@@ -186,11 +186,15 @@ dependencies = [
  "hex-literal",
  "log",
  "pallet-assets",
+ "pallet-ato-collective",
+ "pallet-atocha",
+ "pallet-atofinance",
  "pallet-authorship",
  "pallet-babe",
  "pallet-balances",
  "pallet-beefy",
  "pallet-beefy-mmr",
+ "pallet-elections-phragmen",
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-mmr",
@@ -216,7 +220,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-transaction-pool",
  "sp-version",
  "static_assertions",
@@ -533,7 +537,7 @@ dependencies = [
  "sc-network-gossip",
  "sc-utils",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-arithmetic",
  "sp-blockchain",
  "sp-core",
@@ -577,10 +581,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-core",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -1688,7 +1692,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-runtime-interface",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-storage",
 ]
 
@@ -1730,7 +1734,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-tracing",
 ]
 
@@ -1769,7 +1773,7 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-state-machine",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-tracing",
 ]
 
@@ -1820,7 +1824,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-version",
 ]
 
@@ -1836,7 +1840,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -3943,7 +3947,63 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "pallet-ato-collective"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "pallet-atocha"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sha2 0.9.8",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.12)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0",
+]
+
+[[package]]
+name = "pallet-atofinance"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "lazy_static",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.12)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0",
 ]
 
 [[package]]
@@ -3958,7 +4018,7 @@ dependencies = [
  "scale-info",
  "sp-authorship",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -3975,14 +4035,14 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-consensus-babe",
  "sp-consensus-vrf",
  "sp-io",
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -3997,7 +4057,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4013,7 +4073,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4038,7 +4098,24 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "5.0.0-dev"
+source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12#902587b22222be87321c1a53f8b2a11ed3855a42"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4054,14 +4131,14 @@ dependencies = [
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-core",
  "sp-finality-grandpa",
  "sp-io",
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4075,12 +4152,12 @@ dependencies = [
  "pallet-authorship",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4098,7 +4175,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4114,7 +4191,7 @@ dependencies = [
  "sp-api",
  "sp-core",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4155,7 +4232,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4177,7 +4254,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4190,7 +4267,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4208,7 +4285,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4222,7 +4299,7 @@ dependencies = [
  "safe-mix",
  "scale-info",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4242,7 +4319,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-trie",
 ]
 
@@ -4257,7 +4334,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -4288,7 +4365,7 @@ dependencies = [
  "sp-inherents",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-timestamp",
 ]
 
@@ -4306,7 +4383,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -5510,7 +5587,7 @@ dependencies = [
  "schnorrkel",
  "serde",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
@@ -5541,7 +5618,7 @@ dependencies = [
  "sc-rpc-api",
  "serde",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-babe",
@@ -5704,7 +5781,7 @@ dependencies = [
  "sc-utils",
  "serde_json",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
@@ -5766,7 +5843,7 @@ dependencies = [
  "hex",
  "parking_lot",
  "serde_json",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-core",
  "sp-keystore",
 ]
@@ -6018,7 +6095,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
@@ -6580,7 +6657,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-state-machine",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-version",
  "thiserror",
 ]
@@ -6607,7 +6684,20 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
- "sp-std",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "sp-application-crypto"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.12#d76f39995315ec36980908e4b99709bd14927044"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -6621,7 +6711,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-debug-derive",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "static_assertions",
 ]
 
@@ -6634,7 +6724,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-inherents",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -6646,7 +6736,7 @@ dependencies = [
  "sp-api",
  "sp-inherents",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -6681,7 +6771,7 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-version",
  "thiserror",
 ]
@@ -6697,7 +6787,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-consensus",
  "sp-consensus-slots",
  "sp-consensus-vrf",
@@ -6705,7 +6795,7 @@ dependencies = [
  "sp-inherents",
  "sp-keystore",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-timestamp",
 ]
 
@@ -6729,7 +6819,7 @@ dependencies = [
  "schnorrkel",
  "sp-core",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -6766,7 +6856,7 @@ dependencies = [
  "sp-debug-derive",
  "sp-externalities",
  "sp-runtime-interface",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-storage",
  "ss58-registry",
  "substrate-bip39",
@@ -6804,7 +6894,7 @@ source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-storage",
 ]
 
@@ -6819,11 +6909,11 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-core",
  "sp-keystore",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -6836,7 +6926,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "thiserror",
 ]
 
@@ -6856,7 +6946,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime-interface",
  "sp-state-machine",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-tracing",
  "sp-trie",
  "sp-wasm-interface",
@@ -6898,6 +6988,32 @@ version = "4.0.0-dev"
 source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12#902587b22222be87321c1a53f8b2a11ed3855a42"
 dependencies = [
  "zstd",
+]
+
+[[package]]
+name = "sp-npos-elections"
+version = "4.0.0-dev"
+source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12#902587b22222be87321c1a53f8b2a11ed3855a42"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-npos-elections-solution-type",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "sp-npos-elections-solution-type"
+version = "4.0.0-dev"
+source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12#902587b22222be87321c1a53f8b2a11ed3855a42"
+dependencies = [
+ "proc-macro-crate 1.1.0",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -6943,11 +7059,11 @@ dependencies = [
  "rand 0.7.3",
  "scale-info",
  "serde",
- "sp-application-crypto",
+ "sp-application-crypto 4.0.0-dev (git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12)",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -6960,7 +7076,7 @@ dependencies = [
  "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-storage",
  "sp-tracing",
  "sp-wasm-interface",
@@ -6999,7 +7115,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-staking",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -7010,7 +7126,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -7028,13 +7144,19 @@ dependencies = [
  "sp-core",
  "sp-externalities",
  "sp-panic-handler",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-trie",
  "thiserror",
  "tracing",
  "trie-db",
  "trie-root",
 ]
+
+[[package]]
+name = "sp-std"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35391ea974fa5ee869cb094d5b437688fbf3d8127d64d1b9fed5822a1ed39b12"
 
 [[package]]
 name = "sp-std"
@@ -7051,7 +7173,7 @@ dependencies = [
  "ref-cast",
  "serde",
  "sp-debug-derive",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -7064,7 +7186,7 @@ dependencies = [
  "sp-externalities",
  "sp-io",
  "sp-runtime-interface",
- "sp-std",
+ "sp-std 4.0.0-dev",
 ]
 
 [[package]]
@@ -7079,7 +7201,7 @@ dependencies = [
  "sp-api",
  "sp-inherents",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "thiserror",
 ]
 
@@ -7089,7 +7211,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v0.9.12#902587b22222be87321c1a53f8b2a11ed3855a42"
 dependencies = [
  "parity-scale-codec",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -7116,7 +7238,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-trie",
 ]
 
@@ -7130,7 +7252,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "trie-db",
  "trie-root",
 ]
@@ -7146,7 +7268,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "sp-version-proc-macro",
  "thiserror",
 ]
@@ -7169,7 +7291,7 @@ source = "git+https://github.com/octopus-network/substrate.git?branch=polkadot-v
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
- "sp-std",
+ "sp-std 4.0.0-dev",
  "wasmi",
 ]
 
@@ -7737,7 +7859,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.4",
  "static_assertions",
 ]

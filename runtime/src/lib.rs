@@ -42,6 +42,7 @@ pub use sp_runtime::{Perbill, Permill};
 use beefy_primitives::{crypto::AuthorityId as BeefyId, mmr::MmrLeafVersion};
 use codec::Encode;
 use frame_support::{weights::DispatchClass, PalletId};
+use frame_support::traits::CurrencyToVote;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -274,6 +275,111 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 }
 
+// ------------------------- ATOCHA Pallets Config Started.
+
+parameter_types! {
+	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
+}
+
+type CouncilCollective = pallet_ato_collective::Instance1;
+impl pallet_ato_collective::Config<CouncilCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = pallet_ato_collective::PrimeDefaultVote;
+	type WeightInfo = pallet_ato_collective::weights::SubstrateWeight<Runtime>;
+}
+
+pub const fn deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+}
+pub type LockIdentifier = [u8; 8];
+parameter_types! {
+	pub const CandidacyBond: Balance = 10 * DOLLARS;
+	// 1 storage item created, key size is 32 bytes, value size is 16+16.
+	pub const VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub const VotingBondFactor: Balance = deposit(0, 32);
+	pub const TermDuration: BlockNumber = 7 * DAYS;
+	pub const DesiredMembers: u32 = 13;
+	pub const DesiredRunnersUp: u32 = 7;
+	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
+}
+
+// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
+const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
+pub struct U128CurrencyToVote;
+impl U128CurrencyToVote {
+	fn factor(issuance: u128) -> u128 {
+		(issuance / u64::MAX as u128).max(1)
+	}
+}
+impl CurrencyToVote<u128> for U128CurrencyToVote {
+	fn to_vote(value: u128, issuance: u128) -> u64 {
+		(value / Self::factor(issuance)).saturated_into()
+	}
+
+	fn to_currency(value: u128, issuance: u128) -> u128 {
+		value.saturating_mul(Self::factor(issuance))
+	}
+}
+impl pallet_elections_phragmen::Config for Runtime {
+	type Event = Event;
+	type PalletId = ElectionsPhragmenPalletId;
+	type Currency = Balances;
+	type ChangeMembers = Council;
+	// NOTE: this implies that council's genesis members cannot be set directly and must come from
+	// this module.
+	type InitializeMembers = Council;
+	type CurrencyToVote = U128CurrencyToVote;
+	type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
+	type LoserCandidate = ();
+	type KickedMember = ();
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
+	type TermDuration = TermDuration;
+	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+}
+
+// --------
+
+impl pallet_atocha::Config for Runtime {
+	type Event = Event;
+}
+
+parameter_types! {
+	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
+	pub const BasicDollars: Balance = DOLLARS;
+	pub const TicketFee: Balance = 5 * DOLLARS; // Will be delete.
+	pub const DepositFee: Balance = 100 * DOLLARS; //Will be delete.
+	pub const DayBlockCount: u32 = 1 * DAYS; // Will be delete
+	pub const StakingPeriod: u32 = 10; // Will be delete.
+	pub TargetIssuanceRate: Permill = Permill::from_percent(10);
+	pub const PerEraOfBlockNumber: BlockNumber = 3 * DAYS;
+}
+
+impl pallet_atofinance::Config for Runtime {
+	type Event = Event;
+	type PalletId = AresFinancePalletId;
+	type Currency = pallet_balances::Pallet<Self>;
+	type BasicDollars = BasicDollars;
+	type TicketFee = TicketFee;
+	type DepositFee = DepositFee;
+	type DayBlockCount = DayBlockCount;
+	type StakingPeriod = StakingPeriod;
+	type SlashHandler = ();
+	type RewardHandler = ();
+	type PerEraOfBlockNumber = PerEraOfBlockNumber;
+	type TargetIssuanceRate = TargetIssuanceRate;
+}
+// ------------------------- ATOCHA Pallets Config end.
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
@@ -643,6 +749,11 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>},
+		AtochaFinace: pallet_atofinance::{Pallet, Call, Storage, Event<T>},
+		//
+		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Council: pallet_ato_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 	}
 );
 

@@ -62,10 +62,16 @@ beefy-primitives = { git = "https://github.com/paritytech/substrate.git", branch
 pallet-beefy = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12", default-features = false }
 pallet-beefy-mmr = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12", default-features = false }
 pallet-mmr-primitives = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12", default-features = false }
-
+pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12", default-features = false }
 pallet-octopus-appchain = { git = "https://github.com/octopus-network/octopus-pallets.git", branch = "release-v0.9.12", default-features = false }
 pallet-octopus-lpos = { git = "https://github.com/octopus-network/octopus-pallets.git", branch = "release-v0.9.12", default-features = false }
 pallet-octopus-upward-messages = { git = "https://github.com/octopus-network/octopus-pallets.git", branch = "release-v0.9.12", default-features = false }
+
+pallet-atocha = { path = '../pallets/atocha', default-features = false, version = '1.0.0' }
+pallet-atofinance = { path = '../pallets/atofinance', default-features = false, version = '1.0.0' }
+pallet-ato-collective = { version = "4.0.0-dev", default-features = false, path = "../pallets/atocollective" }
+#pallet-elections-phragmen = { path = '../pallets/elections-phragmen', default-features = false }
+
 
 [features]
 default = ['std']
@@ -121,4 +127,8 @@ std = [
     'pallet-octopus-appchain/std',
     'pallet-octopus-lpos/std',
     'pallet-octopus-upward-messages/std',
+    'pallet-atocha/std',
+    'pallet-atofinance/std',
+    'pallet-ato-collective/std',
+    'pallet-elections-phragmen/std',
 ]

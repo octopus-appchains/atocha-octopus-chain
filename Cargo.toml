@@ -5,6 +5,8 @@ panic = 'unwind'
 members = [
     'node',
     'pallets/template',
+    'pallets/atocha',
+    'pallets/atofinance',
     'runtime',
 ]
 
@@ -25,6 +27,7 @@ pallet-babe = { git = "https://github.com/octopus-network/substrate.git", branch
 pallet-balances = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }
 pallet-beefy = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }
 pallet-beefy-mmr = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }
+pallet-elections-phragmen = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }
 pallet-grandpa = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }
 pallet-im-online = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }
 pallet-mmr = { git = "https://github.com/octopus-network/substrate.git", branch = "polkadot-v0.9.12" }

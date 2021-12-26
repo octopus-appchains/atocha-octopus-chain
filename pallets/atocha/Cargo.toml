@@ -1,0 +1,48 @@
+[package]
+authors = ['Atocha-Group']
+description = 'Atocha puzzle main mod.'
+edition = '2018'
+homepage = 'https://substrate.dev'
+license = 'MIT'
+name = 'pallet-atocha'
+readme = 'README.md'
+repository = 'https://github.com/atocha-protocol/atocha-chain-node'
+version = '1.0.0'
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+codec = { version = "2.0.0", features = ['derive'], package = 'parity-scale-codec', default-features = false }
+sp-core =  { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+sp-application-crypto = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+log = { version = "0.4.14", default-features = false }
+hex = { version = "0.4", default-features = false }
+sp-std = {default-features = false, version = '3.0.0'}
+sha2 = {default-features = false, version = '0.9.8'}
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+serde = { version = '1.0.119' }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+[features]
+default = ['std']
+runtime-benchmarks = ['frame-benchmarking']
+std = [
+    'codec/std',
+    "scale-info/std",
+    'frame-support/std',
+    'frame-system/std',
+    'frame-benchmarking/std',
+    'sp-application-crypto/std',
+    'sp-core/std',
+    'hex/std',
+    'log/std',
+]
+try-runtime = ['frame-support/try-runtime']
+

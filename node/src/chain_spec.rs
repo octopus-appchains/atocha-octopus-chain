@@ -1,6 +1,6 @@
 use appchain_barnacle_runtime::{
 	opaque::Block, opaque::SessionKeys, AccountId, BabeConfig, Balance, BalancesConfig,
-	GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig,
+	GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig,CouncilConfig,ElectionsConfig
 	SessionConfig, Signature, SudoConfig, SystemConfig, DOLLARS, WASM_BINARY,
 };
 use beefy_primitives::crypto::AuthorityId as BeefyId;
@@ -220,6 +220,10 @@ fn testnet_genesis(
 			authorities: vec![],
 			epoch_config: Some(appchain_barnacle_runtime::BABE_GENESIS_EPOCH_CONFIG),
 		},
+		elections: ElectionsConfig {
+			members: endowed_accounts.iter().cloned().map(|member| (member, STASH)).collect(),
+		},
+		council: CouncilConfig::default(),
 		im_online: ImOnlineConfig { keys: vec![] },
 		grandpa: GrandpaConfig { authorities: vec![] },
 		assets: Default::default(),
