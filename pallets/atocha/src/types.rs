@@ -48,7 +48,7 @@ pub struct PuzzleInfoData<Account, BlockNumber> {
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum PuzzleStatus {
 	PUZZLE_STATUS_IS_SOLVING,
-	PUZZLE_STATUS_IS_UP_TO_TIME,
+	PUZZLE_STATUS_IS_FINAL,
 	PUZZLE_STATUS_IS_SOLVED,
 }
 

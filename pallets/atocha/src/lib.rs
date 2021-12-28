@@ -47,6 +47,12 @@ pub mod pallet {
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
+		#[pallet::constant]
+		type MinBonusOfPuzzle: Get<BalanceOf<Self>>;
+
+		#[pallet::constant]
+		type ChallengePeriodLength: Get<Self::BlockNumber>;
+
 		type PuzzleLedger: IPuzzleLedger<
 			<Self as frame_system::Config>::AccountId,
 			BalanceOf<Self>,
@@ -115,6 +121,8 @@ pub mod pallet {
 		WrongAnswer,
 		PuzzleNotExist,
 		PuzzleHasBeenSolved,
+		PuzzleStatusErr,
+		PuzzleMinBonusInsufficient,
 	}
 
 	#[pallet::hooks]
@@ -131,16 +139,21 @@ pub mod pallet {
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 			answer_hash: PuzzleAnswerHash,
 			answer_explain: Option<PuzzleAnswerExplain>,
-			// answer_nonce: PuzzleAnswerNonce,
+			amount: BalanceOf<T>,
 			puzzle_version: PuzzleVersion,
 		) -> DispatchResultWithPostInfo {
 			// check signer
 			let who = ensure_signed(origin)?;
+			ensure!(!<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleAlreadyExist);
+
+			// Check amount > MinBonus
+			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 
-			ensure!(!<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleAlreadyExist);
+			// pid: PuzzleHash, who: AccountId, amount: BalanceOf, create_bn: BlockNumber,
+			T::PuzzleLedger::do_bonus(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number)?;
 
 			let puzzle_content = PuzzleInfoData {
 				account: who.clone(),
@@ -197,6 +210,7 @@ pub mod pallet {
 			let answer_status_check = || -> PuzzleAnswerStatus {
 				if update_answer_sign == puzzle_content.answer_hash {
 					puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
+					puzzle_content.reveal_bn = Some(current_block_number);
 					<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content);
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
@@ -224,6 +238,32 @@ pub mod pallet {
 				puzzle_hash,
 				current_block_number,
 			));
+			//
+			Ok(().into())
+		}
+
+		#[pallet::weight(1000)]
+		pub fn take_answer_reward(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+			//
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			// 1\ Check puzzle status is PUZZLE_STATUS_IS_SOLVED AND current_bn - Some(reveal_bn)  > T::ChallengePeriodLength
+			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
+
+			let reveal_bn = puzzle_content.reveal_bn.unwrap();
+			ensure!(
+				current_block_number - reveal_bn > T::ChallengePeriodLength::get(),
+				Error::<T>::PuzzleStatusErr
+			);
+
 			//
 			Ok(().into())
 		}

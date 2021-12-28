@@ -71,10 +71,17 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
+parameter_types! {
+	pub const MinBonusOfPuzzle: Balance = 100 * DOLLARS;
+	pub const ChallengePeriodLength: BlockNumber = 100;
+}
+
 impl crate::Config for Test {
 	type Event = Event;
 	// type Currency = pallet_balances::Pallet<Self>;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
+	type MinBonusOfPuzzle = MinBonusOfPuzzle;
+	type ChallengePeriodLength = ChallengePeriodLength;
 	type PuzzleLedger = AtochaPot; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
@@ -132,7 +139,27 @@ impl pallet_balances::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_balances::GenesisConfig::<Test> {
+		balances: vec![
+			(toAid(1), 1_000_000_000_000_000),
+			(toAid(2), 2_000_000_000_000_000),
+			(toAid(3), 3_000_000_000_000_000),
+			(toAid(4), 4_000_000_000_000_000),
+			(toAid(5), 5_000_000_000_000_000),
+			(toAid(6), 6_000_000_000_000_000),
+		],
+	}
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+	// crate::GenesisConfig::<Test> { _pt: Default::default() }
+	// 	.assimilate_storage(&mut t)
+	// 	.unwrap();
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
 
 pub fn make_answer_sha256(answer_hash: Vec<u8>, puzzle_hash_txid: Vec<u8>) -> Vec<u8> {
@@ -171,7 +198,7 @@ pub(crate) fn handle_create_puzzle(
 		puzzle_hash.clone(),
 		answer_hash.clone(),
 		None,
-		// answer_nonce.clone(),
+		100 * DOLLARS,
 		puzzle_version.clone()
 	));
 }

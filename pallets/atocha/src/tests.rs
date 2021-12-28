@@ -23,19 +23,6 @@ fn test_create_puzzle() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		// Make SHA256 answer hash
-		// let mut answer_hash = toVec("ANSWER_HASH");
-		// let mut sha_answer_hash = sha2_256(answer_hash.as_slice()).to_vec();
-		//
-		// let mut sha1_answer_hex = &hex::encode(&sha_answer_hash);
-		// let mut sha1_ansser_vec = sha1_answer_hex.as_bytes().to_vec();
-		//
-		// let mut answer_nonce = "NONCE".as_bytes().to_vec();
-		// sha1_ansser_vec.append(&mut answer_nonce);
-		// let raw_str = sp_std::str::from_utf8(sha1_ansser_vec.as_slice());
-		//
-		// let sha256_answer = sha2_256(sha1_ansser_vec.as_slice());
-
 		let puzzle_hash = toVec("PUZZLE_TX_ID");
 		let answer_plain_txt = toVec("ANSWER_HASH_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
@@ -113,13 +100,14 @@ fn test_answer_puzzle() {
 			answer_hash.clone(),
 		);
 
-		System::set_block_number(5);
+		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
 		));
+
 
 		let answer_list =
 			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
@@ -133,14 +121,25 @@ fn test_answer_puzzle() {
 					account: toAid(CONST_ORIGIN_IS_ANSWER_1),
 					// puzzle_ticket: 500,
 					answer_status: PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH,
-					create_bn: 5,
+					create_bn: 15,
 				}
 			)
 		);
 
 		// Check puzzle status.
 		let relation_info = AtochaModule::puzzle_info(puzzle_hash.clone()).unwrap();
-		assert_eq!(relation_info.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
+		assert_eq!(
+			relation_info,
+			PuzzleInfoData {
+				account: toAid(CONST_ORIGIN_IS_CREATOR),
+				answer_hash: answer_hash.clone(),
+				answer_explain: None,
+				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
+				create_bn: 5,
+				reveal_bn: None,
+				puzzle_version: 1,
+			}
+		);
 
 		// ------------
 		assert_ok!(AtochaModule::answer_puzzle(
@@ -162,14 +161,25 @@ fn test_answer_puzzle() {
 					account: toAid(CONST_ORIGIN_IS_ANSWER_1),
 					// puzzle_ticket: 500,
 					answer_status: PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH,
-					create_bn: 5,
+					create_bn: 15,
 				}
 			)
 		);
 
 		// Check puzzle status.
 		let relation_info = AtochaModule::puzzle_info(puzzle_hash.clone()).unwrap();
-		assert_eq!(relation_info.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
+		assert_eq!(
+			relation_info,
+			PuzzleInfoData {
+				account: toAid(CONST_ORIGIN_IS_CREATOR),
+				answer_hash: answer_hash.clone(),
+				answer_explain: None,
+				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				create_bn: 5,
+				reveal_bn: Some(15),
+				puzzle_version: 1,
+			}
+		);
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
@@ -180,6 +190,28 @@ fn test_answer_puzzle() {
 			),
 			Error::<Test>::PuzzleHasBeenSolved
 		);
+	});
+}
+
+
+#[test]
+fn test_take_answer_reward() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(5);
+
+		let puzzle_hash = toVec("PUZZLE_TX_ID");
+		let answer_plain_txt = toVec("ANSWER_HASH_256");
+		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
+
+		// Create puzzle hash on the chain.
+		handle_create_puzzle(
+			toAid(CONST_ORIGIN_IS_CREATOR),
+			puzzle_hash.clone(),
+			answer_hash.clone(),
+		);
+
+		assert!(false, "not implements");
 	});
 }
 
