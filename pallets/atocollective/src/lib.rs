@@ -50,13 +50,14 @@ use sp_std::{marker::PhantomData, prelude::*, result};
 
 use frame_support::{
 	codec::{Decode, Encode},
-	dispatch::{DispatchError, DispatchResultWithPostInfo, Dispatchable, PostDispatchInfo},
+	dispatch::{DispatchError, DispatchResultWithPostInfo, Dispatchable, PostDispatchInfo, DispatchResult},
 	ensure,
 	traits::{
 		Backing, ChangeMembers, EnsureOrigin, Get, GetBacking, InitializeMembers, StorageVersion,
 	},
 	weights::{GetDispatchInfo, Weight},
 };
+use frame_support::sp_runtime::traits::StaticLookup;
 
 #[cfg(test)]
 mod tests;
@@ -512,7 +513,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let members = Self::members();
-			ensure!(members.contains(&who), Error::<T, I>::NotMember);
+			// ensure!(members.contains(&who), Error::<T, I>::NotMember);
 
 			let proposal_len = proposal.using_encoded(|x| x.len());
 			ensure!(proposal_len <= length_bound as usize, Error::<T, I>::WrongProposalLength);
@@ -521,6 +522,23 @@ pub mod pallet {
 				!<ProposalOf<T, I>>::contains_key(proposal_hash),
 				Error::<T, I>::DuplicateProposal
 			);
+
+			Self::check_challenge_call(
+				proposal.as_ref().clone(),
+				proposal_hash,
+				|dest, proposal_hash|->DispatchResult{
+					// let my_origin = RawOrigin::Members(threshold, seats).into();
+					// T::AresProposalMinimumThreshold::ensure_origin(RawOrigin::Members(threshold, seats).into())?;
+					// T::AresProposalMaximumThreshold::ensure_origin(RawOrigin::Members(threshold, seats).into())?;
+					// let dest: T::AccountId = T::Lookup::lookup(dest.clone())?;
+					// T::ChallengeFlow::prepare( &who, &dest, proposal_hash, deposit)
+					Ok(())
+				},
+				|| -> DispatchResult {
+					ensure!(members.contains(&who), Error::<T, I>::NotMember);
+					Ok(())
+				}
+			)?;
 
 			if threshold < 2 {
 				let seats = Self::members().len() as MemberCount;
@@ -895,6 +913,35 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			proposals.len() + 1 // calculate weight based on original length
 		});
 		num_proposals as u32
+	}
+
+	fn check_challenge_call<FA, FB>(
+		proposal: <T as Config<I>>::Proposal,
+		proposal_hash: T::Hash,
+		match_func: FA,
+		mismatch_func: FB,
+	) -> DispatchResult
+		where
+			FA: FnOnce(&<T::Lookup as StaticLookup>::Source, T::Hash) -> DispatchResult,
+			FB: FnOnce() -> DispatchResult,
+	{
+		// match proposal.is_sub_type() {
+		// 	Some(call) => match *call {
+		// 		pallet_ares_challenge::Call::propose(
+		// 			ref dest,
+		// 			ref block_hash,
+		// 			ref price,
+		// 			ref deposit,
+		// 		) => {
+		// 			info!("call func:{:?}", deposit);
+		// 			match_func(dest, proposal_hash, *deposit)
+		// 		}
+		// 		_ => Ok(()),
+		// 	},
+		// 	None => mismatch_func(),
+		// }
+
+		mismatch_func()
 	}
 }
 

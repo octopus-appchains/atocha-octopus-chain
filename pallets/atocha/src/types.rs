@@ -1,6 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use super::*;
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::traits::Currency;
 use scale_info::TypeInfo;
 use sp_core::RuntimeDebug;
 use sp_std::vec::Vec;
@@ -18,6 +20,9 @@ pub type CreateBn<B> = B;
 pub type DurationBn<B> = B;
 pub type RevealBn<B> = B;
 pub type PuzzleVersion = u64;
+
+pub type BalanceOf<T> =
+<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub const ANSWER_STATUS_IS_EXPECT: AnswerStatus = 1;
 

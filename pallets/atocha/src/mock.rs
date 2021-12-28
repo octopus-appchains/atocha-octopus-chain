@@ -2,21 +2,29 @@ use crate as pallet_atocha;
 use frame_support::parameter_types;
 use frame_support::sp_runtime::app_crypto::sp_core::sr25519::Signature;
 use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
+use frame_support::PalletId;
 use frame_system as system;
 use sp_core::hashing::sha2_256;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	Permill,Perbill,
 };
 
 use crate::types::PuzzleVersion;
 use frame_support::assert_ok;
 use frame_support::traits::Contains;
 
+
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub(crate) type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+pub type Balance = u128;
+pub type BlockNumber = u64;
+pub const DOLLARS: Balance = 1_000_000_000_000;
+
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -25,8 +33,10 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>},
+		AtochaPot: pallet_atofinance::{Pallet, Call, Storage, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 	}
 );
 
@@ -53,7 +63,7 @@ impl frame_system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -61,8 +71,63 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
-impl pallet_atocha::Config for Test {
+impl crate::Config for Test {
 	type Event = Event;
+	// type Currency = pallet_balances::Pallet<Self>;
+	type Currency = <Self as pallet_atofinance::Config>::Currency;
+	type PuzzleLedger = AtochaPot; // pallet_atofinance::Pallet<Test>;
+	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
+	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
+	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
+}
+
+parameter_types! {
+	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
+	pub const BasicDollars: Balance = DOLLARS;
+	pub const TicketFee: Balance = 5 * DOLLARS;
+	pub const DepositFee: Balance = 100 * DOLLARS;
+	pub const DayBlockCount: u32 = 14400;
+	pub const StakingPeriod: u32 = 10;
+	pub const PerEraOfBlockNumber: BlockNumber = 5;
+	pub TargetIssuanceRate: Permill = Permill::from_float(0.1);
+	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
+	pub RaisingPeriodLength: BlockNumber = 5;
+}
+
+impl pallet_atofinance::imps::challenge_manager::Config for Test {
+	type ChallengeThreshold = ChallengeThreshold;
+	type RaisingPeriodLength = RaisingPeriodLength;
+}
+
+impl pallet_atofinance::Config for Test {
+	type Event = Event;
+	type PalletId = AresFinancePalletId;
+	type Currency = pallet_balances::Pallet<Self>;
+	type SlashHandler = ();
+	type RewardHandler = ();
+	type BasicDollars = BasicDollars;
+	type TicketFee = TicketFee;
+	type DepositFee = DepositFee;
+	type DayBlockCount = DayBlockCount;
+	type StakingPeriod = StakingPeriod;
+	type TargetIssuanceRate = TargetIssuanceRate;
+	type PerEraOfBlockNumber = PerEraOfBlockNumber;
+}
+
+parameter_types! {
+	pub const ExistentialDeposit: u64 = 1;
+	pub const MaxLocks: u32 = 10;
+}
+impl pallet_balances::Config for Test {
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type MaxLocks = MaxLocks;
+	type Balance = Balance;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

@@ -30,15 +30,50 @@ mod tests;
 pub mod pallet {
 
 	use crate::types::*;
-	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
 	use hex;
 	use sp_core::sp_std::convert::TryInto;
 	use sp_std::vec::Vec;
+	use pallet_atofinance::traits::{*};
+	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// The staking balance.
+		type Currency: Currency<Self::AccountId>
+			+ ReservableCurrency<Self::AccountId>
+			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+		type PuzzleLedger: IPuzzleLedger<
+			<Self as frame_system::Config>::AccountId,
+			BalanceOf<Self>,
+			PuzzleSubjectHash,
+			<Self as frame_system::Config>::BlockNumber,
+			DispatchResult
+		>;
+		type PuzzleRewardOfToken: IPuzzleReward<
+			<Self as frame_system::Config>::AccountId,
+			BalanceOf<Self>,
+			PuzzleSubjectHash,
+			DispatchResult
+		>;
+		type PuzzleRewardOfPoint: IPuzzleReward<
+			<Self as frame_system::Config>::AccountId,
+			PointToken,
+			PuzzleSubjectHash,
+			DispatchResult
+		>;
+		type AtoChallenge: IAtoChallenge<
+			<Self as frame_system::Config>::AccountId,
+			PuzzleSubjectHash,
+			BalanceOf<Self>,
+			PuzzleChallengeData<<Self as frame_system::Config>::AccountId, Self::BlockNumber, BalanceOf<Self>>,
+			ChallengeStatus<Self::BlockNumber>,
+			pallet_atofinance::Error<Self>,
+		>;
 	}
 
 	#[pallet::pallet]
@@ -189,6 +224,25 @@ pub mod pallet {
 				puzzle_hash,
 				current_block_number,
 			));
+			//
+			Ok(().into())
+		}
+
+		#[pallet::weight(1000)]
+		pub fn commit_challenge(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+			// answer_hash: PuzzleAnswerHash,
+			// answer_explain: Option<PuzzleAnswerExplain>,
+			// answer_nonce: PuzzleAnswerNonce,
+			// puzzle_version: PuzzleVersion,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+
+			//
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+
 			//
 			Ok(().into())
 		}

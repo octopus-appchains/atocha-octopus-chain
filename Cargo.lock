@@ -3975,6 +3975,8 @@ dependencies = [
  "frame-system",
  "hex",
  "log",
+ "pallet-atofinance",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "serde",

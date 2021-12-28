@@ -17,7 +17,7 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 codec = { version = "2.0.0", features = ['derive'], package = 'parity-scale-codec', default-features = false }
-sp-core =  { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 sp-application-crypto = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 log = { version = "0.4.14", default-features = false }
@@ -25,24 +25,30 @@ hex = { version = "0.4", default-features = false }
 sp-std = {default-features = false, version = '3.0.0'}
 sha2 = {default-features = false, version = '0.9.8'}
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+pallet-atofinance = { path = '../../pallets/atofinance', default-features = false, version = '1.0.0' }
 
 [dev-dependencies]
 serde = { version = '1.0.119' }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 
 [features]
 default = ['std']
 runtime-benchmarks = ['frame-benchmarking']
 std = [
     'codec/std',
-    "scale-info/std",
     'frame-support/std',
     'frame-system/std',
     'frame-benchmarking/std',
+    'log/std',
+    'hex/std',
+    'pallet-atofinance/std',
+    'pallet-balances/std',
+    "scale-info/std",
     'sp-application-crypto/std',
     'sp-core/std',
-    'hex/std',
-    'log/std',
+
+
 ]
 try-runtime = ['frame-support/try-runtime']
 
