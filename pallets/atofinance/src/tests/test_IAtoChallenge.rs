@@ -105,6 +105,26 @@ fn test_issue_challenge() {
 			ChallengeManager::<Test>::get_challenge_status(&puzzle_hash),
 			Some(ChallengeStatus::RaiseCompleted(5))
 		);
+
+		let challenge_data = ChallengeManager::<Test>::check_get_active_challenge_info(&puzzle_hash);
+		assert!(challenge_data.is_ok());
+		let challenge_data = challenge_data.unwrap();
+		assert_eq!(
+			challenge_data,
+			PuzzleChallengeData {
+				raised_total: 6_000_000_000_000,
+				status: ChallengeStatus::RaiseCompleted(5),
+				create_bn: 5,
+				creator: ACCOUNT_ID_2,
+				start_bn: None,
+				end_bn: None,
+				raised_group: vec![
+					(ACCOUNT_ID_2, 2_000_000_000_000),
+					(ACCOUNT_ID_2, 3_000_000_000_000),
+					(ACCOUNT_ID_3, 1_000_000_000_000),
+				]
+			}
+		);
 	});
 }
 

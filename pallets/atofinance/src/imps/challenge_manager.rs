@@ -27,6 +27,7 @@ impl<T: Config>
 		let storage_ledger = <AtoFinanceLedger<T>>::try_get(pid).ok();
 		ensure!(storage_ledger.is_some(), Error::<T>::PuzzleNotExists);
 		ensure!(!<PuzzleChallengeInfo<T>>::contains_key(pid), Error::<T>::ChallengeAlreadyExists);
+
 		// Get threshold.
 		let threshold_balance = Self::get_balance_threshold(pid);
 		let real_deposit = deposit.min(threshold_balance);
@@ -85,7 +86,7 @@ impl<T: Config>
 		pid: &PuzzleSubjectHash,
 		deposit: BalanceOf<T>,
 	) -> DispatchResult {
-		let mut challenge_data = Self::check_get_challenge_info(pid)?;
+		let mut challenge_data = Self::check_get_active_challenge_info(pid)?;
 		let threshold_balance = Self::get_balance_threshold(pid);
 		let remaining_funds = threshold_balance.saturating_sub(challenge_data.raised_total);
 		ensure!(remaining_funds > Zero::zero(), Error::<T>::EndOfRaising);
@@ -120,7 +121,9 @@ impl<T: Config>
 		Some(challenge_info.status)
 	}
 
-	fn check_get_challenge_info(
+
+	/// Check and get the active challenges.
+	fn check_get_active_challenge_info(
 		pid: &PuzzleSubjectHash,
 	) -> Result<PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>>, Error<T>> {
 		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
@@ -128,10 +131,20 @@ impl<T: Config>
 		}
 		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
 		let period_len = T::RaisingPeriodLength::get();
-		let current_block_number = <frame_system::Pallet<T>>::block_number();
-		if current_block_number > challenge_info.create_bn.saturating_add(period_len) {
-			return Err(Error::<T>::RaisingPeriodExpired);
-		}
+
+		match challenge_info.status {
+			ChallengeStatus::Raise(bn) => {
+				let current_block_number = <frame_system::Pallet<T>>::block_number();
+				if current_block_number > bn.saturating_add(period_len) {
+					return Err(Error::<T>::RaisingPeriodExpired);
+				}
+			},
+			ChallengeStatus::RaiseCompleted(bn) => {},
+			_ => {
+				return Err(Error::<T>::EndOfRaising);
+			}
+		};
+
 		Ok(challenge_info)
 	}
 

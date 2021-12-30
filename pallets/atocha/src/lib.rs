@@ -28,13 +28,14 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-
+	use frame_benchmarking::frame_support::sp_runtime::Perbill;
 	use crate::types::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
 	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
 	use hex;
 	use sp_core::sp_std::convert::TryInto;
+	use sp_runtime::PerThing;
 	use sp_std::vec::Vec;
 	use pallet_atofinance::traits::{*};
 	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
@@ -53,6 +54,12 @@ pub mod pallet {
 		#[pallet::constant]
 		type ChallengePeriodLength: Get<Self::BlockNumber>;
 
+		#[pallet::constant]
+		type TaxOfTVS: Get<Perbill> ;
+
+		#[pallet::constant]
+		type TaxOfTVO: Get<Perbill> ;
+
 		type PuzzleLedger: IPuzzleLedger<
 			<Self as frame_system::Config>::AccountId,
 			BalanceOf<Self>,
@@ -64,13 +71,15 @@ pub mod pallet {
 			<Self as frame_system::Config>::AccountId,
 			BalanceOf<Self>,
 			PuzzleSubjectHash,
-			DispatchResult
+			DispatchResult,
+			PerVal = Perbill,
 		>;
 		type PuzzleRewardOfPoint: IPuzzleReward<
 			<Self as frame_system::Config>::AccountId,
 			PointToken,
 			PuzzleSubjectHash,
-			DispatchResult
+			DispatchResult,
+			PerVal = Perbill,
 		>;
 		type AtoChallenge: IAtoChallenge<
 			<Self as frame_system::Config>::AccountId,
@@ -123,6 +132,8 @@ pub mod pallet {
 		PuzzleHasBeenSolved,
 		PuzzleStatusErr,
 		PuzzleMinBonusInsufficient,
+		PuzzleNotSolvedChallengeFailed,
+		ChallengePeriodIsNotEnd,
 	}
 
 	#[pallet::hooks]
@@ -259,12 +270,25 @@ pub mod pallet {
 			);
 
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
+			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
 			ensure!(
 				current_block_number - reveal_bn > T::ChallengePeriodLength::get(),
-				Error::<T>::PuzzleStatusErr
+				Error::<T>::ChallengePeriodIsNotEnd
 			);
 
-			//
+			let tax_fee = || {
+				if puzzle_content.account == who {
+					T::TaxOfTVS::get()
+				}else{
+					T::TaxOfTVO::get()
+				}
+			};
+
+			// Take balance.
+			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), tax_fee())?;
+			// Take points.
+			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), tax_fee())?;
+
 			Ok(().into())
 		}
 
