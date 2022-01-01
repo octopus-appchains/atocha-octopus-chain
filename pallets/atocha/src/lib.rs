@@ -71,6 +71,7 @@ pub mod pallet {
 			<Self as frame_system::Config>::AccountId,
 			BalanceOf<Self>,
 			PuzzleSubjectHash,
+			<Self as frame_system::Config>::BlockNumber,
 			DispatchResult,
 			PerVal = Perbill,
 		>;
@@ -78,6 +79,7 @@ pub mod pallet {
 			<Self as frame_system::Config>::AccountId,
 			PointToken,
 			PuzzleSubjectHash,
+			<Self as frame_system::Config>::BlockNumber,
 			DispatchResult,
 			PerVal = Perbill,
 		>;
@@ -134,6 +136,7 @@ pub mod pallet {
 		PuzzleMinBonusInsufficient,
 		PuzzleNotSolvedChallengeFailed,
 		ChallengePeriodIsNotEnd,
+		NoRightToReward,
 	}
 
 	#[pallet::hooks]
@@ -172,6 +175,7 @@ pub mod pallet {
 				answer_explain,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: current_block_number,
+				reveal_answer: None,
 				reveal_bn: None,
 				puzzle_version,
 			};
@@ -222,6 +226,7 @@ pub mod pallet {
 				if update_answer_sign == puzzle_content.answer_hash {
 					puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
 					puzzle_content.reveal_bn = Some(current_block_number);
+					puzzle_content.reveal_answer = Some(who.clone());
 					<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content);
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
@@ -269,6 +274,10 @@ pub mod pallet {
 				Error::<T>::PuzzleStatusErr
 			);
 
+			// NoRightToReward
+			// Get winner answer.
+			ensure!(puzzle_content.reveal_answer == Some(who.clone()), Error::<T>::NoRightToReward);
+
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
 			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
 			ensure!(
@@ -284,10 +293,11 @@ pub mod pallet {
 				}
 			};
 
-			// Take balance.
-			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), tax_fee())?;
+
 			// Take points.
-			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), tax_fee())?;
+			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee())?;
+			// Take balance.
+			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee())?;
 
 			Ok(().into())
 		}

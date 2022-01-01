@@ -40,7 +40,7 @@ pub struct PuzzleInfoData<Account, BlockNumber> {
 	// pub puzzle_ticket: PuzzleTicket,
 	pub puzzle_status: PuzzleStatus,
 	pub create_bn: CreateBn<BlockNumber>,
-	// pub duration_bn: DurationBn,
+	pub reveal_answer: Option<Account>,
 	pub reveal_bn: Option<RevealBn<BlockNumber>>,
 	pub puzzle_version: PuzzleVersion,
 }

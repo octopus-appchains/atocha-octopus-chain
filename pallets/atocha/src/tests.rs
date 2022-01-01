@@ -5,7 +5,7 @@ use crate::mock::AccountId;
 use crate::pallet::*;
 use crate::{mock::*, Error};
 use frame_support::sp_runtime::app_crypto::sr25519::Signature;
-use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
+use frame_support::sp_runtime::traits::{IdentifyAccount, Verify, Zero};
 use frame_support::{assert_noop, assert_ok};
 use pallet_atofinance::traits::*;
 
@@ -48,6 +48,7 @@ fn test_create_puzzle() {
 				// answer_nonce: toVec("NONCE"),
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
+				reveal_answer: None,
 				reveal_bn: None,
 				puzzle_version: 1,
 			}
@@ -136,6 +137,7 @@ fn test_answer_puzzle() {
 				answer_explain: None,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
+				reveal_answer: None,
 				reveal_bn: None,
 				puzzle_version: 1,
 			}
@@ -176,6 +178,7 @@ fn test_answer_puzzle() {
 				answer_explain: None,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				create_bn: 5,
+				reveal_answer: Some(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 				reveal_bn: Some(15),
 				puzzle_version: 1,
 			}
@@ -266,7 +269,7 @@ fn test_take_answer_reward_with_crator() {
 		);
 
 		// Now you can receive rewards.
-		System::set_block_number(15 + 50 + 100 );
+		System::set_block_number( 15 + 50 + 100 );
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
@@ -278,6 +281,7 @@ fn test_take_answer_reward_with_crator() {
 		System::set_block_number(15 + 50 + 100 + 1 );
 		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_CREATOR));
 		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
+		assert_eq!(original_point, Zero::zero());
 
 		assert_ok!(AtochaModule::take_answer_reward(
 				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
@@ -285,12 +289,14 @@ fn test_take_answer_reward_with_crator() {
 		));
 		// Deduct TVS tax.
 		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_CREATOR)), original_balance + 100*DOLLARS - TaxOfTVS::get() * 100*DOLLARS);
-		let winanswer_remain_points = 100*DOLLARS * (65 - 5);
+		let reward_period_count = (65 - 5) / PerEraOfBlockNumber::get();
+		let winanswer_remain_points: Balance = 100*DOLLARS * reward_period_count as Balance;
+
+		let total_bonus = pallet_atofinance::imps::PointReward::<Test>::get_total_bonus(&puzzle_hash, 65);
+		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
 		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR)),
 				   original_point + winanswer_remain_points - TaxOfTVS::get() * winanswer_remain_points);
 
-
-		assert!(false, "not implements");
 	});
 }
 
@@ -335,37 +341,77 @@ fn test_take_answer_reward_with_other() {
 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
-		// Update sure answer on chain.
-		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
-			puzzle_hash.clone(),
-			answer_plain_txt.clone(),
-		));
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
-		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
-
 		// bn < ChallengePeriodLength: BlockNumber = 100;
 		System::set_block_number(15 + 50);
+
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 			),
+			Error::<Test>::PuzzleStatusErr
+		);
+
+		// Update sure answer on chain.
+		assert_ok!(AtochaModule::answer_puzzle(
+			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+			puzzle_hash.clone(),
+			answer_plain_txt.clone(),
+		));
+
+		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
+
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::take_answer_reward(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				puzzle_hash.clone(),
+			),
 			Error::<Test>::ChallengePeriodIsNotEnd
 		);
 
 		// Now you can receive rewards.
-		System::set_block_number(15 + 100 + 1);
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_1));
+		System::set_block_number( 15 + 50 + 100 );
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::take_answer_reward(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::ChallengePeriodIsNotEnd
+		);
+		System::set_block_number(15 + 50 + 100 + 1 );
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2));
+		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
+		assert_eq!(original_point, Zero::zero());
+
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::take_answer_reward(
+				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::NoRightToReward
+		);
+
 		assert_ok!(AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 		));
-		// Deduct TVS tax.
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_1)), original_balance + 100*DOLLARS - TaxOfTVO::get() * 100*DOLLARS);
 
-		assert!(false, "not implements");
+
+		// Deduct TVS tax.
+		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2)), original_balance + 100*DOLLARS - TaxOfTVO::get() * 100*DOLLARS);
+		let reward_period_count = (65 - 5) / PerEraOfBlockNumber::get();
+		let winanswer_remain_points: Balance = 100*DOLLARS * reward_period_count as Balance;
+
+		let total_bonus = pallet_atofinance::imps::PointReward::<Test>::get_total_bonus(&puzzle_hash, 65);
+		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
+
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				   original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points);
 	});
 }
 

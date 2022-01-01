@@ -5,18 +5,17 @@ use super::*;
 use frame_support::traits::TryDrop;
 
 pub struct PointReward<T>(PhantomData<T>);
-impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, DispatchResult>
+impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
 	for PointReward<T>
 {
 	type PerVal = Perbill;
 	type Imbalance = NoneImbalance;
 	type OnBurn = ();
 
-	fn get_total_bonus(pid: &PuzzleSubjectHash) -> Option<PointToken> {
+	fn get_total_bonus(pid: &PuzzleSubjectHash, cut_bn: T::BlockNumber) -> Option<PointToken> {
 		// Get current block number.
-		let current_bn = crate::Pallet::<T>::get_current_bn();
 		Some(<PointManager<T>>::calculate_points_of_puzzle(
-			current_bn,
+			cut_bn,
 			pid,
 			T::PerEraOfBlockNumber::get(),
 		))
@@ -25,6 +24,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, Dispa
 	fn answer_get_reward(
 		pid: &PuzzleSubjectHash,
 		beneficiary: T::AccountId,
+		cut_bn: T::BlockNumber,
 		tax: Self::PerVal,
 	) -> DispatchResult {
 		let pot_reward = <AtoPointReward<T>>::try_get(pid).ok();
@@ -40,7 +40,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, Dispa
 			reward_type = RewardType::CreatorReward;
 		}
 
-		let total_point = Self::get_total_bonus(pid);
+		let total_point = Self::get_total_bonus(pid, cut_bn);
 		ensure!(total_point.is_some(), Error::<T>::NotPointToken);
 		let total_point = total_point.unwrap();
 
@@ -69,6 +69,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, Dispa
 	fn challenge_get_reward(
 		pid: &PuzzleSubjectHash,
 		beneficiaries: Vec<(T::AccountId, Self::PerVal)>,
+		cut_bn: T::BlockNumber,
 		tax: Self::PerVal,
 	) -> DispatchResult {
 		let pot_reward = <AtoPointReward<T>>::try_get(pid).ok();
@@ -110,7 +111,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, Dispa
 			);
 		}
 
-		let total_point = Self::get_total_bonus(pid);
+		let total_point = Self::get_total_bonus(pid, cut_bn);
 		ensure!(total_point.is_some(), Error::<T>::NotPointToken);
 		let total_point = total_point.unwrap();
 

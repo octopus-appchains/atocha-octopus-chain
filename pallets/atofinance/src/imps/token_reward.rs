@@ -3,7 +3,7 @@
 use super::*;
 
 pub struct TokenReward<T>(PhantomData<T>);
-impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, DispatchResult>
+impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
 	for TokenReward<T>
 {
 	type PerVal = Perbill;
@@ -12,7 +12,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, Dis
 	type OnBurn = T::RewardHandler;
 	// type FundPool = T::AccountId;
 
-	fn get_total_bonus(pid: &PuzzleSubjectHash) -> Option<BalanceOf<T>> {
+	fn get_total_bonus(pid: &PuzzleSubjectHash, _cut_bn: T::BlockNumber) -> Option<BalanceOf<T>> {
 		let storage_ledger = <AtoFinanceLedger<T>>::try_get(pid).ok();
 		if storage_ledger.is_none() {
 			return None;
@@ -24,6 +24,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, Dis
 	fn answer_get_reward(
 		pid: &PuzzleSubjectHash,
 		beneficiary: T::AccountId,
+		_cut_bn: T::BlockNumber,
 		tax: Self::PerVal,
 	) -> DispatchResult {
 		//
@@ -72,6 +73,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, Dis
 	fn challenge_get_reward(
 		pid: &PuzzleSubjectHash,
 		beneficiaries: Vec<(T::AccountId, Self::PerVal)>,
+		_cut_bn: T::BlockNumber,
 		tax: Self::PerVal,
 	) -> DispatchResult {
 		let pot_reward = <AtoFinanceReward<T>>::try_get(pid).ok();

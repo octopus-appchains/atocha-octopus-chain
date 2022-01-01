@@ -18,13 +18,14 @@ fn test_answer_get_reward_with_creator() {
 
 		let puzzle_hash = toVec("TEST_PUZZLE_HASH");
 		init_puzzle_ledger(puzzle_hash.clone());
-		assert_eq!(<PointReward<Test>>::get_total_bonus(&puzzle_hash), Some(470000000000000));
+		assert_eq!(<PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn), Some(470000000000000));
 
 		// Try to claim rewards of empty puzzle
 		assert_noop!(
 			<PointReward<Test>>::answer_get_reward(
 				&toVec("TEST_PUZZLE_HASH-ERROR"),
 				ACCOUNT_ID_1,
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::PuzzleNotExists,
@@ -33,6 +34,7 @@ fn test_answer_get_reward_with_creator() {
 		assert_ok!(<PointReward<Test>>::answer_get_reward(
 			&puzzle_hash,
 			ACCOUNT_ID_1,
+			current_bn,
 			Perbill::from_percent(10)
 		));
 
@@ -49,7 +51,7 @@ fn test_answer_get_reward_with_creator() {
 		// pub payout: BalanceOf,
 		// pub beneficiaries: Vec<(Account, PerVal)>,
 		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash);
-		let total_reward_token = <PointReward<Test>>::get_total_bonus(&puzzle_hash).unwrap();
+		let total_reward_token = <PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
 			PotRewardData {
@@ -67,6 +69,7 @@ fn test_answer_get_reward_with_creator() {
 			<PointReward<Test>>::answer_get_reward(
 				&puzzle_hash,
 				ACCOUNT_ID_1,
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::RewardHasBeenClaimed,
@@ -77,6 +80,7 @@ fn test_answer_get_reward_with_creator() {
 			<PointReward<Test>>::answer_get_reward(
 				&puzzle_hash,
 				ACCOUNT_ID_3,
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::RewardHasBeenClaimed,
@@ -87,7 +91,8 @@ fn test_answer_get_reward_with_creator() {
 #[test]
 fn test_answer_get_reward_with_other() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(60);
+		let current_bn = 60;
+		System::set_block_number(current_bn);
 
 		const ACCOUNT_ID_1: u64 = 1;
 		const ACCOUNT_ID_2: u64 = 2;
@@ -98,7 +103,7 @@ fn test_answer_get_reward_with_other() {
 
 		let puzzle_hash = toVec("TEST_PUZZLE_HASH");
 		init_puzzle_ledger(puzzle_hash.clone());
-		assert_eq!(<PointReward<Test>>::get_total_bonus(&puzzle_hash), Some(470000000000000));
+		assert_eq!(<PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn), Some(470000000000000));
 
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 70_000_000_000_000);
 
@@ -107,6 +112,7 @@ fn test_answer_get_reward_with_other() {
 			<PointReward<Test>>::answer_get_reward(
 				&toVec("TEST_PUZZLE_HASH-ERROR"),
 				ACCOUNT_ID_3,
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::PuzzleNotExists,
@@ -115,6 +121,7 @@ fn test_answer_get_reward_with_other() {
 		assert_ok!(<PointReward<Test>>::answer_get_reward(
 			&puzzle_hash,
 			ACCOUNT_ID_3,
+			current_bn,
 			Perbill::from_percent(10)
 		));
 
@@ -131,7 +138,7 @@ fn test_answer_get_reward_with_other() {
 		// pub payout: BalanceOf,
 		// pub beneficiaries: Vec<(Account, PerVal)>,
 		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash);
-		let total_reward_point = <PointReward<Test>>::get_total_bonus(&puzzle_hash).unwrap();
+		let total_reward_point = <PointReward<Test>>::get_total_bonus(&puzzle_hash,current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
 			PotRewardData {
@@ -149,6 +156,7 @@ fn test_answer_get_reward_with_other() {
 			<PointReward<Test>>::answer_get_reward(
 				&puzzle_hash,
 				ACCOUNT_ID_1,
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::RewardHasBeenClaimed,
@@ -159,6 +167,7 @@ fn test_answer_get_reward_with_other() {
 			<PointReward<Test>>::answer_get_reward(
 				&puzzle_hash,
 				ACCOUNT_ID_3,
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::RewardHasBeenClaimed,
@@ -169,7 +178,8 @@ fn test_answer_get_reward_with_other() {
 #[test]
 fn test_challenge_get_reward() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(60);
+		let current_bn = 60;
+		System::set_block_number(current_bn);
 
 		const ACCOUNT_ID_1: u64 = 1;
 		const ACCOUNT_ID_2: u64 = 2;
@@ -180,7 +190,7 @@ fn test_challenge_get_reward() {
 
 		let puzzle_hash = toVec("TEST_PUZZLE_HASH");
 		init_puzzle_ledger(puzzle_hash.clone());
-		assert_eq!(<PointReward<Test>>::get_total_bonus(&puzzle_hash), Some(470000000000000));
+		assert_eq!(<PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn), Some(470000000000000));
 
 		// Change owner not allowed.
 		// Try to claim rewards of empty puzzle
@@ -191,6 +201,7 @@ fn test_challenge_get_reward() {
 					(ACCOUNT_ID_1, Perbill::from_percent(30)),
 					(ACCOUNT_ID_2, Perbill::from_percent(70)),
 				],
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::PuzzleNotExists,
@@ -200,6 +211,7 @@ fn test_challenge_get_reward() {
 			<PointReward<Test>>::challenge_get_reward(
 				&toVec("TEST_PUZZLE_HASH"),
 				vec![],
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::BeneficiaryListNotEmpty,
@@ -213,6 +225,7 @@ fn test_challenge_get_reward() {
 					(ACCOUNT_ID_2, Perbill::from_percent(40)),
 					(ACCOUNT_ID_3, Perbill::from_percent(40)),
 				],
+				current_bn,
 				Perbill::from_percent(10)
 			),
 			Error::<Test>::WrongPaymentRatio,
@@ -224,6 +237,7 @@ fn test_challenge_get_reward() {
 				(ACCOUNT_ID_1, Perbill::from_percent(30)),
 				(ACCOUNT_ID_2, Perbill::from_percent(70)),
 			],
+			current_bn,
 			Perbill::from_percent(10)
 		));
 
@@ -239,7 +253,7 @@ fn test_challenge_get_reward() {
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_2), 296_100_000_000_000);
 
 		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash);
-		let total_reward_point = <PointReward<Test>>::get_total_bonus(&puzzle_hash).unwrap();
+		let total_reward_point = <PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
 			PotRewardData {

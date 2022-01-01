@@ -50,6 +50,7 @@ impl<T: Config>
 				let duration_num: T::BlockNumber = (current_bn.saturating_sub(x.create_bn))
 					.saturating_mul(decimal.into())
 					/ per_bn;
+				// println!(" x.create_bn = {:?}, current_bn = {:?},  duration_num = {:?}", &x.create_bn, &current_bn, &duration_num);
 				let duration_num: PointToken = duration_num.unique_saturated_into();
 				let sponsor_funds: PointToken = x.funds.unique_saturated_into();
 				let base_point: PointToken =

@@ -185,5 +185,5 @@ pub(crate) fn init_puzzle_ledger(puzzle_hash: Vec<u8>) {
 	assert_eq!(pot_ledger.funds, 10_000_000_000_000);
 	assert_eq!(pot_ledger.total, 60_000_000_000_000);
 	assert_eq!(pot_ledger.sponsor_list.len(), 3);
-	assert_eq!(<TokenReward<Test>>::get_total_bonus(&puzzle_hash), Some(60_000_000_000_000));
+	assert_eq!(<TokenReward<Test>>::get_total_bonus(&puzzle_hash, 0), Some(60_000_000_000_000));
 }

@@ -28,7 +28,7 @@ pub trait IPuzzleLedger<AccountId, BalanceOf, PuzzleHash, BlockNumber, DResult> 
 	) -> DResult;
 }
 
-pub trait IPuzzleReward<AccountId, BalanceOf, PuzzleHash, DResult> {
+pub trait IPuzzleReward<AccountId, BalanceOf, PuzzleHash, BlockNumber, DResult> {
 	type PerVal: PerThing;
 	type Imbalance: TryDrop;
 	type OnBurn: OnUnbalanced<Self::Imbalance>;
@@ -42,15 +42,16 @@ pub trait IPuzzleReward<AccountId, BalanceOf, PuzzleHash, DResult> {
 	// 	+ MaxEncodedLen;
 
 	//
-	fn get_total_bonus(pid: &PuzzleHash) -> Option<BalanceOf>;
+	fn get_total_bonus(pid: &PuzzleHash, cut_bn: BlockNumber) -> Option<BalanceOf>;
 
 	//
-	fn answer_get_reward(pid: &PuzzleHash, beneficiary: AccountId, tax: Self::PerVal) -> DResult;
+	fn answer_get_reward(pid: &PuzzleHash, beneficiary: AccountId, cut_bn: BlockNumber, tax: Self::PerVal) -> DResult;
 
 	//
 	fn challenge_get_reward(
 		pid: &PuzzleHash,
 		beneficiaries: Vec<(AccountId, Self::PerVal)>,
+		cut_bn: BlockNumber,
 		tax: Self::PerVal,
 	) -> DResult;
 }
