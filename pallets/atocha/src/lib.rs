@@ -136,6 +136,8 @@ pub mod pallet {
 		PuzzleMinBonusInsufficient,
 		PuzzleNotSolvedChallengeFailed,
 		ChallengePeriodIsNotEnd,
+		ChallengePeriodIsEnd,
+		BeingChallenged,
 		NoRightToReward,
 	}
 
@@ -265,8 +267,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			// check signer
 			let who = ensure_signed(origin)?;
-			//
-			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			// 1\ Check puzzle status is PUZZLE_STATUS_IS_SOLVED AND current_bn - Some(reveal_bn)  > T::ChallengePeriodLength
 			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
 			ensure!(
@@ -278,11 +278,20 @@ pub mod pallet {
 			// Get winner answer.
 			ensure!(puzzle_content.reveal_answer == Some(who.clone()), Error::<T>::NoRightToReward);
 
+			//
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
 			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
 			ensure!(
 				current_block_number - reveal_bn > T::ChallengePeriodLength::get(),
 				Error::<T>::ChallengePeriodIsNotEnd
+			);
+
+			// Check Challenged
+			let challenge_info = T::AtoChallenge::check_get_active_challenge_info(&puzzle_hash);
+			ensure!(
+				challenge_info.is_err(),
+				Error::<T>::BeingChallenged
 			);
 
 			let tax_fee = || {
@@ -292,7 +301,6 @@ pub mod pallet {
 					T::TaxOfTVO::get()
 				}
 			};
-
 
 			// Take points.
 			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee())?;
@@ -306,6 +314,7 @@ pub mod pallet {
 		pub fn commit_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+			deposit: BalanceOf<T>,
 			// answer_hash: PuzzleAnswerHash,
 			// answer_explain: Option<PuzzleAnswerExplain>,
 			// answer_nonce: PuzzleAnswerNonce,
@@ -313,13 +322,46 @@ pub mod pallet {
 		) -> DispatchResult {
 			// check signer
 			let who = ensure_signed(origin)?;
-
+			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
-
+			let reveal_bn = puzzle_content.reveal_bn.unwrap();
+			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
+			ensure!(
+				current_block_number - reveal_bn <= T::ChallengePeriodLength::get(),
+				Error::<T>::ChallengePeriodIsEnd
+			);
+			//
+			T::AtoChallenge::issue_challenge(who.clone(), &puzzle_hash, deposit)?;
 			//
 			Ok(().into())
 		}
+
+		#[pallet::weight(1000)]
+		pub fn recognition_challenge(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+			deposit: BalanceOf<T>,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
+			//
+
+			//
+			T::AtoChallenge::recognition_challenge(&puzzle_hash)?;
+			//
+			Ok(().into())
+		}
+
 	}
 }
 

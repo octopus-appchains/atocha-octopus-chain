@@ -75,6 +75,7 @@ pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Erro
 	fn challenge_crowdloan(who: AccountId, pid: &PuzzleHash, deposit: BalanceOf) -> DispatchResult;
 	fn has_the_raising_period_expired(pid: &PuzzleHash) -> bool;
 	fn get_challenge_status(pid: &PuzzleHash) -> Option<Status>;
+	fn recognition_challenge(pid: &PuzzleHash) -> Result<(), Error>;
 	fn back_challenge_crowdloan(pid: &PuzzleHash, tax: Perbill) -> bool;
 	fn check_get_active_challenge_info(pid: &PuzzleHash) -> Result<DataInfo, Error>;
 }
