@@ -254,7 +254,7 @@ pub mod pallet {
 		PuzzleChallengeData<
 			<T as frame_system::Config>::AccountId,
 			<T as frame_system::Config>::BlockNumber,
-			BalanceOf<T>,
+			BalanceOf<T>, Perbill,
 		>,
 		ValueQuery,
 	>;

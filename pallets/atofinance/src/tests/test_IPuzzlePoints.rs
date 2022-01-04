@@ -96,5 +96,6 @@ fn test_calculate_points_of_puzzle() {
 			),
 			0
 		);
+
 	});
 }

@@ -125,6 +125,30 @@ fn test_issue_challenge() {
 				]
 			}
 		);
+
+		let check_perval = vec![
+			(ACCOUNT_ID_2, Perbill::from_rational(2_000_000_000_000u64, 6_000_000_000_000u64)),
+			(ACCOUNT_ID_2, Perbill::from_rational(3_000_000_000_000u64, 6_000_000_000_000u64)),
+			(ACCOUNT_ID_3, Perbill::from_percent(100) - Perbill::from_rational(5_000_000_000_000u64, 6_000_000_000_000u64)),
+		];
+		let challengen_list = ChallengeManager::<Test>::get_list_of_challengers(&puzzle_hash);
+		assert_eq!(challengen_list, check_perval);
+
+		// Test back_challenge_crowdloan
+		let account2_free_balance = Balances::free_balance(ACCOUNT_ID_2);
+		let account3_free_balance = Balances::free_balance(ACCOUNT_ID_3);
+
+		ChallengeManager::<Test>::back_challenge_crowdloan(&puzzle_hash, Perbill::from_percent(10));
+		let account2_bonus = Perbill::from_rational(5_000_000_000_000u64, 6_000_000_000_000u64) * 6_000_000_000_000;
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_2),
+				    account2_free_balance +
+						account2_bonus - Perbill::from_percent(10) * account2_bonus
+		) ;
+		let account3_bonus = check_perval[2].1 * 6_000_000_000_000;
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_3),
+				   account3_free_balance +
+					   account3_bonus - Perbill::from_percent(10) * account3_bonus
+		);
 	});
 }
 
@@ -195,3 +219,5 @@ fn test_issue_challenge_raise_direct_done() {
 		);
 	});
 }
+
+

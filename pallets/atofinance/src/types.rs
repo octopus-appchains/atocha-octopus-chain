@@ -92,9 +92,9 @@ pub struct PotRewardData<Account, BlockNumber, BalanceOf, PerVal: PerThing> {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, Default, TypeInfo)]
-pub struct PuzzleChallengeData<Account, BlockNumber, BalanceOf> {
+pub struct PuzzleChallengeData<Account, BlockNumber, BalanceOf, PerVal: PerThing> {
 	pub raised_total: BalanceOf,
-	pub status: ChallengeStatus<BlockNumber>,
+	pub status: ChallengeStatus<BlockNumber, PerVal>,
 	pub create_bn: BlockNumber,
 	pub creator: Account,
 	pub start_bn: Option<BlockNumber>,
@@ -103,15 +103,15 @@ pub struct PuzzleChallengeData<Account, BlockNumber, BalanceOf> {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum ChallengeStatus<BlockNumber> {
+pub enum ChallengeStatus<BlockNumber, PerVal: PerThing> {
 	Raise(BlockNumber),
 	RaiseCompleted(BlockNumber),
-	RaiseFailedAndBackFunds(BlockNumber),
+	RaiseBackFunds(BlockNumber, PerVal),
 	JudgePassed(BlockNumber),
 	JudgeRejected(BlockNumber),
 }
 
-impl<BlockNumber: Default> Default for ChallengeStatus<BlockNumber> {
+impl<BlockNumber: Default, PerVal: PerThing> Default for ChallengeStatus<BlockNumber, PerVal> {
 	fn default() -> Self {
 		Self::Raise(Default::default())
 	}

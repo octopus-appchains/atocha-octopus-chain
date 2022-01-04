@@ -87,8 +87,8 @@ pub mod pallet {
 			<Self as frame_system::Config>::AccountId,
 			PuzzleSubjectHash,
 			BalanceOf<Self>,
-			PuzzleChallengeData<<Self as frame_system::Config>::AccountId, Self::BlockNumber, BalanceOf<Self>>,
-			ChallengeStatus<Self::BlockNumber>,
+			PuzzleChallengeData<<Self as frame_system::Config>::AccountId, Self::BlockNumber, BalanceOf<Self>, Perbill>,
+			ChallengeStatus<Self::BlockNumber, Perbill>,
 			pallet_atofinance::Error<Self>,
 		>;
 	}
@@ -355,9 +355,13 @@ pub mod pallet {
 				Error::<T>::PuzzleStatusErr
 			);
 			//
+			let reveal_bn = puzzle_content.reveal_bn.unwrap();
 
 			//
 			T::AtoChallenge::recognition_challenge(&puzzle_hash)?;
+			// T::AtoChallenge::
+			//
+			T::PuzzleRewardOfPoint::challenge_get_reward(&puzzle_hash, vec![], reveal_bn, ())?;
 			//
 			Ok(().into())
 		}

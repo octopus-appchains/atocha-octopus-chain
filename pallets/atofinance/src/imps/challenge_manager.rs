@@ -14,8 +14,8 @@ impl<T: Config>
 		T::AccountId,
 		PuzzleSubjectHash,
 		BalanceOf<T>,
-		PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>>,
-		ChallengeStatus<T::BlockNumber>,
+		PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>, Perbill>,
+		ChallengeStatus<T::BlockNumber, Perbill>,
 		Error<T>,
 	> for ChallengeManager<T>
 {
@@ -113,7 +113,7 @@ impl<T: Config>
 		Ok(())
 	}
 
-	fn get_challenge_status(pid: &PuzzleSubjectHash) -> Option<ChallengeStatus<T::BlockNumber>> {
+	fn get_challenge_status(pid: &PuzzleSubjectHash) -> Option<ChallengeStatus<T::BlockNumber, Perbill>> {
 		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
 			return None;
 		}
@@ -125,7 +125,7 @@ impl<T: Config>
 	/// Check and get the active challenges.
 	fn check_get_active_challenge_info(
 		pid: &PuzzleSubjectHash,
-	) -> Result<PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>>, Error<T>> {
+	) -> Result<PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>, Perbill>, Error<T>> {
 		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
 			return Err(Error::<T>::ChallengeNotExists);
 		}
@@ -158,7 +158,74 @@ impl<T: Config>
 		current_block_number > challenge_info.create_bn.saturating_add(period_len)
 	}
 
-	fn back_challenge_crowdloan(pid: &PuzzleSubjectHash, tax: Perbill) -> bool {
-		todo!()
+	fn back_challenge_crowdloan(pid: &PuzzleSubjectHash, tax: Perbill) -> Result<(), Error<T>> {
+		let challenge_data = Self::check_get_active_challenge_info(pid);
+		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
+		let mut challenge_data = challenge_data.unwrap();
+		let challengers = Self::get_list_of_challengers(pid);
+		let pot_infos = crate::Pallet::<T>::pot();
+		ensure!(pot_infos.1 >= challenge_data.raised_total, Error::<T>::InsufficientBalance);
+
+		let current_block_number = <frame_system::Pallet<T>>::block_number();
+		challenge_data.status = ChallengeStatus::RaiseBackFunds(current_block_number, tax);
+		<PuzzleChallengeInfo<T>>::insert(&pid, challenge_data.clone());
+
+		let mut total_pay: BalanceOf<T> = Zero::zero();
+		for (acc, pay_rate) in challengers {
+			let pay_amount = pay_rate * challenge_data.raised_total;
+			let pay_tax = tax * pay_amount;
+			let real_pay = pay_amount.saturating_sub(pay_tax);
+			let res = T::Currency::transfer(
+				&crate::Pallet::<T>::account_id(),
+				&acc,
+				real_pay,
+				ExistenceRequirement::KeepAlive,
+			);
+			total_pay+=real_pay;
+		}
+
+		let im_balance = T::Currency::burn(challenge_data.raised_total.saturating_sub(total_pay));
+		T::RewardHandler::on_unbalanced(im_balance);
+		Ok(())
+	}
+
+	fn get_list_of_challengers(pid: &PuzzleSubjectHash) -> Vec<(T::AccountId, Perbill)> {
+		let mut result_vec = Vec::new();
+		let challenge_data = Self::check_get_active_challenge_info(pid);
+		if challenge_data.is_err() {
+			return result_vec;
+		}
+		let challenge_data = challenge_data.unwrap();
+		if challenge_data.raised_total == Zero::zero() {
+			return result_vec;
+		}
+		let raised_total = challenge_data.raised_total;
+
+		let mut raised_len: usize = Zero::zero();
+		let raised_max_len = challenge_data.raised_group.len();
+		let mut all_percent = Perbill::from_percent(0);
+		let mut total_amount: BalanceOf<T> = Zero::zero();
+		for (acc, balance) in challenge_data.raised_group {
+			raised_len+=1;
+			if raised_len == raised_max_len {
+				let tmp_percent = Perbill::from_percent(100).saturating_sub(all_percent);
+				result_vec.push((acc, Perbill::from_percent(100).saturating_sub(all_percent)));
+				all_percent = all_percent.saturating_add(tmp_percent)
+			}else{
+				// let tmp_percent = balance.saturating_mul(100u32.into()) / raised_total;
+				let tmp_percent = Perbill::from_rational(balance, raised_total);
+				result_vec.push((acc, tmp_percent));
+				all_percent = all_percent.saturating_add(tmp_percent);
+			}
+			total_amount+=balance;
+		}
+		assert_eq!(all_percent, Perbill::from_percent(100));
+		assert_eq!(total_amount, challenge_data.raised_total);
+
+		result_vec
+	}
+
+	fn recognition_challenge(pid: &PuzzleSubjectHash) -> Result<(), Error<T>> {
+		Self::back_challenge_crowdloan(pid, Perbill::from_percent(0))
 	}
 }
