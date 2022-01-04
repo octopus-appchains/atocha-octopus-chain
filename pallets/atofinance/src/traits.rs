@@ -79,4 +79,6 @@ pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Erro
 	fn back_challenge_crowdloan(pid: &PuzzleHash, tax: Perbill) -> Result<(), Error>;
 	fn check_get_active_challenge_info(pid: &PuzzleHash) -> Result<DataInfo, Error>;
 	fn get_list_of_challengers(pid: &PuzzleHash) ->  Vec<(AccountId, Perbill)>;
+	fn final_challenge(pid: &PuzzleHash, status: Status) ;
+	fn challenge_failed(pid: &PuzzleHash) -> Result<(), Error>;
 }

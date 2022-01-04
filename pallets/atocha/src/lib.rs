@@ -60,6 +60,12 @@ pub mod pallet {
 		#[pallet::constant]
 		type TaxOfTVO: Get<Perbill> ;
 
+		#[pallet::constant]
+		type TaxOfTI: Get<Perbill> ;
+
+		#[pallet::constant]
+		type PenaltyOfCP: Get<Perbill>;
+
 		type PuzzleLedger: IPuzzleLedger<
 			<Self as frame_system::Config>::AccountId,
 			BalanceOf<Self>,
@@ -91,6 +97,16 @@ pub mod pallet {
 			ChallengeStatus<Self::BlockNumber, Perbill>,
 			pallet_atofinance::Error<Self>,
 		>;
+
+		type AtoPointsManage: IPuzzlePoints<
+			<Self as frame_system::Config>::AccountId,
+			PointToken,
+			<Self as frame_system::Config>::BlockNumber,
+			PuzzleSubjectHash,
+			DispatchResult
+		>;
+
+		type CouncilOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -136,6 +152,7 @@ pub mod pallet {
 		PuzzleMinBonusInsufficient,
 		PuzzleNotSolvedChallengeFailed,
 		ChallengePeriodIsNotEnd,
+		ChallengeListNotEmpty,
 		ChallengePeriodIsEnd,
 		BeingChallenged,
 		NoRightToReward,
@@ -149,7 +166,7 @@ pub mod pallet {
 	where
 		u64: From<<T as frame_system::Config>::BlockNumber>,
 	{
-		#[pallet::weight(1000)]
+		#[pallet::weight(0)]
 		pub fn create_puzzle(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -193,7 +210,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(0)]
 		pub fn answer_puzzle(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
@@ -260,7 +277,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(0)]
 		pub fn take_answer_reward(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
@@ -294,23 +311,28 @@ pub mod pallet {
 				Error::<T>::BeingChallenged
 			);
 
-			let tax_fee = || {
-				if puzzle_content.account == who {
+			let tax_fee = |acc| {
+				if acc == &who {
 					T::TaxOfTVS::get()
 				}else{
 					T::TaxOfTVO::get()
 				}
 			};
 
+			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
+			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
+
+			let creator_acc = puzzle_content.account.clone();
+
 			// Take points.
-			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee())?;
+			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee(&creator_acc))?;
 			// Take balance.
-			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee())?;
+			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee(&creator_acc))?;
 
 			Ok(().into())
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(0)]
 		pub fn commit_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -341,8 +363,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(1000)]
-		pub fn recognition_challenge(
+		#[pallet::weight(0)]
+		pub fn challenge_crowdloan(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 			deposit: BalanceOf<T>,
@@ -355,14 +377,79 @@ pub mod pallet {
 				Error::<T>::PuzzleStatusErr
 			);
 			//
+			T::AtoChallenge::challenge_crowdloan(who.clone(), &puzzle_hash, deposit)?;
+			//
+			Ok(().into())
+		}
+
+		#[pallet::weight(0)]
+		pub fn recognition_challenge(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+		) -> DispatchResult {
+			// check signer
+			T::CouncilOrigin::ensure_origin(origin)?;
+			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
+			//
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
 
+			//Get challenge list
+			let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+			ensure!(
+				beneficiaries.len() > 0 as usize,
+				Error::<T>::ChallengeListNotEmpty
+			);
 			//
-			T::AtoChallenge::recognition_challenge(&puzzle_hash)?;
-			// T::AtoChallenge::
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgePassed(current_block_number));
+			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
+			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
+
+			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries, reveal_bn, T::TaxOfTI::get());
+			// Not need point to reward.
+			// T::PuzzleRewardOfPoint::challenge_get_reward(&puzzle_hash, vec![], reveal_bn, ())?;
+
+			let create_total_point = T::AtoPointsManage::get_total_points(&puzzle_content.account);
+			if create_total_point > 0 {
+				let cut_down_point = T::PenaltyOfCP::get() * create_total_point;
+				T::AtoPointsManage::reduce_points_to(&puzzle_content.account, cut_down_point)?;
+			}
+			Ok(().into())
+		}
+
+		// refuse_challenge
+		#[pallet::weight(0)]
+		pub fn refuse_challenge(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+		) -> DispatchResult {
+			// check signer
+			T::CouncilOrigin::ensure_origin(origin)?;
+			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
 			//
-			T::PuzzleRewardOfPoint::challenge_get_reward(&puzzle_hash, vec![], reveal_bn, ())?;
+			// let reveal_bn = puzzle_content.reveal_bn.unwrap();
+
+			//Get challenge list
+			let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+			ensure!(
+				beneficiaries.len() > 0 as usize,
+				Error::<T>::ChallengeListNotEmpty
+			);
+
 			//
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
+
+
+
 			Ok(().into())
 		}
 

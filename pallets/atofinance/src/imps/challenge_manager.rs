@@ -184,8 +184,19 @@ impl<T: Config>
 			total_pay+=real_pay;
 		}
 
-		let im_balance = T::Currency::burn(challenge_data.raised_total.saturating_sub(total_pay));
-		T::RewardHandler::on_unbalanced(im_balance);
+		let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), challenge_data.raised_total.saturating_sub(total_pay));
+		T::SlashHandler::on_unbalanced(im_balance.0);
+
+		Ok(())
+	}
+
+	fn challenge_failed(pid: &PuzzleSubjectHash ) -> Result<(), Error<T>> {
+		let challenge_data = Self::check_get_active_challenge_info(pid);
+		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
+		let mut challenge_data = challenge_data.unwrap();
+		let raised_total = challenge_data.raised_total;
+		let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), raised_total);
+		T::SlashHandler::on_unbalanced(im_balance.0);
 		Ok(())
 	}
 
@@ -227,5 +238,20 @@ impl<T: Config>
 
 	fn recognition_challenge(pid: &PuzzleSubjectHash) -> Result<(), Error<T>> {
 		Self::back_challenge_crowdloan(pid, Perbill::from_percent(0))
+	}
+
+	fn final_challenge(pid: &PuzzleSubjectHash, status: ChallengeStatus<T::BlockNumber, Perbill>) {
+		let in_status = match status {
+			ChallengeStatus::Raise(_) => {None}
+			ChallengeStatus::RaiseCompleted(_) => {None}
+			ChallengeStatus::RaiseBackFunds(_, _) => {None}
+			ChallengeStatus::JudgePassed(_) => {Some(status)}
+			ChallengeStatus::JudgeRejected(_) => {Some(status)}
+		};
+		if let Some(s) = in_status {
+			let mut challenge_info = Self::check_get_active_challenge_info(pid).unwrap();
+			challenge_info.status = s;
+			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info);
+		};
 	}
 }

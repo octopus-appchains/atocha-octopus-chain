@@ -76,6 +76,8 @@ parameter_types! {
 	pub const ChallengePeriodLength: BlockNumber = 100;
 	pub const TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
 	pub const TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
+	pub const TaxOfTI: Perbill = Perbill::from_percent(10);
+	pub const PenaltyOfCP: Perbill = Perbill::from_percent(10);
 }
 
 impl crate::Config for Test {
@@ -88,8 +90,12 @@ impl crate::Config for Test {
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
+	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
 	type TaxOfTVS = TaxOfTVS;
 	type TaxOfTVO = TaxOfTVO;
+	type TaxOfTI = TaxOfTI;
+	type PenaltyOfCP = PenaltyOfCP;
+	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
 parameter_types! {
