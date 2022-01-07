@@ -23,6 +23,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12", default-features = false, optional = true }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
+pallet-atocha = { path = '../../pallets/atocha', default-features = false, version = '1.0.0' }
 
 [features]
 default = ["std"]
@@ -37,6 +38,7 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-atocha/std",
 ]
 #runtime-benchmarks = [
 #	"frame-benchmarking/runtime-benchmarks",

@@ -1,4 +1,6 @@
 #![no_std]
+
+use codec::Encode;
 use super::Event as AtochaEvent;
 use crate::mock::toVec;
 use crate::mock::AccountId;
@@ -7,6 +9,7 @@ use crate::{mock::*, Error};
 use frame_support::sp_runtime::app_crypto::sr25519::Signature;
 use frame_support::sp_runtime::traits::{IdentifyAccount, Verify, Zero};
 use frame_support::{assert_noop, assert_ok};
+use sp_core::hashing::sha2_256;
 use pallet_atofinance::traits::*;
 
 use crate::types::*;
@@ -58,11 +61,7 @@ fn test_create_puzzle() {
 		);
 		//
 		System::assert_last_event(
-			AtochaEvent::PuzzleCreated(
-				toAid(CONST_ORIGIN_IS_CREATOR),
-				puzzle_hash, //.as_bytes().to_vec(),
-				5,
-			)
+			AtochaEvent::PuzzleCreated(toAid(CONST_ORIGIN_IS_CREATOR), puzzle_hash, 5, 100 * DOLLARS)
 			.into(),
 		);
 	});
@@ -740,7 +739,79 @@ fn test_take_answer_reward_with_challenge_faild() {
 				   original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points);
 	});
 }
+
+fn shaToVec (sha_vec: Vec<u8>) ->Vec<u8> {
+	let mut result_answer_u8 = [0u8; 32 * 2];
+	// Answer sha256 to encode slice
+	let encode_result =
+		hex::encode_to_slice(&sha_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
+	assert!(encode_result.is_ok(), "make_answer_sign to Hex failed.");
+	result_answer_u8.to_vec()
+}
 #[test]
+fn test_bug_online_checkfaild () {
+
+	let final_answer_raw =  toVec("C");
+	let final_answer_sha256 =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940d");
+	let final_puzzle_txid = toVec("liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let final_answer_puzzle_hash =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940dliIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let final_answer_final_sha256 =  toVec("aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd");
+	new_test_ext().execute_with(|| {
+		System::set_block_number(5);
+		let c_sha256 = sha2_256(&final_answer_raw).encode();
+		assert_eq!(shaToVec(c_sha256), final_answer_sha256);
+		let make_answer_sha256 = make_answer_sha256(final_answer_raw.clone(), final_puzzle_txid.clone());
+		assert_eq!(shaToVec(make_answer_sha256), final_answer_final_sha256);
+		let pallet_answer_sha256 = AtochaModule::make_answer_sign(final_answer_raw.clone(), final_puzzle_txid.clone());
+		assert_eq!(shaToVec(pallet_answer_sha256), final_answer_final_sha256);
+	});
+}
+
+#[test]
+fn test_bug_online_answer_faild_2235 () {
+	let final_answer_raw =  toVec("C");
+	let final_answer_sha256 =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940d");
+	let final_puzzle_txid = toVec("liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let final_answer_puzzle_hash =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940dliIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let final_answer_final_sha256 =  toVec("aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd");
+	new_test_ext().execute_with(|| {
+		System::set_block_number(5);
+
+		// Create puzzle hash on the chain.
+		handle_create_puzzle(
+			toAid(CONST_ORIGIN_IS_CREATOR),
+			final_puzzle_txid.clone(),
+			final_answer_final_sha256.clone(),
+		);
+
+		// Check puzzle no answers.
+		let answer_list =
+			<PuzzleDirectAnswer<Test>>::iter_prefix(final_puzzle_txid.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+		assert_eq!(0, answer_list.len());
+
+		let mut puzzle_content = <PuzzleInfo<Test>>::get(&final_puzzle_txid).unwrap();
+		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
+
+		// Check puzzle no win answers.
+		System::set_block_number(15);
+
+		assert_ok!(AtochaModule::answer_puzzle(
+			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			final_puzzle_txid.clone(),
+			toVec("C"),
+		));
+
+		let answer_list =
+			<PuzzleDirectAnswer<Test>>::iter_prefix(final_puzzle_txid.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+		assert_eq!(1, answer_list.len());
+
+		let mut puzzle_content = <PuzzleInfo<Test>>::get(&final_puzzle_txid).unwrap();
+		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
+
+	});
+}
+
+
 // fn test_issue_challenge_and_take_answer_reward() {
 // 	new_test_ext().execute_with(|| {
 // 		System::set_block_number(5);

@@ -50,15 +50,17 @@ use sp_std::{marker::PhantomData, prelude::*, result};
 
 use frame_support::{
 	codec::{Decode, Encode},
-	dispatch::{DispatchError, DispatchResultWithPostInfo, Dispatchable, PostDispatchInfo, DispatchResult},
+	dispatch::{DispatchError, DispatchResultWithPostInfo, Dispatchable, PostDispatchInfo, DispatchResult, Parameter},
 	ensure,
 	traits::{
-		Backing, ChangeMembers, EnsureOrigin, Get, GetBacking, InitializeMembers, StorageVersion,
+		Backing, ChangeMembers, EnsureOrigin, Get, GetBacking, InitializeMembers, StorageVersion, Currency, IsSubType,
 	},
 	weights::{GetDispatchInfo, Weight},
 };
-use frame_support::sp_runtime::traits::StaticLookup;
 
+
+use frame_support::sp_runtime::traits::StaticLookup;
+use pallet_atocha::types::PuzzleSubjectHash;
 #[cfg(test)]
 mod tests;
 
@@ -69,6 +71,7 @@ pub mod weights;
 
 pub use pallet::*;
 pub use weights::WeightInfo;
+
 
 /// Simple index type for proposal counting.
 pub type ProposalIndex = u32;
@@ -176,7 +179,7 @@ pub mod pallet {
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config {
+	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_atocha::Config{
 		/// The outer origin type.
 		type Origin: From<RawOrigin<Self::AccountId, I>>;
 
@@ -184,6 +187,7 @@ pub mod pallet {
 		type Proposal: Parameter
 			+ Dispatchable<Origin = <Self as Config<I>>::Origin, PostInfo = PostDispatchInfo>
 			+ From<frame_system::Call<Self>>
+			+ IsSubType<pallet_atocha::Call<Self>>
 			+ GetDispatchInfo;
 
 		/// The outer event type.
@@ -526,12 +530,7 @@ pub mod pallet {
 			Self::check_challenge_call(
 				proposal.as_ref().clone(),
 				proposal_hash,
-				|dest, proposal_hash|->DispatchResult{
-					// let my_origin = RawOrigin::Members(threshold, seats).into();
-					// T::AresProposalMinimumThreshold::ensure_origin(RawOrigin::Members(threshold, seats).into())?;
-					// T::AresProposalMaximumThreshold::ensure_origin(RawOrigin::Members(threshold, seats).into())?;
-					// let dest: T::AccountId = T::Lookup::lookup(dest.clone())?;
-					// T::ChallengeFlow::prepare( &who, &dest, proposal_hash, deposit)
+				|puzzle_id|->DispatchResult{
 					Ok(())
 				},
 				|| -> DispatchResult {
@@ -917,31 +916,28 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 	fn check_challenge_call<FA, FB>(
 		proposal: <T as Config<I>>::Proposal,
-		proposal_hash: T::Hash,
+		_proposal_hash: T::Hash,
 		match_func: FA,
 		mismatch_func: FB,
 	) -> DispatchResult
 		where
-			FA: FnOnce(&<T::Lookup as StaticLookup>::Source, T::Hash) -> DispatchResult,
-			FB: FnOnce() -> DispatchResult,
+			FA: FnOnce( PuzzleSubjectHash ) -> DispatchResult,
+			FB: FnOnce( ) -> DispatchResult,
 	{
-		// match proposal.is_sub_type() {
-		// 	Some(call) => match *call {
-		// 		pallet_ares_challenge::Call::propose(
-		// 			ref dest,
-		// 			ref block_hash,
-		// 			ref price,
-		// 			ref deposit,
-		// 		) => {
-		// 			info!("call func:{:?}", deposit);
-		// 			match_func(dest, proposal_hash, *deposit)
-		// 		}
-		// 		_ => Ok(()),
-		// 	},
-		// 	None => mismatch_func(),
-		// }
-
-		mismatch_func()
+		match proposal.is_sub_type() { // is_sub_type
+			Some(call) => match *call {
+				pallet_atocha::Call::recognition_challenge {
+					ref puzzle_hash,
+				} => {
+					// info!("call recognition_challenge pid = {:?}", &puzzle_hash);
+					return match_func(puzzle_hash.clone());
+				}
+				_ => Ok(()),
+			},
+			None => {
+				mismatch_func()
+			}
+		}
 	}
 }
 

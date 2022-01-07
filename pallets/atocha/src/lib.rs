@@ -12,11 +12,11 @@ use sha2::Digest;
 use sp_application_crypto::sr25519;
 use sp_application_crypto::sr25519::Public;
 use sp_application_crypto::sr25519::Signature;
-
+use sp_runtime::SaturatedConversion;
 use sp_core::sp_std::vec::Vec;
 
 mod traits;
-mod types;
+pub mod types;
 
 #[cfg(test)]
 mod mock;
@@ -28,7 +28,7 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_benchmarking::frame_support::sp_runtime::Perbill;
+	use frame_support::sp_runtime::Perbill;
 	use crate::types::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
 	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency};
@@ -65,6 +65,12 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type PenaltyOfCP: Get<Perbill>;
+
+		#[pallet::constant]
+		type MaxSponsorExplainLen: Get<u32>;
+
+		#[pallet::constant]
+		type MaxAnswerExplainLen: Get<u32>;
 
 		type PuzzleLedger: IPuzzleLedger<
 			<Self as frame_system::Config>::AccountId,
@@ -137,8 +143,10 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// creator id, puzzle_hash, create block number , duration block number,
-		PuzzleCreated(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>), // remove . DurationBn
+		PuzzleCreated(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>, BalanceOf<T>), // remove . DurationBn
+		AdditionalSponsorship(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>, BalanceOf<T>, PuzzleSponsorExplain), // remove . DurationBn
 		AnswerCreated(T::AccountId, PuzzleAnswerHash, PuzzleSubjectHash, CreateBn<T::BlockNumber>),
+		AnswerMisMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
 	}
 
 	#[pallet::error]
@@ -150,6 +158,7 @@ pub mod pallet {
 		PuzzleHasBeenSolved,
 		PuzzleStatusErr,
 		PuzzleMinBonusInsufficient,
+		ExplainTooLong,
 		PuzzleNotSolvedChallengeFailed,
 		ChallengePeriodIsNotEnd,
 		ChallengeListNotEmpty,
@@ -163,8 +172,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
-	where
-		u64: From<<T as frame_system::Config>::BlockNumber>,
 	{
 		#[pallet::weight(0)]
 		pub fn create_puzzle(
@@ -172,7 +179,7 @@ pub mod pallet {
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 			answer_hash: PuzzleAnswerHash,
 			answer_explain: Option<PuzzleAnswerExplain>,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 			puzzle_version: PuzzleVersion,
 		) -> DispatchResultWithPostInfo {
 			// check signer
@@ -181,6 +188,12 @@ pub mod pallet {
 
 			// Check amount > MinBonus
 			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
+
+			let mut reason_opt = None;
+			if let Some(r) = answer_explain {
+				ensure!(r.len() as u32 <= T::MaxAnswerExplainLen::get(), Error::<T>::ExplainTooLong);
+				reason_opt = Some(r);
+			}
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -191,7 +204,7 @@ pub mod pallet {
 			let puzzle_content = PuzzleInfoData {
 				account: who.clone(),
 				answer_hash,
-				answer_explain,
+				answer_explain: reason_opt,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: current_block_number,
 				reveal_answer: None,
@@ -205,6 +218,46 @@ pub mod pallet {
 				who,
 				puzzle_hash,
 				current_block_number.into(),
+				amount,
+			));
+			//
+			Ok(().into())
+		}
+
+		#[pallet::weight(0)]
+		pub fn additional_sponsorship(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+			#[pallet::compact] amount: BalanceOf<T>,
+			reason: Option<PuzzleSponsorExplain>,
+		) -> DispatchResultWithPostInfo {
+			// check signer
+			let who = ensure_signed(origin)?;
+			ensure!(<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleNotExist);
+
+			// Check amount > MinBonus
+			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
+
+			//
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+
+			let mut reason_v8 = Vec::new();
+			if let Some(r) = reason {
+				ensure!(r.len() as u32 <= T::MaxSponsorExplainLen::get(), Error::<T>::ExplainTooLong);
+				reason_v8 = r;
+			}
+
+			// pid: PuzzleHash, who: AccountId, amount: BalanceOf, create_bn: BlockNumber,
+			// T::PuzzleLedger::do_bonus(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number)?;
+			T::PuzzleLedger::do_sponsorship(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number, reason_v8.clone())?;
+
+			// send event
+			Self::deposit_event(Event::AdditionalSponsorship(
+				who,
+				puzzle_hash,
+				current_block_number.into(),
+				amount,
+				reason_v8,
 			));
 			//
 			Ok(().into())
@@ -242,6 +295,7 @@ pub mod pallet {
 				Self::make_answer_sign(answer_hash.clone(), puzzle_hash.clone());
 
 			let answer_status_check = || -> PuzzleAnswerStatus {
+				// println!(" update_answer_sign {:?} == puzzle_content.answer_hash {:?} ", &update_answer_sign, &puzzle_content.answer_hash  );
 				if update_answer_sign == puzzle_content.answer_hash {
 					puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
 					puzzle_content.reveal_bn = Some(current_block_number);
@@ -249,6 +303,12 @@ pub mod pallet {
 					<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content);
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
+					Self::deposit_event(Event::<T>::AnswerMisMatch(
+						puzzle_hash.clone(),
+						answer_hash.clone(),
+						update_answer_sign.clone(),
+						puzzle_content.answer_hash.clone()
+					));
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH
 				}
 			};
@@ -336,7 +396,7 @@ pub mod pallet {
 		pub fn commit_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-			deposit: BalanceOf<T>,
+			#[pallet::compact] deposit: BalanceOf<T>,
 			// answer_hash: PuzzleAnswerHash,
 			// answer_explain: Option<PuzzleAnswerExplain>,
 			// answer_nonce: PuzzleAnswerNonce,
@@ -367,7 +427,7 @@ pub mod pallet {
 		pub fn challenge_crowdloan(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-			deposit: BalanceOf<T>,
+			#[pallet::compact] deposit: BalanceOf<T>,
 		) -> DispatchResult {
 			// check signer
 			let who = ensure_signed(origin)?;
@@ -448,8 +508,6 @@ pub mod pallet {
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
 
-
-
 			Ok(().into())
 		}
 
@@ -457,8 +515,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T>
-where
-	u64: From<<T as frame_system::Config>::BlockNumber>,
 {
 	fn check_signed_valid(public_id: Public, signature: &[u8], msg: &[u8]) -> bool {
 		let signature = Signature::try_from(signature);
@@ -470,7 +526,22 @@ where
 	}
 
 	fn get_current_block_number() -> u64 {
-		u64::from(<frame_system::Pallet<T>>::block_number())
+		let current_bn = <frame_system::Pallet<T>>::block_number();
+		current_bn.saturated_into()
+	}
+
+	fn make_sha256_hash(txt: Vec<u8>) -> Vec<u8> {
+		let mut sha_answer_hash_x = sha2::Sha256::new();
+		sha_answer_hash_x.update(txt.as_slice());
+		// Make answer sha256.
+		let mut sha1_ansser_vec = sha_answer_hash_x.finalize().as_slice().to_vec();
+		// Create answer hex str vec
+		let mut result_answer_u8 = [0u8; 32 * 2];
+		// Answer sha256 to encode slice
+		let encode_result =
+			hex::encode_to_slice(&sha1_ansser_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
+		assert!(encode_result.is_ok(), "make_answer_sign to Hex failed.");
+		result_answer_u8.to_vec()
 	}
 
 	fn make_answer_sign(answer_hash: Vec<u8>, mut answer_nonce: Vec<u8>) -> Vec<u8> {
@@ -494,6 +565,12 @@ where
 		// Make final sha256 = sha256(sha256(Answer)+nonce)
 		let mut sha256_answer_final = sha2::Sha256::new();
 		sha256_answer_final.update(result_answer_v8.as_slice());
-		sha256_answer_final.finalize().as_slice().to_vec()
+		let mut sha1_ansser_vec = sha256_answer_final.finalize().as_slice().to_vec();
+
+		let mut final_result_u8 = [0u8; 32 * 2];
+		let final_encode_result =
+			hex::encode_to_slice(&sha1_ansser_vec.as_slice(), &mut final_result_u8 as &mut [u8]);
+		assert!(final_encode_result.is_ok(), "make_answer_sign to Hex failed.");
+		final_result_u8.to_vec()
 	}
 }

@@ -10,9 +10,14 @@ use sc_chain_spec::ChainSpecExtension;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use hex_literal::hex;
+use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public, H256};
+use sp_runtime::{
+	app_crypto::sp_core::crypto::UncheckedFrom,
+	traits::{IdentifyAccount, Verify},
+	Perbill,
+};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -82,10 +87,13 @@ pub fn authority_keys_from_seed(
 
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-
+	let mut properties = serde_json::map::Map::new();
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenSymbol".into(), "ATO".into());
+	properties.insert("SS58Prefix".into(), 836.into());
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Development",
+		"Atocha Testnet",
 		// ID
 		"dev",
 		ChainType::Development,
@@ -94,43 +102,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				wasm_binary,
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				// Pre-funded accounts
-				Some(vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-				]),
-				true,
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// Properties
-		None,
-		// Extensions
-		Default::default(),
-	))
-}
-
-pub fn local_testnet_config() -> Result<ChainSpec, String> {
-	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-
-	Ok(ChainSpec::from_genesis(
-		// Name
-		"Local Testnet",
-		// ID
-		"local_testnet",
-		ChainType::Local,
-		move || {
-			testnet_genesis(
-				wasm_binary,
-				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
@@ -152,7 +123,81 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
+		Some(properties),
+		// Extensions
+		Default::default(),
+	))
+}
+
+pub fn local_testnet_config() -> Result<ChainSpec, String> {
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+	let mut properties = serde_json::map::Map::new();
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenSymbol".into(), "ATO".into());
+	properties.insert("SS58Prefix".into(), 836.into());
+
+	Ok(ChainSpec::from_genesis(
+		// Name
+		"Atocha Local",
+		// ID
+		"local_atocha_chain",
+		ChainType::Local,
+			move || {
+			testnet_genesis(
+				wasm_binary,
+				// Initial PoA authorities
+				vec![ // (AccountId, BabeId, GrandpaId, ImOnlineId, BeefyId, OctopusId)
+					(
+						hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
+						hex!["ba32c05ec684fc939386f386740913221cab2839a36c4a688b06110b2af27636"].unchecked_into(),
+						hex!["17f660e50ef43dfd413464272918bcdc93853b1a8e464ea0651d884d39ff0d60"].unchecked_into(),
+						hex!["3eab31566cbc8d955cf75f62ba2284a7e086bfaaeaf61554d80b1e2a8d28d31c"].unchecked_into(),
+						hex!["037189dae60e6883be7460f1efc30740d415664bcafb91d3101840d8aca61ef792"].unchecked_into(),
+						hex!["e85963b110f2d25896e44b3c90b895ea6cdeb60cf7b015f940c7832e5a703558"].unchecked_into(),
+					),
+					(
+						  hex!["d8301ff8160af5fd870c18a1d8c19ed04c67a705eeb4bb8ee68dee8b6d08b03d"].into(),
+						  hex!["e6a718f9f868744b40113b02e870f5bd68572825f56ca1bf6b0440da663ec548"].unchecked_into(),
+						  hex!["dc99745c24b80d2275d9809b3f2b5de4ebc139fc7296ad70f2486204bb9a8e09"].unchecked_into(),
+						  hex!["40145c4e7a734180a306a18e17dafe8aaa606936e9e97ea2f92402bfe0824946"].unchecked_into(),
+						  hex!["030ad8a03e48797cb92570106ccc650ac6a25cdb1ffe71457e7d9b26f53b257a95"].unchecked_into(),
+						  hex!["a056fa80a559f9aae07feaf2e9ec0118c6a0c7191eb3e94b26bb3281955ab345"].unchecked_into(),
+					),
+					  (
+						  hex!["6af5c7ab6d40dda6e3bc997fda6c264d579b1456100f2138dbbb52c15ac22433"].into(),
+						  hex!["803b77cc9ae3ab640cd02ff46a69d6e5a9db93e15c7f3feb6df8898254411038"].unchecked_into(),
+						  hex!["9d51325e4827162b0614bb94f9f84a810f19ba7fab2d6ad6fe3a907af79f5cb4"].unchecked_into(),
+						  hex!["c88cf70e50c1bee44a1650c1e2973a39da506a6a15a152f74d8f4f707238e045"].unchecked_into(),
+						  hex!["0216e0c0dffce6af471d580e882d59eecd05a0f0665f743880a58ff5e1fcafd206"].unchecked_into(),
+						  hex!["3c6c1e14692e4df4421b8cd75be90b8ed318d7e93f0c7dfc8abfbe424d89ff05"].unchecked_into(),
+					  ),
+				],
+				// Sudo account
+				hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
+				// Pre-funded accounts
+				Some(vec![
+					hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
+					hex!["d8301ff8160af5fd870c18a1d8c19ed04c67a705eeb4bb8ee68dee8b6d08b03d"].into(),
+					hex!["6af5c7ab6d40dda6e3bc997fda6c264d579b1456100f2138dbbb52c15ac22433"].into(),
+					hex!["c4362617bcba50a389ff636e263323a5f6fcd351db826926e32d74f9e3513a44"].into(),
+					hex!["50d5286923aded90246905b0bf04dd89e4062e48af4bb7218e40dfd0d24d0e0e"].into(),
+					hex!["b83a9ab230e3705cf381d871eef46316164679798d4ae5a46510695bb18e8f48"].into(),
+					hex!["f6ec24fc050d1009ddb2880e93e3279e4982d7920e78e6e79a0ee7589302900c"].into(),
+					hex!["6e120ef780923ef2cc2ae815f4d567071dd4b7396ce78e6ed7e1d40ec189d704"].into(),
+					hex!["e8c5a9677a1047f7b721e50b60d3ce6e80be136af1ad5427c1cbba151b62c36a"].into(),
+					hex!["4ace5ba9a9c16c25f1eeec05a9d2757c1bab6dc777f3d97c97e9c0f1ca9e0e5a"].into(),
+				]),
+				true,
+			)
+		},
+		// Bootnodes
+		vec![],
+		// Telemetry
 		None,
+		// Protocol ID
+		None,
+		// Properties
+		Some(properties),
 		// Extensions
 		Default::default(),
 	))

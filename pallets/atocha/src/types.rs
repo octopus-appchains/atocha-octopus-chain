@@ -9,8 +9,10 @@ use sp_std::vec::Vec;
 
 pub type PuzzleSubjectHash = Vec<u8>;
 pub type PuzzleAnswerExplain = Vec<u8>;
+pub type PuzzleSponsorExplain = Vec<u8>;
 pub type AnswerStatus = u8;
 pub type PuzzleAnswerHash = Vec<u8>;
+
 // pub type PuzzleAnswerOption = Option<PuzzleAnswerHash>;
 // pub type PuzzleTicket = u64;
 

@@ -75,27 +75,27 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		#[pallet::constant]
-		type BasicDollars: Get<BalanceOf<Self>>;
+		// #[pallet::constant]
+		// type BasicDollars: Get<BalanceOf<Self>>;
 
-		#[pallet::constant]
-		type TicketFee: Get<BalanceOf<Self>>;
+		// #[pallet::constant]
+		// type TicketFee: Get<BalanceOf<Self>>;
 
-		#[pallet::constant]
-		type DepositFee: Get<BalanceOf<Self>>;
+		// #[pallet::constant]
+		// type DepositFee: Get<BalanceOf<Self>>;
 
-		#[pallet::constant]
-		type DayBlockCount: Get<u32>;
+		// #[pallet::constant]
+		// type DayBlockCount: Get<u32>;
 
-		#[pallet::constant]
-		type StakingPeriod: Get<u32>;
+		// #[pallet::constant]
+		// type StakingPeriod: Get<u32>;
 
 		#[pallet::constant]
 		type PerEraOfBlockNumber: Get<Self::BlockNumber>;
 
-		// type PuzzleStatus: IPuzzleStatus<PuzzleSubjectHash>;
-		#[pallet::constant]
-		type TargetIssuanceRate: Get<Permill>;
+		// // type PuzzleStatus: IPuzzleStatus<PuzzleSubjectHash>;
+		// #[pallet::constant]
+		// type TargetIssuanceRate: Get<Permill>;
 	}
 
 	#[pallet::pallet]

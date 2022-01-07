@@ -43,13 +43,11 @@ use beefy_primitives::{crypto::AuthorityId as BeefyId, mmr::MmrLeafVersion};
 use codec::Encode;
 use frame_support::{weights::DispatchClass, PalletId};
 use frame_support::traits::CurrencyToVote;
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
-};
+use frame_system::{limits::{BlockLength, BlockWeights}, EnsureRoot, EnsureOneOf};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
 use pallet_session::historical as pallet_session_historical;
+use sp_core::u32_trait::{_1, _2};
 use sp_runtime::{
 	generic::Era,
 	traits::{self, ConvertInto, Keccak256, OpaqueKeys, SaturatedConversion, StaticLookup},
@@ -113,15 +111,15 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/origins#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("appchain-barnacle"),
-	impl_name: create_runtime_str!("appchain-barnacle"),
+	spec_name: create_runtime_str!("atocha-chain"),
+	impl_name: create_runtime_str!("atocha-chain"), // Atocha Testnet
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 100,
+	spec_version: 101,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -350,35 +348,64 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 // --------
 
+parameter_types! {
+	pub const MinBonusOfPuzzle: Balance = 100 * DOLLARS;
+	pub const ChallengePeriodLength: BlockNumber = 30;
+	pub const TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
+	pub const TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
+	pub const TaxOfTI: Perbill = Perbill::from_percent(10);
+	pub const PenaltyOfCP: Perbill = Perbill::from_percent(10);
+	pub const MaxSponsorExplainLen: u32 = 256;
+	pub const MaxAnswerExplainLen: u32 = 1024;
+
+}
+
+pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_ato_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
+>;
+
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
+	type Currency = <Self as pallet_atofinance::Config>::Currency;
+	type MinBonusOfPuzzle = MinBonusOfPuzzle;
+	type ChallengePeriodLength = ChallengePeriodLength;
+	type PuzzleLedger = AtochaFinace; // pallet_atofinance::Pallet<Test>;
+	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
+	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
+	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
+	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
+	type TaxOfTVS = TaxOfTVS;
+	type TaxOfTVO = TaxOfTVO;
+	type TaxOfTI = TaxOfTI;
+	type PenaltyOfCP = PenaltyOfCP;
+	type MaxSponsorExplainLen = MaxSponsorExplainLen;
+	type MaxAnswerExplainLen = MaxAnswerExplainLen;
+	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
 }
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	pub const BasicDollars: Balance = DOLLARS;
-	pub const TicketFee: Balance = 5 * DOLLARS; // Will be delete.
-	pub const DepositFee: Balance = 100 * DOLLARS; //Will be delete.
-	pub const DayBlockCount: u32 = 1 * DAYS; // Will be delete
-	pub const StakingPeriod: u32 = 10; // Will be delete.
-	pub TargetIssuanceRate: Permill = Permill::from_percent(10);
-	pub const PerEraOfBlockNumber: BlockNumber = 3 * DAYS;
+	pub const PerEraOfBlockNumber: BlockNumber = 5;
+	pub ChallengeThreshold: Perbill = Perbill::from_percent(60);
+	pub RaisingPeriodLength: BlockNumber = 30;
+}
+
+impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
+	type ChallengeThreshold = ChallengeThreshold;
+	type RaisingPeriodLength = RaisingPeriodLength;
 }
 
 impl pallet_atofinance::Config for Runtime {
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type Currency = pallet_balances::Pallet<Self>;
-	type BasicDollars = BasicDollars;
-	type TicketFee = TicketFee;
-	type DepositFee = DepositFee;
-	type DayBlockCount = DayBlockCount;
-	type StakingPeriod = StakingPeriod;
 	type SlashHandler = ();
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	type TargetIssuanceRate = TargetIssuanceRate;
 }
+
 // ------------------------- ATOCHA Pallets Config end.
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
