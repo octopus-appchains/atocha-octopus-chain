@@ -211,22 +211,22 @@ fn testnet_genesis(
 	endowed_accounts: Option<Vec<AccountId>>,
 	_enable_println: bool,
 ) -> GenesisConfig {
-	// let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
-	// 	vec![
-	// 		get_account_id_from_seed::<sr25519::Public>("Alice"),
-	// 		get_account_id_from_seed::<sr25519::Public>("Bob"),
-	// 		get_account_id_from_seed::<sr25519::Public>("Charlie"),
-	// 		get_account_id_from_seed::<sr25519::Public>("Dave"),
-	// 		get_account_id_from_seed::<sr25519::Public>("Eve"),
-	// 		get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-	// 	]
-	// });
-	// endow all authorities.
-	// initial_authorities.iter().map(|x| &x.0).for_each(|x| {
-	// 	if !endowed_accounts.contains(x) {
-	// 		endowed_accounts.push(x.clone())
-	// 	}
-	// });
+	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
+		vec![
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Eve"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+		]
+	});
+	endow all authorities.
+	initial_authorities.iter().map(|x| &x.0).for_each(|x| {
+		if !endowed_accounts.contains(x) {
+			endowed_accounts.push(x.clone())
+		}
+	});
 
 	let validators = initial_authorities.iter().map(|x| (x.0.clone(), STASH)).collect::<Vec<_>>();
 
