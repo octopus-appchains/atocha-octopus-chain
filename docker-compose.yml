@@ -1,17 +1,66 @@
 version: "3.2"
 
 services:
-  dev:
-    container_name: appchain-barnacle
-    image: paritytech/ci-linux:974ba3ac-20201006
-    working_dir: /var/www/appchain-barnacle
+  chain_one:
+    build:
+      context: .
+      dockerfile: ./build.dockerfile.yml
+    container_name: atocha-one
+    image: atocha-protocol/atocha-node
     ports:
-      - "9944:9944"
-    environment:
-      - CARGO_HOME=/var/www/appchain-barnacle/.cargo
+      - "8844:9944"
+      - "8833:9933"
+      - "31333:30333"
     volumes:
-      - .:/var/www/appchain-barnacle
-      - type: bind
-        source: ./.local
-        target: /root/.local
-    command: bash -c "cargo build --release && ./target/release/appchain-barnacle --dev --ws-external"
+      - ./data/atocha/one:/data
+    command: >
+      atocha-node --chain local --name ato_one --execution Native --pruning archive
+      --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+      --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
+      --port 31333
+      ---validator
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "10"
+  chain_two:
+    container_name: atocha-two
+    image: atocha-protocol/atocha-node
+    ports:
+      - "8845:9944"
+      - "8834:9933"
+      - "31334:30333"
+    volumes:
+      - ./data/atocha/two:/data
+    command: >
+      atocha-node --chain local --name ato_two --execution Native --pruning archive
+      --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+      --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
+      --port 31333
+      ---validator
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "10"
+  chain_three:
+    container_name: atocha-three
+    image: atocha-protocol/atocha-node
+    ports:
+      - "8846:9944"
+      - "8835:9933"
+      - "31335:30333"
+    volumes:
+      - ./data/atocha/three:/data
+    command: >
+      atocha-node --chain local --name ato_three --execution Native --pruning archive
+      --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+      --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
+      --port 31333
+      ---validator
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "10"

@@ -1,0 +1,17 @@
+FROM docker.io/paritytech/ci-linux:production as atochabuilder
+WORKDIR /substrate
+COPY . /substrate
+RUN cargo build --locked --release
+
+FROM docker.io/library/ubuntu:20.04
+COPY --from=atochabuilder /substrate/target/release/atocha-node /usr/local/bin
+
+RUN apt-get update && \
+apt-get install ca-certificates -y && \
+update-ca-certificates && \
+mkdir -p /root/.local/share/atocha-node  && \
+ln -s /root/.local/share/atocha-node /data && \
+/usr/local/bin/atocha-node --version
+
+EXPOSE 30333 9933 9944 9615
+VOLUME ["/data"]
