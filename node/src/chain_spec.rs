@@ -221,7 +221,7 @@ fn testnet_genesis(
 			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
 		]
 	});
-	endow all authorities.
+	// endow all authorities.
 	initial_authorities.iter().map(|x| &x.0).for_each(|x| {
 		if !endowed_accounts.contains(x) {
 			endowed_accounts.push(x.clone())
