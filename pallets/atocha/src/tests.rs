@@ -81,11 +81,11 @@ fn test_answer_puzzle() {
 		let answer_plain_txt = toVec("ANSWER_HASH_256");
 		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
-
+		let no_std_answer_hash = AtochaModule::make_answer_sign(answer_plain_txt.clone(), puzzle_hash.clone());
+		assert_eq!(no_std_answer_hash, answer_hash);
 		// check initial status.
 		let answer_answer = AtochaModule::puzzle_direct_answer(&puzzle_hash, &answer_plain_txt);
 		assert_eq!(None, answer_answer);
-
 		// if puzzle not exists.
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
@@ -740,14 +740,6 @@ fn test_take_answer_reward_with_challenge_faild() {
 	});
 }
 
-fn shaToVec (sha_vec: Vec<u8>) ->Vec<u8> {
-	let mut result_answer_u8 = [0u8; 32 * 2];
-	// Answer sha256 to encode slice
-	let encode_result =
-		hex::encode_to_slice(&sha_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
-	assert!(encode_result.is_ok(), "make_answer_sign to Hex failed.");
-	result_answer_u8.to_vec()
-}
 #[test]
 fn test_bug_online_checkfaild () {
 
@@ -759,11 +751,14 @@ fn test_bug_online_checkfaild () {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 		let c_sha256 = sha2_256(&final_answer_raw).encode();
+		// println!("RUN A1 ");
 		assert_eq!(shaToVec(c_sha256), final_answer_sha256);
 		let make_answer_sha256 = make_answer_sha256(final_answer_raw.clone(), final_puzzle_txid.clone());
-		assert_eq!(shaToVec(make_answer_sha256), final_answer_final_sha256);
+		// println!("RUN A2 final_answer_final_sha256 = {:?}", &final_answer_final_sha256);
+		assert_eq!(make_answer_sha256, final_answer_final_sha256);
 		let pallet_answer_sha256 = AtochaModule::make_answer_sign(final_answer_raw.clone(), final_puzzle_txid.clone());
-		assert_eq!(shaToVec(pallet_answer_sha256), final_answer_final_sha256);
+		// println!("RUN A3 pallet_answer_sha256 = {:?}", &pallet_answer_sha256);
+		assert_eq!(pallet_answer_sha256, final_answer_final_sha256);
 	});
 }
 
@@ -949,7 +944,6 @@ fn test_signed_method() {
         let test_signature = &hex::decode("2aeaa98e26062cf65161c68c5cb7aa31ca050cb5bdd07abc80a475d2a2eebc7b7a9c9546fbdff971b29419ddd9982bf4148c81a49df550154e1674a6b58bac84").expect("Hex invalid")[..];
         let signature = Signature::try_from(test_signature);
         let signature = signature.unwrap();
-        println!(" signature = {:?}", signature);
 
         // let account_result =  AccountId::from_ss58check("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty");
         // let account_id = account_result.unwrap();
@@ -957,7 +951,6 @@ fn test_signed_method() {
 
         let public_id = Public::from_ss58check("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty");
         let public_id = public_id.unwrap();
-        println!(" public_id = {:?} ", public_id);
 
         let multi_sig = MultiSignature::from(signature); // OK
         let multi_signer = MultiSigner::from(public_id);

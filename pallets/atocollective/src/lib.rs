@@ -742,16 +742,14 @@ pub mod pallet {
 							.saturating_add(proposal_weight),
 					),
 					Pays::Yes,
-				)
-					.into())
+				).into())
 			} else if disapproved {
 				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
 				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
 				return Ok((
 					Some(T::WeightInfo::close_early_disapproved(seats, proposal_count)),
 					Pays::No,
-				)
-					.into())
+				).into())
 			}
 
 			// Only allow actual closing of the proposal after the voting period has ended.

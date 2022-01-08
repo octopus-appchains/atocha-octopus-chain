@@ -181,7 +181,16 @@ pub fn make_answer_sha256(answer_hash: Vec<u8>, puzzle_hash_txid: Vec<u8>) -> Ve
 	// println!("On test sha_answer_hash B2 = {:?}", sha1_ansser_vec);
 	// let raw_str = sp_std::str::from_utf8(sha1_ansser_vec.as_slice());
 	let sha256_answer = sha2_256(sha1_ansser_vec.as_slice());
-	sha256_answer.to_vec()
+	shaToVec(sha256_answer.to_vec())
+}
+
+pub fn shaToVec (sha_vec: Vec<u8>) ->Vec<u8> {
+	let mut result_answer_u8 = [0u8; 32 * 2];
+	// Answer sha256 to encode slice
+	let encode_result =
+		hex::encode_to_slice(&sha_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
+	assert!(encode_result.is_ok(), "make_answer_sign to Hex failed.");
+	result_answer_u8.to_vec()
 }
 
 pub(crate) fn handle_create_puzzle(

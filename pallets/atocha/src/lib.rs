@@ -146,7 +146,12 @@ pub mod pallet {
 		PuzzleCreated(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>, BalanceOf<T>), // remove . DurationBn
 		AdditionalSponsorship(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>, BalanceOf<T>, PuzzleSponsorExplain), // remove . DurationBn
 		AnswerCreated(T::AccountId, PuzzleAnswerHash, PuzzleSubjectHash, CreateBn<T::BlockNumber>),
+		AnswerMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
 		AnswerMisMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
+		IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
+		CrowdloanChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
+		CreatorPointSlash(PuzzleSubjectHash, PointSlashData<T::AccountId, Perbill, PointToken>),
+		ChallengePassed(PuzzleSubjectHash,ChallendRewardData<T::AccountId, Perbill>),
 	}
 
 	#[pallet::error]
@@ -280,7 +285,7 @@ pub mod pallet {
 			ensure!(<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleNotExist);
 
 			// Get puzzle
-			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			let puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
 			ensure!(
 				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				Error::<T>::PuzzleHasBeenSolved
@@ -297,10 +302,19 @@ pub mod pallet {
 			let answer_status_check = || -> PuzzleAnswerStatus {
 				// println!(" update_answer_sign {:?} == puzzle_content.answer_hash {:?} ", &update_answer_sign, &puzzle_content.answer_hash  );
 				if update_answer_sign == puzzle_content.answer_hash {
-					puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
-					puzzle_content.reveal_bn = Some(current_block_number);
-					puzzle_content.reveal_answer = Some(who.clone());
-					<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content);
+					let mut update_puzzle_content = puzzle_content.clone();
+					update_puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
+					update_puzzle_content.reveal_bn = Some(current_block_number);
+					update_puzzle_content.reveal_answer = Some(who.clone());
+					<PuzzleInfo<T>>::insert(&puzzle_hash, update_puzzle_content);
+
+					Self::deposit_event(Event::<T>::AnswerMatch(
+						puzzle_hash.clone(),
+						answer_hash.clone(),
+						update_answer_sign.clone(),
+						puzzle_content.answer_hash.clone()
+					));
+
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
 					Self::deposit_event(Event::<T>::AnswerMisMatch(
@@ -419,6 +433,12 @@ pub mod pallet {
 			);
 			//
 			T::AtoChallenge::issue_challenge(who.clone(), &puzzle_hash, deposit)?;
+			Self::deposit_event(Event::<T>::IssueChallenge(
+				who.clone(),
+				puzzle_hash.clone(),
+				deposit.clone(),
+			));
+
 			//
 			Ok(().into())
 		}
@@ -438,6 +458,11 @@ pub mod pallet {
 			);
 			//
 			T::AtoChallenge::challenge_crowdloan(who.clone(), &puzzle_hash, deposit)?;
+			Self::deposit_event(Event::<T>::IssueChallenge(
+				who.clone(),
+				puzzle_hash.clone(),
+				deposit.clone(),
+			));
 			//
 			Ok(().into())
 		}
@@ -469,7 +494,7 @@ pub mod pallet {
 			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
 			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
 
-			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries, reveal_bn, T::TaxOfTI::get());
+			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries.clone(), reveal_bn, T::TaxOfTI::get());
 			// Not need point to reward.
 			// T::PuzzleRewardOfPoint::challenge_get_reward(&puzzle_hash, vec![], reveal_bn, ())?;
 
@@ -477,7 +502,25 @@ pub mod pallet {
 			if create_total_point > 0 {
 				let cut_down_point = T::PenaltyOfCP::get() * create_total_point;
 				T::AtoPointsManage::reduce_points_to(&puzzle_content.account, cut_down_point)?;
+				Self::deposit_event(Event::<T>::CreatorPointSlash(
+					puzzle_hash.clone(),
+					PointSlashData {
+						who: puzzle_content.account.clone(),
+						rate_cp: T::PenaltyOfCP::get(),
+						total: create_total_point.clone(),
+						slash: cut_down_point.clone(),
+					},
+				));
 			}
+
+			Self::deposit_event(Event::<T>::ChallengePassed(
+				puzzle_hash.clone(),
+				ChallendRewardData {
+					beneficiaries: beneficiaries.clone(),
+					rate_ti: T::TaxOfTI::get(),
+				}
+			));
+
 			Ok(().into())
 		}
 

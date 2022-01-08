@@ -79,3 +79,17 @@ impl Default for PuzzleAnswerStatus {
 		Self::ANSWER_STATUS_IS_NONE
 	}
 }
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct PointSlashData<Account, PerThing, PointNum> {
+	pub who: Account,
+	pub rate_cp: PerThing,
+	pub total: PointNum,
+	pub slash: PointNum,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct ChallendRewardData<Account, PerThing> {
+	pub beneficiaries: Vec<(Account, PerThing)>,
+	pub rate_ti: PerThing,
+}
