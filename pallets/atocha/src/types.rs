@@ -36,7 +36,7 @@ pub struct PuzzleInfoData<Account, BlockNumber> {
 	pub account: Account,
 	pub answer_hash: PuzzleAnswerHash,
 	// pub answer_option: Option<PuzzleAnswerHash>,
-	pub answer_explain: Option<PuzzleAnswerExplain>,
+	// pub answer_explain: Option<PuzzleAnswerExplain>,
 	// pub answer_signed: PuzzleAnswerSigned,
 	// pub answer_nonce: PuzzleAnswerNonce,
 	// pub puzzle_ticket: PuzzleTicket,
@@ -60,10 +60,11 @@ impl Default for PuzzleStatus {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct PuzzleAnswerData<Account, BlockNumber> {
 	pub account: Account,
 	pub answer_status: PuzzleAnswerStatus,
+	pub answer_explain: PuzzleAnswerExplain,
 	pub create_bn: CreateBn<BlockNumber>,
 }
 

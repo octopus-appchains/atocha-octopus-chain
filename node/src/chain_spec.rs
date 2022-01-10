@@ -141,7 +141,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		"Atocha Local",
 		// ID
 		"local_atocha_chain",
-		ChainType::Local,
+		ChainType::Live,
 			move || {
 			testnet_genesis(
 				wasm_binary,

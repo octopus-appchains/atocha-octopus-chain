@@ -277,7 +277,7 @@ impl frame_system::Config for Runtime {
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxProposals: u32 = 3000;
 	pub const CouncilMaxMembers: u32 = 100;
 }
 
@@ -350,14 +350,13 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 parameter_types! {
 	pub const MinBonusOfPuzzle: Balance = 100 * DOLLARS;
-	pub const ChallengePeriodLength: BlockNumber = 30;
+	pub const ChallengePeriodLength: BlockNumber = 1 * HOURS;
 	pub const TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
 	pub const TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
 	pub const TaxOfTI: Perbill = Perbill::from_percent(10);
 	pub const PenaltyOfCP: Perbill = Perbill::from_percent(10);
 	pub const MaxSponsorExplainLen: u32 = 256;
 	pub const MaxAnswerExplainLen: u32 = 1024;
-
 }
 
 pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
@@ -368,6 +367,7 @@ pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
 
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
+	// type Call = Call;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
 	type MinBonusOfPuzzle = MinBonusOfPuzzle;
 	type ChallengePeriodLength = ChallengePeriodLength;
@@ -387,9 +387,9 @@ impl pallet_atocha::Config for Runtime {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	pub const PerEraOfBlockNumber: BlockNumber = 5;
+	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES;
 	pub ChallengeThreshold: Perbill = Perbill::from_percent(60);
-	pub RaisingPeriodLength: BlockNumber = 30;
+	pub RaisingPeriodLength: BlockNumber = 10 * MINUTES;
 }
 
 impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
@@ -404,6 +404,7 @@ impl pallet_atofinance::Config for Runtime {
 	type SlashHandler = ();
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
+	type AtoPropose = Council;
 }
 
 // ------------------------- ATOCHA Pallets Config end.

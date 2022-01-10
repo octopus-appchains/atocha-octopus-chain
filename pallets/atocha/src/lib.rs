@@ -28,14 +28,16 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::sp_runtime::Perbill;
+	use frame_support::sp_runtime::{Perbill, RuntimeDebug};
 	use crate::types::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::dispatch::Dispatchable;
 	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
 	use hex;
 	use sp_core::sp_std::convert::TryInto;
 	use sp_runtime::PerThing;
+	use sp_runtime::sp_std::fmt::Debug;
 	use sp_std::vec::Vec;
 	use pallet_atofinance::traits::{*};
 	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
@@ -47,6 +49,8 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+		// type Call: Dispatchable + Debug;
 
 		#[pallet::constant]
 		type MinBonusOfPuzzle: Get<BalanceOf<Self>>;
@@ -86,6 +90,7 @@ pub mod pallet {
 			<Self as frame_system::Config>::BlockNumber,
 			DispatchResult,
 			PerVal = Perbill,
+			OnBurn = (),
 		>;
 		type PuzzleRewardOfPoint: IPuzzleReward<
 			<Self as frame_system::Config>::AccountId,
@@ -95,6 +100,7 @@ pub mod pallet {
 			DispatchResult,
 			PerVal = Perbill,
 		>;
+
 		type AtoChallenge: IAtoChallenge<
 			<Self as frame_system::Config>::AccountId,
 			PuzzleSubjectHash,
@@ -183,7 +189,6 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 			answer_hash: PuzzleAnswerHash,
-			answer_explain: Option<PuzzleAnswerExplain>,
 			#[pallet::compact] amount: BalanceOf<T>,
 			puzzle_version: PuzzleVersion,
 		) -> DispatchResultWithPostInfo {
@@ -194,12 +199,6 @@ pub mod pallet {
 			// Check amount > MinBonus
 			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
 
-			let mut reason_opt = None;
-			if let Some(r) = answer_explain {
-				ensure!(r.len() as u32 <= T::MaxAnswerExplainLen::get(), Error::<T>::ExplainTooLong);
-				reason_opt = Some(r);
-			}
-
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 
@@ -209,7 +208,6 @@ pub mod pallet {
 			let puzzle_content = PuzzleInfoData {
 				account: who.clone(),
 				answer_hash,
-				answer_explain: reason_opt,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: current_block_number,
 				reveal_answer: None,
@@ -273,10 +271,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
 			answer_hash: PuzzleAnswerHash,
-			// ticket: PuzzleTicket,
+			answer_explain: PuzzleAnswerExplain,
 		) -> DispatchResultWithPostInfo {
 			// check signer
 			let who = ensure_signed(origin)?;
+
+			ensure!(answer_explain.len() as u32 <= T::MaxAnswerExplainLen::get(), Error::<T>::ExplainTooLong);
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -331,6 +331,7 @@ pub mod pallet {
 			let answer_content = PuzzleAnswerData {
 				account: who.clone(),
 				answer_status: answer_status_check(),
+				answer_explain,
 				create_bn: current_block_number.clone(),
 			};
 
@@ -471,7 +472,7 @@ pub mod pallet {
 		pub fn recognition_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			// check signer
 			T::CouncilOrigin::ensure_origin(origin)?;
 			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
@@ -489,14 +490,14 @@ pub mod pallet {
 				Error::<T>::ChallengeListNotEmpty
 			);
 			//
+
+			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries.clone(), reveal_bn, T::TaxOfTI::get())?;
+			T::AtoChallenge::recognition_challenge(&puzzle_hash)?;
+
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgePassed(current_block_number));
 			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
 			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
-
-			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries.clone(), reveal_bn, T::TaxOfTI::get());
-			// Not need point to reward.
-			// T::PuzzleRewardOfPoint::challenge_get_reward(&puzzle_hash, vec![], reveal_bn, ())?;
 
 			let create_total_point = T::AtoPointsManage::get_total_points(&puzzle_content.account);
 			if create_total_point > 0 {
@@ -553,6 +554,40 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		// // refuse_challenge
+		// #[pallet::weight(0)]
+		// pub fn cancel_challenge_crowdloan(
+		// 	origin: OriginFor<T>,
+		// 	puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+		// ) -> DispatchResult {
+		// 	// check signer
+		// 	let who = ensure_signed(origin)?;
+		// 	//Get beneficiarie list
+		// 	let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+		//
+		//
+		// 	let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+		// 	ensure!(
+		// 		puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+		// 		Error::<T>::PuzzleStatusErr
+		// 	);
+		// 	//
+		// 	// let reveal_bn = puzzle_content.reveal_bn.unwrap();
+		//
+		// 	//Get challenge list
+		// 	let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+		// 	ensure!(
+		// 		beneficiaries.len() > 0 as usize,
+		// 		Error::<T>::ChallengeListNotEmpty
+		// 	);
+		//
+		// 	//
+		// 	let current_block_number = <frame_system::Pallet<T>>::block_number();
+		// 	T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
+		//
+		// 	Ok(().into())
+		// }
 
 	}
 }

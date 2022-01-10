@@ -24,6 +24,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", bran
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }
 pallet-atocha = { path = '../../pallets/atocha', default-features = false, version = '1.0.0' }
+pallet-atofinance = { path = '../../pallets/atofinance', default-features = false, version = '1.0.0' }
 
 [features]
 default = ["std"]
@@ -39,6 +40,7 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-atocha/std",
+	"pallet-atofinance/std",
 ]
 #runtime-benchmarks = [
 #	"frame-benchmarking/runtime-benchmarks",

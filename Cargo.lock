@@ -3961,6 +3961,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-atocha",
+ "pallet-atofinance",
  "parity-scale-codec",
  "scale-info",
  "sp-core",

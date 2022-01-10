@@ -7,10 +7,11 @@ use crate::mock::AccountId;
 use crate::pallet::*;
 use crate::{mock::*, Error};
 use frame_support::sp_runtime::app_crypto::sr25519::Signature;
-use frame_support::sp_runtime::traits::{IdentifyAccount, Verify, Zero};
+use frame_support::sp_runtime::traits::{IdentifyAccount, Saturating, Verify, Zero};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::hashing::sha2_256;
 use pallet_atofinance::traits::*;
+use sp_runtime::Perbill;
 
 use crate::types::*;
 use sp_core::hexdisplay::HexDisplay;
@@ -50,7 +51,6 @@ fn test_create_puzzle() {
 			PuzzleInfoData {
 				account: toAid(CONST_ORIGIN_IS_CREATOR),
 				answer_hash,
-				answer_explain: None,
 				// answer_nonce: toVec("NONCE"),
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
@@ -93,6 +93,7 @@ fn test_answer_puzzle() {
 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 				answer_plain_txt.clone(),
+				toVec("Answer explain"),
 			),
 			Error::<Test>::PuzzleNotExist
 		);
@@ -110,6 +111,7 @@ fn test_answer_puzzle() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
+			vec![]
 		));
 
 		let answer_list =
@@ -124,6 +126,7 @@ fn test_answer_puzzle() {
 					account: toAid(CONST_ORIGIN_IS_ANSWER_1),
 					// puzzle_ticket: 500,
 					answer_status: PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH,
+					answer_explain: vec![],
 					create_bn: 15,
 				}
 			)
@@ -136,7 +139,6 @@ fn test_answer_puzzle() {
 			PuzzleInfoData {
 				account: toAid(CONST_ORIGIN_IS_CREATOR),
 				answer_hash: answer_hash.clone(),
-				answer_explain: None,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
 				reveal_answer: None,
@@ -150,6 +152,7 @@ fn test_answer_puzzle() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
+			vec![]
 		));
 
 		// check answer list count.
@@ -165,6 +168,7 @@ fn test_answer_puzzle() {
 					account: toAid(CONST_ORIGIN_IS_ANSWER_1),
 					// puzzle_ticket: 500,
 					answer_status: PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH,
+					answer_explain: vec![],
 					create_bn: 15,
 				}
 			)
@@ -177,7 +181,6 @@ fn test_answer_puzzle() {
 			PuzzleInfoData {
 				account: toAid(CONST_ORIGIN_IS_CREATOR),
 				answer_hash: answer_hash.clone(),
-				answer_explain: None,
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				create_bn: 5,
 				reveal_answer: Some(toAid(CONST_ORIGIN_IS_ANSWER_1)),
@@ -192,6 +195,7 @@ fn test_answer_puzzle() {
 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 				answer_plain_txt.clone(),
+				vec![]
 			),
 			Error::<Test>::PuzzleHasBeenSolved
 		);
@@ -230,6 +234,7 @@ fn test_take_answer_reward_with_crator() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
+			vec![]
 		));
 
 		let answer_list =
@@ -256,6 +261,7 @@ fn test_take_answer_reward_with_crator() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
+			vec![]
 		));
 
 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
@@ -285,10 +291,18 @@ fn test_take_answer_reward_with_crator() {
 		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
 		assert_eq!(original_point, Zero::zero());
 
+		let atopot_balance_before = Balances::free_balance(AtochaPot::account_id());
+		println!("atopot_balance = {:?}", &atopot_balance_before);
+
 		assert_ok!(AtochaModule::take_answer_reward(
 				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
 				puzzle_hash.clone(),
 		));
+
+		let atopot_balance = Balances::free_balance(AtochaPot::account_id());
+		println!("atopot_balance = {:?}", &atopot_balance);
+		assert_eq!(atopot_balance, atopot_balance_before - 100000000000000);
+
 		// Deduct TVS tax.
 		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_CREATOR)), original_balance + 100*DOLLARS - TaxOfTVS::get() * 100*DOLLARS);
 		let reward_period_count = (65 - 5) / PerEraOfBlockNumber::get();
@@ -334,6 +348,7 @@ fn test_take_answer_reward_with_other() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
+			vec![]
 		));
 
 		let answer_list =
@@ -360,6 +375,7 @@ fn test_take_answer_reward_with_other() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
+			vec![]
 		));
 
 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
@@ -450,6 +466,7 @@ fn test_take_answer_reward_with_challenge_win() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
+			vec![]
 		));
 
 		let answer_list =
@@ -476,6 +493,7 @@ fn test_take_answer_reward_with_challenge_win() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
+			vec![]
 		));
 
 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
@@ -513,6 +531,10 @@ fn test_take_answer_reward_with_challenge_win() {
 		);
 
 		System::set_block_number( 15 + 50 + 100 );
+
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		assert_eq!(original_balance, 4000 * DOLLARS);
+
 		// --- Be challenged
 		assert_ok!(AtochaModule::commit_challenge(
 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
@@ -521,7 +543,10 @@ fn test_take_answer_reward_with_challenge_win() {
 		));
 
 		System::set_block_number(15 + 50 + 100 + 1 );
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2));
+
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		assert_eq!(original_balance, 4000 * DOLLARS - 10 * DOLLARS);
+
 		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
 		assert_eq!(original_point, Zero::zero());
 
@@ -534,12 +559,18 @@ fn test_take_answer_reward_with_challenge_win() {
 			Error::<Test>::BeingChallenged
 		);
 
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		assert_eq!(original_balance, 5000 * DOLLARS);
+
 		// Begin raise
 		assert_ok!(AtochaModule::challenge_crowdloan(
 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_4)),
 				puzzle_hash.clone(),
 				100 * DOLLARS
 		));
+
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		assert_eq!(original_balance, 5000 * DOLLARS - 50 * DOLLARS);
 
 		assert_eq!(ChallengeManager::<Test>::get_total_raise(&puzzle_hash) , 60 * DOLLARS);
 		assert_eq!(
@@ -558,12 +589,22 @@ fn test_take_answer_reward_with_challenge_win() {
 			Error::<Test>::BeingChallenged
 		);
 
+		let challengers: Vec<(AccountId, Perbill)> = <Test as crate::Config>::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+		let get_chellenger_proportion = |acc: &AccountId|-> Option<Perbill> {
+			let challengers_clone = challengers.clone();
+			for x in challengers_clone {
+				if(&x.0 == acc) {
+					return Some(x.1);
+				}
+			}
+			None
+		};
+
 		//
 		assert_ok!(AtochaModule::recognition_challenge (
 				Origin::root(),
 				puzzle_hash.clone(),
 		));
-
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
@@ -573,6 +614,29 @@ fn test_take_answer_reward_with_challenge_win() {
 			),
 			Error::<Test>::PuzzleStatusErr
 		);
+
+		// Check challenge status;
+		let challenge_status = <Test as crate::Config>::AtoChallenge::get_challenge_status(&puzzle_hash);
+		assert_eq!(challenge_status, Some(ChallengeStatus::JudgePassed(15 + 50 + 200 + 1 )));
+
+		//
+		let total_bonus = Perbill::from_percent(100).saturating_sub(TaxOfTI::get()) * (100 * DOLLARS);
+		println!("{:?}\n{:?}\n{:?}, ",
+				 total_bonus,
+				 get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus.clone(),
+				get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus.clone()
+		);
+
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		assert_eq!(original_balance, 4000 * DOLLARS + (
+			get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus
+		) );
+
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		assert_eq!(original_balance, 5000 * DOLLARS + (
+			get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus
+		));
+
 	});
 }
 
@@ -608,6 +672,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
+			vec![]
 		));
 
 		let answer_list =
@@ -634,6 +699,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
+			vec![]
 		));
 
 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
@@ -794,6 +860,7 @@ fn test_bug_online_answer_faild_2235 () {
 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 			final_puzzle_txid.clone(),
 			toVec("C"),
+			vec![]
 		));
 
 		let answer_list =

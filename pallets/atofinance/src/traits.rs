@@ -75,10 +75,20 @@ pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Erro
 	fn challenge_crowdloan(who: AccountId, pid: &PuzzleHash, deposit: BalanceOf) -> DispatchResult;
 	fn has_the_raising_period_expired(pid: &PuzzleHash) -> bool;
 	fn get_challenge_status(pid: &PuzzleHash) -> Option<Status>;
-	fn recognition_challenge(pid: &PuzzleHash) -> Result<(), Error>;
-	fn back_challenge_crowdloan(pid: &PuzzleHash, tax: Perbill) -> Result<(), Error>;
+	fn recognition_challenge(pid: &PuzzleHash) -> DispatchResult;
+	fn back_challenge_crowdloan(pid: &PuzzleHash, tax: Perbill) -> DispatchResult;
 	fn check_get_active_challenge_info(pid: &PuzzleHash) -> Result<DataInfo, Error>;
 	fn get_list_of_challengers(pid: &PuzzleHash) ->  Vec<(AccountId, Perbill)>;
-	fn final_challenge(pid: &PuzzleHash, status: Status) ;
+	fn final_challenge(pid: &PuzzleHash, status: Status) -> DispatchResult;
 	fn challenge_failed(pid: &PuzzleHash) -> Result<(), Error>;
+}
+
+pub trait IAtoPropose<PuzzleHash>  {
+	fn challenge_propose(puzzle_hash: PuzzleHash) -> DispatchResult ;
+}
+
+impl IAtoPropose<Vec<u8>> for () {
+	fn challenge_propose(puzzle_hash: Vec<u8>) -> DispatchResult {
+		Ok(())
+	}
 }

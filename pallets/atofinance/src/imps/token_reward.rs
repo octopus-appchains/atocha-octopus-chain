@@ -7,9 +7,9 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 	for TokenReward<T>
 {
 	type PerVal = Perbill;
-	type Imbalance = PositiveImbalanceOf<T>;
-	// type OnBurn = T::SlashHandler;
-	type OnBurn = T::RewardHandler;
+	type Imbalance = NegativeImbalanceOf<T>;
+	type OnBurn = T::SlashHandler;
+	// type OnBurn = T::RewardHandler;
 	// type FundPool = T::AccountId;
 
 	fn get_total_bonus(pid: &PuzzleSubjectHash, _cut_bn: T::BlockNumber) -> Option<BalanceOf<T>> {
@@ -52,8 +52,8 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		let positive_imbalance = T::Currency::burn(tax_fee);
-		Self::OnBurn::on_unbalanced(positive_imbalance);
+		let negative_imbalance = T::Currency::slash(&crate::Pallet::<T>::account_id(), tax_fee);
+		Self::OnBurn::on_unbalanced(negative_imbalance.0);
 
 		let mut beneficiaries = Vec::new();
 		beneficiaries.push((beneficiary, Perbill::from_percent(100)));
@@ -117,6 +117,8 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 
 		let total_balance = storage_ledger.total;
 
+		println!(" total_balance = {:?}", total_balance);
+
 		// Check liquidity.
 		let (pot_account, free_balance) = crate::Pallet::<T>::pot();
 		ensure!(free_balance >= total_balance, Error::<T>::InsufficientBalance);
@@ -127,12 +129,12 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 
 		let mut storage_beneficiaries = Vec::new();
 		for (beneficiary, pay_proportion) in beneficiaries.clone().into_iter() {
-			// println!(
-			// 	"RUN Transfer : {:?}, proportion : {:?} pay = {:?} ",
-			// 	&beneficiary,
-			// 	&pay_proportion,
-			// 	pay_proportion * payout,
-			// );
+			println!(
+				"RUN Transfer : {:?}, proportion : {:?} pay = {:?} ",
+				&beneficiary,
+				&pay_proportion,
+				pay_proportion * payout,
+			);
 			T::Currency::transfer(
 				&pot_account,
 				&beneficiary,
@@ -142,8 +144,8 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 			storage_beneficiaries.push((beneficiary, pay_proportion));
 		}
 		// Burn fee.
-		let positive_imbalance = T::Currency::burn(tax_fee);
-		Self::OnBurn::on_unbalanced(positive_imbalance);
+		let negative_imbalance = T::Currency::slash(&pot_account, tax_fee);
+		Self::OnBurn::on_unbalanced(negative_imbalance.0);
 
 		let pot_reward = PotRewardData {
 			create_bn: <frame_system::Pallet<T>>::block_number(),

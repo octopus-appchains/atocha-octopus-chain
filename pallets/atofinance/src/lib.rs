@@ -93,6 +93,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PerEraOfBlockNumber: Get<Self::BlockNumber>;
 
+		type AtoPropose: IAtoPropose<PuzzleSubjectHash>;
 		// // type PuzzleStatus: IPuzzleStatus<PuzzleSubjectHash>;
 		// #[pallet::constant]
 		// type TargetIssuanceRate: Get<Permill>;
@@ -261,7 +262,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub(crate) _pt: PhantomData<T>,
+		pub _pt: PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
@@ -307,6 +308,10 @@ pub mod pallet {
 		TicketFeeNotPaid,
 		//
 		RefundFailed,
+		//
+		NeedARefundFirst,
+		//
+		ChallengeStatusError,
 		//
 		ReserveFailed,
 		//

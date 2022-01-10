@@ -19,6 +19,7 @@ pub type BalanceOf<T> =
 pub type PositiveImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::PositiveImbalance;
+
 pub type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;

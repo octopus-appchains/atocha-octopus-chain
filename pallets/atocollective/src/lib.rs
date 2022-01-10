@@ -47,6 +47,7 @@ use sp_core::u32_trait::Value as U32;
 use sp_io::storage;
 use sp_runtime::{traits::Hash, RuntimeDebug};
 use sp_std::{marker::PhantomData, prelude::*, result};
+use pallet_atofinance::traits::IAtoPropose;
 
 use frame_support::{
 	codec::{Decode, Encode},
@@ -179,7 +180,7 @@ pub mod pallet {
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 
 	#[pallet::config]
-	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_atocha::Config{
+	pub trait Config<I: 'static = ()>: frame_system::Config + pallet_atocha::Config + pallet_atofinance::Config {
 		/// The outer origin type.
 		type Origin: From<RawOrigin<Self::AccountId, I>>;
 
@@ -187,6 +188,7 @@ pub mod pallet {
 		type Proposal: Parameter
 			+ Dispatchable<Origin = <Self as Config<I>>::Origin, PostInfo = PostDispatchInfo>
 			+ From<frame_system::Call<Self>>
+			+ From<pallet_atocha::Call<Self>>
 			+ IsSubType<pallet_atocha::Call<Self>>
 			+ GetDispatchInfo;
 
@@ -305,6 +307,7 @@ pub mod pallet {
 		Disapproved { proposal_hash: T::Hash },
 		/// A motion was executed; result will be `Ok` if it returned without error.
 		Executed { proposal_hash: T::Hash, result: DispatchResult },
+		ExecutedRefuse { result: DispatchResult },
 		/// A single member did some action; result will be `Ok` if it returned without error.
 		MemberExecuted { proposal_hash: T::Hash, result: DispatchResult },
 		/// A proposal was closed because its threshold was reached or after its duration was up.
@@ -527,17 +530,17 @@ pub mod pallet {
 				Error::<T, I>::DuplicateProposal
 			);
 
-			Self::check_challenge_call(
-				proposal.as_ref().clone(),
-				proposal_hash,
-				|puzzle_id|->DispatchResult{
-					Ok(())
-				},
-				|| -> DispatchResult {
-					ensure!(members.contains(&who), Error::<T, I>::NotMember);
-					Ok(())
-				}
-			)?;
+			// Self::check_challenge_call(
+			// 	proposal.as_ref().clone(),
+			// 	proposal_hash,
+			// 	|puzzle_id|->DispatchResult{
+			// 		Ok(())
+			// 	},
+			// 	|| -> DispatchResult {
+			// 		ensure!(members.contains(&who), Error::<T, I>::NotMember);
+			// 		Ok(())
+			// 	}
+			// )?;
 
 			if threshold < 2 {
 				let seats = Self::members().len() as MemberCount;
@@ -746,6 +749,34 @@ pub mod pallet {
 			} else if disapproved {
 				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
 				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
+				let (proposal, _len) = Self::validate_and_get_proposal(
+					&proposal_hash,
+					length_bound,
+					proposal_weight_bound,
+				)?;
+
+				Self::check_challenge_call(
+					proposal.clone(),
+					proposal_hash,
+					|puzzle_hash,proposal_hash| -> DispatchResult{
+						let proposal_refuse: T::Proposal = pallet_atocha::Call::<T>::refuse_challenge {
+							puzzle_hash
+						}.into();
+
+						let dispatch_weight = proposal.get_dispatch_info().weight;
+						let origin = RawOrigin::Members(yes_votes, seats).into();
+						let result = proposal_refuse.dispatch(origin);
+						Self::deposit_event(Event::ExecutedRefuse {
+							result: result.map(|_| ()).map_err(|e| e.error),
+						});
+
+						Ok(())
+					},
+					|| -> DispatchResult {
+						Ok(())
+					}
+				)?;
+
 				return Ok((
 					Some(T::WeightInfo::close_early_disapproved(seats, proposal_count)),
 					Pays::No,
@@ -914,12 +945,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 	fn check_challenge_call<FA, FB>(
 		proposal: <T as Config<I>>::Proposal,
-		_proposal_hash: T::Hash,
+		proposal_hash: T::Hash,
 		match_func: FA,
 		mismatch_func: FB,
 	) -> DispatchResult
 		where
-			FA: FnOnce( PuzzleSubjectHash ) -> DispatchResult,
+			FA: FnOnce( PuzzleSubjectHash , T::Hash) -> DispatchResult,
 			FB: FnOnce( ) -> DispatchResult,
 	{
 		match proposal.is_sub_type() { // is_sub_type
@@ -928,7 +959,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 					ref puzzle_hash,
 				} => {
 					// info!("call recognition_challenge pid = {:?}", &puzzle_hash);
-					return match_func(puzzle_hash.clone());
+					return match_func(puzzle_hash.clone(), proposal_hash);
 				}
 				_ => Ok(()),
 			},
@@ -936,6 +967,54 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 				mismatch_func()
 			}
 		}
+	}
+}
+
+use frame_system::{Call as SystemCall};
+// use frame_system::{Call as SystemCall, Pallet as System, RawOrigin as SystemOrigin};
+// use pallet_atocha::{Call as AtochaCall};
+
+impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I> {
+	fn challenge_propose(puzzle_hash: PuzzleSubjectHash) -> DispatchResult
+	{
+		// proposal: Box<<T as Config<I>>::Proposal>
+		let threshold = 3;
+		// let proposal = Call::System(pallet_atocha::Call::<T>::recognition_challenge{puzzle_hash});
+		// let proposal: T::Proposal = SystemCall::<T>::remark {
+		// 	remark: Vec::new()
+		// }.into();
+		// let proposal: T::Proposal = SystemCall::<T>::set_heap_pages {
+		// 	pages: 13
+		// }.into();
+
+		let proposal: T::Proposal = pallet_atocha::Call::<T>::recognition_challenge {
+			puzzle_hash
+		}.into();
+
+		let proposal_hash = T::Hashing::hash_of(&proposal);
+		<Proposals<T, I>>::try_mutate(|proposals| -> Result<usize, DispatchError> {
+				proposals
+					.try_push(proposal_hash)
+					.map_err(|_| Error::<T, I>::TooManyProposals)?;
+				Ok(proposals.len())
+			})?;
+		let index = Self::proposal_count();
+		<ProposalCount<T, I>>::mutate(|i| *i += 1);
+		<ProposalOf<T, I>>::insert(proposal_hash, proposal);
+		let votes = {
+			let end = frame_system::Pallet::<T>::block_number() + T::MotionDuration::get();
+			Votes { index, threshold, ayes: vec![], nays: vec![], end }
+		};
+		<Voting<T, I>>::insert(proposal_hash, votes);
+
+		Self::deposit_event(Event::Proposed {
+			account: Default::default(),
+			proposal_index: index,
+			proposal_hash,
+			threshold,
+		});
+
+		Ok(())
 	}
 }
 

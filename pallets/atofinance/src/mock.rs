@@ -87,6 +87,7 @@ parameter_types! {
 	// pub TargetIssuanceRate: Permill = Permill::from_float(0.1);
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub RaisingPeriodLength: BlockNumber = 5;
+	pub PenaltyOfCP: Perbill = Perbill::from_float(0.1);
 }
 
 impl crate::imps::challenge_manager::Config for Test {
@@ -107,6 +108,7 @@ impl crate::Config for Test {
 	// type StakingPeriod = StakingPeriod;
 	// type TargetIssuanceRate = TargetIssuanceRate;
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
+	type AtoPropose = ();
 }
 
 parameter_types! {

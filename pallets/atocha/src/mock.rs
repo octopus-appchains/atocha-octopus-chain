@@ -14,7 +14,7 @@ use sp_runtime::{
 
 use crate::types::PuzzleVersion;
 use frame_support::assert_ok;
-use frame_support::traits::Contains;
+use frame_support::traits::{Contains, GenesisBuild};
 
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -126,6 +126,7 @@ impl pallet_atofinance::Config for Test {
 	type SlashHandler = ();
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
+	type AtoPropose = ();
 }
 
 parameter_types! {
@@ -163,6 +164,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	// crate::GenesisConfig::<Test> { _pt: Default::default() }
 	// 	.assimilate_storage(&mut t)
 	// 	.unwrap();
+
+	pallet_atofinance::GenesisConfig::<Test> { _pt: Default::default() }
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
@@ -213,7 +218,6 @@ pub(crate) fn handle_create_puzzle(
 		origin,
 		puzzle_hash.clone(),
 		answer_hash.clone(),
-		None,
 		100 * DOLLARS,
 		puzzle_version.clone()
 	));

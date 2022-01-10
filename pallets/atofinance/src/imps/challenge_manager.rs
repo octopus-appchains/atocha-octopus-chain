@@ -1,13 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::sp_runtime::traits::StaticLookup;
 use super::*;
 
 pub struct ChallengeManager<T>(PhantomData<T>);
 
-pub trait Config: super::Config {
+pub trait Config: super::Config + pallet_balances::Config  {
 	type ChallengeThreshold: Get<Perbill>;
 	type RaisingPeriodLength: Get<<Self as frame_system::Config>::BlockNumber>;
 }
+
+// impl<T: Config> ChallengeManager<T> {
+// 	fn xxx(acc: <T::Lookup as StaticLookup>::Source, amount: T::Balance) -> T::Proposal{
+// 		// Call::System(frame_system::Call::remark { remark: value.encode() })
+// 		// Call::Balances(pallet_balances::Call::transfer{dest: acc, value: amount});
+// 		pallet_balances::Call::<T>::transfer{dest: acc, value: amount}
+// 	}
+// }
 
 impl<T: Config>
 	IAtoChallenge<
@@ -62,7 +71,15 @@ impl<T: Config>
 			end_bn: None,
 			raised_group: raise_group,
 		};
-		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data);
+		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data.clone());
+
+		match challenge_data.status {
+			ChallengeStatus::RaiseCompleted(_x) => {
+				T::AtoPropose::challenge_propose(pid.clone());
+			},
+			_ => {}
+		}
+
 		Ok(())
 	}
 
@@ -109,7 +126,15 @@ impl<T: Config>
 		challenge_data.status = challenge_status();
 		challenge_data.raised_total = raised_total;
 		challenge_data.raised_group.push((who.clone(), deposit));
-		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data);
+		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data.clone());
+
+		match challenge_data.status {
+			ChallengeStatus::RaiseCompleted(_x) => {
+				T::AtoPropose::challenge_propose(pid.clone());
+			},
+			_ => {}
+		}
+
 		Ok(())
 	}
 
@@ -158,7 +183,7 @@ impl<T: Config>
 		current_block_number > challenge_info.create_bn.saturating_add(period_len)
 	}
 
-	fn back_challenge_crowdloan(pid: &PuzzleSubjectHash, tax: Perbill) -> Result<(), Error<T>> {
+	fn back_challenge_crowdloan(pid: &PuzzleSubjectHash, tax: Perbill) -> DispatchResult {
 		let challenge_data = Self::check_get_active_challenge_info(pid);
 		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
 		let mut challenge_data = challenge_data.unwrap();
@@ -236,11 +261,13 @@ impl<T: Config>
 		result_vec
 	}
 
-	fn recognition_challenge(pid: &PuzzleSubjectHash) -> Result<(), Error<T>> {
+	fn recognition_challenge(pid: &PuzzleSubjectHash) -> DispatchResult {
 		Self::back_challenge_crowdloan(pid, Perbill::from_percent(0))
 	}
 
-	fn final_challenge(pid: &PuzzleSubjectHash, status: ChallengeStatus<T::BlockNumber, Perbill>) {
+	fn final_challenge(pid: &PuzzleSubjectHash, status: ChallengeStatus<T::BlockNumber, Perbill>) -> DispatchResult {
+		ensure!(<PuzzleChallengeInfo<T>>::contains_key(&pid), Error::<T>::ChallengeNotExists);
+
 		let in_status = match status {
 			ChallengeStatus::Raise(_) => {None}
 			ChallengeStatus::RaiseCompleted(_) => {None}
@@ -248,10 +275,18 @@ impl<T: Config>
 			ChallengeStatus::JudgePassed(_) => {Some(status)}
 			ChallengeStatus::JudgeRejected(_) => {Some(status)}
 		};
+
 		if let Some(s) = in_status {
-			let mut challenge_info = Self::check_get_active_challenge_info(pid).unwrap();
-			challenge_info.status = s;
+			let mut challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+			let bn = match challenge_info.status {
+				ChallengeStatus::RaiseBackFunds(x, _) => {x},
+				_ => {Zero::zero()}
+			};
+			ensure!(bn != Zero::zero(), Error::<T>::NeedARefundFirst);
+			challenge_info.status = s.clone();
 			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info);
+			return Ok(());
 		};
+		DispatchResult::Err(Error::<T>::ChallengeStatusError.into())
 	}
 }
