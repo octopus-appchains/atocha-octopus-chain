@@ -550,6 +550,8 @@ pub mod pallet {
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
+
+			T::AtoChallenge::challenge_failed(&puzzle_hash);
 			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
 
 			Ok(().into())

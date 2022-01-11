@@ -117,8 +117,6 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 
 		let total_balance = storage_ledger.total;
 
-		println!(" total_balance = {:?}", total_balance);
-
 		// Check liquidity.
 		let (pot_account, free_balance) = crate::Pallet::<T>::pot();
 		ensure!(free_balance >= total_balance, Error::<T>::InsufficientBalance);
@@ -129,20 +127,20 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 
 		let mut storage_beneficiaries = Vec::new();
 		for (beneficiary, pay_proportion) in beneficiaries.clone().into_iter() {
-			println!(
-				"RUN Transfer : {:?}, proportion : {:?} pay = {:?} ",
-				&beneficiary,
-				&pay_proportion,
-				pay_proportion * payout,
-			);
+
+			let tmp_init_free_balance = T::Currency::free_balance(&beneficiary);
+
 			T::Currency::transfer(
 				&pot_account,
 				&beneficiary,
 				pay_proportion * payout,
 				ExistenceRequirement::KeepAlive,
 			)?;
+
+			let tmp_init_free_balance = T::Currency::free_balance(&beneficiary);
 			storage_beneficiaries.push((beneficiary, pay_proportion));
 		}
+
 		// Burn fee.
 		let negative_imbalance = T::Currency::slash(&pot_account, tax_fee);
 		Self::OnBurn::on_unbalanced(negative_imbalance.0);

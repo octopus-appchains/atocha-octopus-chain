@@ -600,6 +600,12 @@ fn test_take_answer_reward_with_challenge_win() {
 			None
 		};
 
+		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		// println!("init original_balance = {:?}", original_balance);
+		assert_eq!(original_balance , (4000 - 10) * DOLLARS );
+		// 3990000000000000
+		//  100000000000000
+
 		//
 		assert_ok!(AtochaModule::recognition_challenge (
 				Origin::root(),
@@ -621,19 +627,19 @@ fn test_take_answer_reward_with_challenge_win() {
 
 		//
 		let total_bonus = Perbill::from_percent(100).saturating_sub(TaxOfTI::get()) * (100 * DOLLARS);
-		println!("{:?}\n{:?}\n{:?}, ",
-				 total_bonus,
-				 get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus.clone(),
-				get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus.clone()
-		);
+		// println!("{:?}\n{:?}\n{:?}, ",
+		// 		 total_bonus,
+		// 		 get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus.clone(),
+		// 		get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus.clone()
+		// );
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
-		assert_eq!(original_balance, 4000 * DOLLARS + (
+		let reward_after_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		assert_eq!(reward_after_balance, 4000 * DOLLARS + (
 			get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus
 		) );
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
-		assert_eq!(original_balance, 5000 * DOLLARS + (
+		let reward_after_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		assert_eq!(reward_after_balance, 5000 * DOLLARS + (
 			get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus
 		));
 

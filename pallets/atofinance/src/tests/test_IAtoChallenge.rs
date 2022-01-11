@@ -139,15 +139,11 @@ fn test_issue_challenge() {
 		let account3_free_balance = Balances::free_balance(ACCOUNT_ID_3);
 
 		ChallengeManager::<Test>::back_challenge_crowdloan(&puzzle_hash, Perbill::from_percent(10));
-		let account2_bonus = Perbill::from_rational(5_000_000_000_000u64, 6_000_000_000_000u64) * 6_000_000_000_000;
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_2),
-				    account2_free_balance +
-						account2_bonus - Perbill::from_percent(10) * account2_bonus
+				    account2_free_balance + (5_000_000_000_000 - Perbill::from_percent(10) * 5_000_000_000_000)
 		) ;
-		let account3_bonus = check_perval[2].1 * 6_000_000_000_000;
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_3),
-				   account3_free_balance +
-					   account3_bonus - Perbill::from_percent(10) * account3_bonus
+				   account3_free_balance + (1_000_000_000_000 - Perbill::from_percent(10) * 1_000_000_000_000)
 		);
 	});
 }

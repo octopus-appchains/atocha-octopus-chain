@@ -283,9 +283,11 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		SomethingStored(u32, T::AccountId),
 		StakingInterestRate(AtoInterestRate, AtoStakingPeriod),
+		ChallengeStatusChange(ChallengeStatus<T::BlockNumber, Perbill>),
 	}
 
 	// Errors inform users that something went wrong.

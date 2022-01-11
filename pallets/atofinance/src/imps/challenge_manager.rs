@@ -75,6 +75,7 @@ impl<T: Config>
 
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
+				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_data.status.clone()));
 				T::AtoPropose::challenge_propose(pid.clone());
 			},
 			_ => {}
@@ -130,6 +131,7 @@ impl<T: Config>
 
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
+				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_data.status.clone()));
 				T::AtoPropose::challenge_propose(pid.clone());
 			},
 			_ => {}
@@ -187,26 +189,25 @@ impl<T: Config>
 		let challenge_data = Self::check_get_active_challenge_info(pid);
 		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
 		let mut challenge_data = challenge_data.unwrap();
-		let challengers = Self::get_list_of_challengers(pid);
+
 		let pot_infos = crate::Pallet::<T>::pot();
 		ensure!(pot_infos.1 >= challenge_data.raised_total, Error::<T>::InsufficientBalance);
 
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 		challenge_data.status = ChallengeStatus::RaiseBackFunds(current_block_number, tax);
 		<PuzzleChallengeInfo<T>>::insert(&pid, challenge_data.clone());
+		crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_data.status.clone()));
 
 		let mut total_pay: BalanceOf<T> = Zero::zero();
-		for (acc, pay_rate) in challengers {
-			let pay_amount = pay_rate * challenge_data.raised_total;
-			let pay_tax = tax * pay_amount;
-			let real_pay = pay_amount.saturating_sub(pay_tax);
+		for (acc, deposit) in challenge_data.raised_group {
+			let deposit = deposit - tax * deposit;
 			let res = T::Currency::transfer(
 				&crate::Pallet::<T>::account_id(),
 				&acc,
-				real_pay,
+				deposit,
 				ExistenceRequirement::KeepAlive,
 			);
-			total_pay+=real_pay;
+			total_pay+=deposit;
 		}
 
 		let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), challenge_data.raised_total.saturating_sub(total_pay));
@@ -218,10 +219,11 @@ impl<T: Config>
 	fn challenge_failed(pid: &PuzzleSubjectHash ) -> Result<(), Error<T>> {
 		let challenge_data = Self::check_get_active_challenge_info(pid);
 		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
-		let mut challenge_data = challenge_data.unwrap();
-		let raised_total = challenge_data.raised_total;
-		let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), raised_total);
-		T::SlashHandler::on_unbalanced(im_balance.0);
+		// let mut challenge_data = challenge_data.unwrap();
+		// let raised_total = challenge_data.raised_total;
+		// let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), raised_total);
+		// T::SlashHandler::on_unbalanced(im_balance.0);
+		Self::back_challenge_crowdloan(pid, Perbill::from_percent(100));
 		Ok(())
 	}
 
@@ -284,7 +286,8 @@ impl<T: Config>
 			};
 			ensure!(bn != Zero::zero(), Error::<T>::NeedARefundFirst);
 			challenge_info.status = s.clone();
-			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info);
+			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info.clone());
+			crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_info.status));
 			return Ok(());
 		};
 		DispatchResult::Err(Error::<T>::ChallengeStatusError.into())
