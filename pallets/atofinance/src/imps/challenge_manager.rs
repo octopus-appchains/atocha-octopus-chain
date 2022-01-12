@@ -54,23 +54,31 @@ impl<T: Config>
 		let mut raise_group: Vec<(T::AccountId, BalanceOf<T>)> = Vec::new();
 		raise_group.push((who.clone(), real_deposit));
 
+		let mut start_bn = None;
 		let challenge_status = || {
 			if real_deposit >= threshold_balance {
+				// start_bn = Some(current_block_number);
 				return ChallengeStatus::RaiseCompleted(current_block_number);
 			}
 			ChallengeStatus::Raise(current_block_number)
 		};
 
+		let current_status = challenge_status();
+		if let ChallengeStatus::RaiseCompleted(x) = current_status.clone() {
+			start_bn = Some(x);
+		}
+
 		// Create challenge data
 		let challenge_data = PuzzleChallengeData {
 			raised_total: real_deposit,
-			status: challenge_status(),
+			status: current_status,
 			create_bn: current_block_number,
 			creator: who,
-			start_bn: None,
+			start_bn: start_bn,
 			end_bn: None,
 			raised_group: raise_group,
 		};
+
 		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data.clone());
 
 		match challenge_data.status {
@@ -124,7 +132,15 @@ impl<T: Config>
 			ChallengeStatus::Raise(current_block_number)
 		};
 
-		challenge_data.status = challenge_status();
+
+		let current_status = challenge_status();
+		let mut start_bn = None;
+		if let ChallengeStatus::RaiseCompleted(x) = current_status.clone() {
+			start_bn = Some(x);
+		}
+
+		challenge_data.start_bn = start_bn;
+		challenge_data.status = current_status;
 		challenge_data.raised_total = raised_total;
 		challenge_data.raised_group.push((who.clone(), deposit));
 		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data.clone());
@@ -284,6 +300,8 @@ impl<T: Config>
 				ChallengeStatus::RaiseBackFunds(x, _) => {x},
 				_ => {Zero::zero()}
 			};
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			challenge_info.end_bn = Some(current_block_number);
 			ensure!(bn != Zero::zero(), Error::<T>::NeedARefundFirst);
 			challenge_info.status = s.clone();
 			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info.clone());

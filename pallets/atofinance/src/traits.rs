@@ -61,6 +61,7 @@ pub trait IPuzzlePoints<AccountId, PToken, BlockNumber, PuzzleHash, DResult> {
 	fn increase_points_to(who: &AccountId, pt: PToken) -> DResult;
 	fn reduce_points_to(who: &AccountId, pt: PToken) -> DResult;
 	fn get_issuance_points() -> PToken;
+	fn get_top_list() -> Vec<(AccountId, PToken)> ;
 	fn calculate_points_of_puzzle(
 		current_bn: BlockNumber,
 		pid: &PuzzleHash,

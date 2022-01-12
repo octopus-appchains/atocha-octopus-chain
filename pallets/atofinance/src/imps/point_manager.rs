@@ -62,4 +62,8 @@ impl<T: Config>
 			.collect();
 		point_list.iter().sum()
 	}
+
+	fn get_top_list() -> Vec<(T::AccountId, PointToken)> {
+		todo!()
+	}
 }

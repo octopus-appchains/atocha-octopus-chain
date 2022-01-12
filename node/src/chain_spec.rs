@@ -279,6 +279,7 @@ fn testnet_genesis(
 			validators,
 			premined_amount: 1024 * DOLLARS,
 		},
+		atocha_finace: Default::default(),
 		octopus_lpos: OctopusLposConfig { era_payout: 2 * DOLLARS, ..Default::default() },
 	}
 }

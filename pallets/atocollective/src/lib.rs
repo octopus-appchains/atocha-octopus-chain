@@ -754,25 +754,30 @@ pub mod pallet {
 					length_bound,
 					proposal_weight_bound,
 				)?;
-
+				log::info!("******* RUN 1");
 				Self::check_challenge_call(
 					proposal.clone(),
 					proposal_hash,
 					|puzzle_hash,proposal_hash| -> DispatchResult{
+						log::info!("******* RUN match_fun.");
 						let proposal_refuse: T::Proposal = pallet_atocha::Call::<T>::refuse_challenge {
 							puzzle_hash
 						}.into();
 
+						log::info!("******* RUN 2");
+
 						let dispatch_weight = proposal.get_dispatch_info().weight;
 						let origin = RawOrigin::Members(yes_votes, seats).into();
 						let result = proposal_refuse.dispatch(origin);
+						log::info!("******* RUN 3");
 						Self::deposit_event(Event::ExecutedRefuse {
 							result: result.map(|_| ()).map_err(|e| e.error),
 						});
-
+						log::info!("******* RUN 4");
 						Ok(())
 					},
 					|| -> DispatchResult {
+						log::info!("******* RUN mismatch_fun.");
 						Ok(())
 					}
 				)?;

@@ -116,7 +116,7 @@ fn test_issue_challenge() {
 				status: ChallengeStatus::RaiseCompleted(5),
 				create_bn: 5,
 				creator: ACCOUNT_ID_2,
-				start_bn: None,
+				start_bn: Some(5),
 				end_bn: None,
 				raised_group: vec![
 					(ACCOUNT_ID_2, 2_000_000_000_000),

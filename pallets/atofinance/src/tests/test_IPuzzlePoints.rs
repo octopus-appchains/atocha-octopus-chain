@@ -35,7 +35,7 @@ fn test_calculate_points_of_puzzle() {
 
 		const ACCOUNT_ID_1: u64 = 1;
 		const ACCOUNT_ID_2: u64 = 2;
-		const ACCOUNT_ID_3: u64 = 2;
+		const ACCOUNT_ID_3: u64 = 3;
 
 		let puzzle_hash = toVec("ABC");
 		// puzzle must exists.

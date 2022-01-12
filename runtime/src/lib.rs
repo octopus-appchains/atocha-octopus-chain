@@ -778,7 +778,7 @@ construct_runtime!(
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>},
-		AtochaFinace: pallet_atofinance::{Pallet, Call, Storage, Event<T>},
+		AtochaFinace: pallet_atofinance::{Pallet, Call, Storage, Event<T>, Config<T>},
 		//
 		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Council: pallet_ato_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},

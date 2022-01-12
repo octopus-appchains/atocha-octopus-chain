@@ -236,7 +236,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// check signer
 			let who = ensure_signed(origin)?;
-			ensure!(<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleNotExist);
 
 			// Check amount > MinBonus
 			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
@@ -249,6 +248,15 @@ pub mod pallet {
 				ensure!(r.len() as u32 <= T::MaxSponsorExplainLen::get(), Error::<T>::ExplainTooLong);
 				reason_v8 = r;
 			}
+
+			ensure!(<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleNotExist);
+
+			// Get puzzle
+			let puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
+				Error::<T>::PuzzleHasBeenSolved
+			);
 
 			// pid: PuzzleHash, who: AccountId, amount: BalanceOf, create_bn: BlockNumber,
 			// T::PuzzleLedger::do_bonus(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number)?;
