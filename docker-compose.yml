@@ -17,13 +17,17 @@ services:
       atocha-node --chain local --name ato_one --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
-      --port 31333
+      --port 30333
+      --node-key 0000000000000000000000000000000000000000000000000000000000000001
       ---validator
     logging:
       driver: json-file
       options:
         max-size: "20m"
         max-file: "10"
+    networks:
+      atochain_network:
+        ipv4_address: 172.30.1.2
   chain_two:
     container_name: atocha-two
     image: atocha-protocol/atocha-node
@@ -37,13 +41,17 @@ services:
       atocha-node --chain local --name ato_two --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
-      --port 31333
+      --port 30333
+      --bootnodes /ip4/172.30.1.2/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       ---validator
     logging:
       driver: json-file
       options:
         max-size: "20m"
         max-file: "10"
+    networks:
+      atochain_network:
+        ipv4_address: 172.30.1.3
   chain_three:
     container_name: atocha-three
     image: atocha-protocol/atocha-node
@@ -57,10 +65,19 @@ services:
       atocha-node --chain local --name ato_three --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
-      --port 31333
+      --port 30333
+      --bootnodes /ip4/172.30.1.2/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       ---validator
     logging:
       driver: json-file
       options:
         max-size: "20m"
         max-file: "10"
+    networks:
+      atochain_network:
+        ipv4_address: 172.30.1.4
+networks:
+  atochain_network:
+    ipam:
+      config:
+          - subnet: "172.30.1.0/24"
