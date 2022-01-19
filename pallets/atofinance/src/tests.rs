@@ -32,6 +32,33 @@ fn test_Perbill() {
 	});
 }
 
+
+#[test]
+fn test_PreStorage() {
+	new_test_ext().execute_with(|| {
+		let current_bn: u64 = 800;
+		System::set_block_number(current_bn);
+		<AtochaPot as OnInitialize<u64>>::on_initialize(current_bn);
+		const ACCOUNT_ID_1: u64 = 2;
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 200000000000000);
+		assert_noop!(
+			AtochaPot::pre_storage(Origin::signed(ACCOUNT_ID_1), "STORAGE_HASH".as_bytes().to_vec(), 9000, 9000 ),
+			Error::<Test>::ExceededMaximumFeeLimit,
+		);
+		assert_ok!(AtochaPot::pre_storage(Origin::signed(ACCOUNT_ID_1), "STORAGE_HASH".as_bytes().to_vec(), 9000, 100000000000000 ));
+
+		assert_eq!(
+			AtochaPot::storage_ledger("STORAGE_HASH".as_bytes().to_vec(), 9000),
+			Some((ACCOUNT_ID_1, current_bn)),
+		);
+
+		assert_eq!(
+			AtochaPot::storage_ledger("STORAGE_HASH".as_bytes().to_vec(), 8000),
+			None,
+		);
+	});
+}
+
 #[test]
 fn test_Transfer() {
 	new_test_ext().execute_with(|| {

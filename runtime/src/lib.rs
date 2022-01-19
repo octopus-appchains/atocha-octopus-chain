@@ -390,6 +390,7 @@ parameter_types! {
 	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES;
 	pub ChallengeThreshold: Perbill = Perbill::from_percent(60);
 	pub RaisingPeriodLength: BlockNumber = 10 * MINUTES;
+	pub StorageBaseFee: Balance = 10000;
 }
 
 impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
@@ -398,13 +399,14 @@ impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
 }
 
 impl pallet_atofinance::Config for Runtime {
+	type AtoPropose = Council;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type Currency = pallet_balances::Pallet<Self>;
 	type SlashHandler = ();
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	type AtoPropose = Council;
+	type StorageBaseFee = StorageBaseFee;
 }
 
 // ------------------------- ATOCHA Pallets Config end.

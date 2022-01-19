@@ -78,16 +78,11 @@ impl system::Config for Test {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	// pub const BasicDollars: Balance = DOLLARS;
-	// pub const TicketFee: Balance = 5 * DOLLARS;
-	// pub const DepositFee: Balance = 100 * DOLLARS;
-	// pub const DayBlockCount: u32 = 14400;
-	// pub const StakingPeriod: u32 = 10;
 	pub const PerEraOfBlockNumber: BlockNumber = 5;
-	// pub TargetIssuanceRate: Permill = Permill::from_float(0.1);
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub RaisingPeriodLength: BlockNumber = 5;
 	pub PenaltyOfCP: Perbill = Perbill::from_float(0.1);
+	pub StorageBaseFee: BalanceOf<Test> = 1000;
 }
 
 impl crate::imps::challenge_manager::Config for Test {
@@ -96,19 +91,14 @@ impl crate::imps::challenge_manager::Config for Test {
 }
 
 impl crate::Config for Test {
+	type AtoPropose = ();
+	type Currency = pallet_balances::Pallet<Self>;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
-	type Currency = pallet_balances::Pallet<Self>;
-	type SlashHandler = ();
-	type RewardHandler = ();
-	// type BasicDollars = BasicDollars;
-	// type TicketFee = TicketFee;
-	// type DepositFee = DepositFee;
-	// type DayBlockCount = DayBlockCount;
-	// type StakingPeriod = StakingPeriod;
-	// type TargetIssuanceRate = TargetIssuanceRate;
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	type AtoPropose = ();
+	type RewardHandler = ();
+	type SlashHandler = ();
+	type StorageBaseFee = StorageBaseFee;
 }
 
 parameter_types! {

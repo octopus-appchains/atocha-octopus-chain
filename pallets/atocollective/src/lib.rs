@@ -720,10 +720,8 @@ pub mod pallet {
 			#[pallet::compact] length_bound: u32,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-
 			let voting = Self::voting(&proposal_hash).ok_or(Error::<T, I>::ProposalMissing)?;
 			ensure!(voting.index == index, Error::<T, I>::WrongIndex);
-
 			let mut no_votes = voting.nays.len() as MemberCount;
 			let mut yes_votes = voting.ayes.len() as MemberCount;
 			let seats = Self::members().len() as MemberCount;
@@ -747,41 +745,19 @@ pub mod pallet {
 					Pays::Yes,
 				).into())
 			} else if disapproved {
-				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
-				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
-				let (proposal, _len) = Self::validate_and_get_proposal(
-					&proposal_hash,
-					length_bound,
-					proposal_weight_bound,
-				)?;
-				log::info!("******* RUN 1");
+				let proposal = ProposalOf::<T, I>::get(&proposal_hash).ok_or(Error::<T, I>::ProposalMissing)?;
 				Self::check_challenge_call(
 					proposal.clone(),
-					proposal_hash,
+					proposal_hash.clone(),
 					|puzzle_hash,proposal_hash| -> DispatchResult{
-						log::info!("******* RUN match_fun.");
-						let proposal_refuse: T::Proposal = pallet_atocha::Call::<T>::refuse_challenge {
-							puzzle_hash
-						}.into();
-
-						log::info!("******* RUN 2");
-
-						let dispatch_weight = proposal.get_dispatch_info().weight;
-						let origin = RawOrigin::Members(yes_votes, seats).into();
-						let result = proposal_refuse.dispatch(origin);
-						log::info!("******* RUN 3");
-						Self::deposit_event(Event::ExecutedRefuse {
-							result: result.map(|_| ()).map_err(|e| e.error),
-						});
-						log::info!("******* RUN 4");
-						Ok(())
+						pallet_atocha::Pallet::<T>::refuse_challenge(puzzle_hash)
 					},
 					|| -> DispatchResult {
-						log::info!("******* RUN mismatch_fun.");
 						Ok(())
 					}
 				)?;
-
+				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
+				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
 				return Ok((
 					Some(T::WeightInfo::close_early_disapproved(seats, proposal_count)),
 					Pays::No,
@@ -824,6 +800,17 @@ pub mod pallet {
 				)
 					.into())
 			} else {
+				let proposal = ProposalOf::<T, I>::get(&proposal_hash).ok_or(Error::<T, I>::ProposalMissing)?;
+				Self::check_challenge_call(
+					proposal.clone(),
+					proposal_hash.clone(),
+					|puzzle_hash,proposal_hash| -> DispatchResult{
+						pallet_atocha::Pallet::<T>::refuse_challenge(puzzle_hash)
+					},
+					|| -> DispatchResult {
+						Ok(())
+					}
+				)?;
 				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
 				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
 				Ok((Some(T::WeightInfo::close_disapproved(seats, proposal_count)), Pays::No).into())
@@ -948,6 +935,27 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		num_proposals as u32
 	}
 
+	// fn disapprove_puzzle_exec(
+	// 	puzzle_hash: PuzzleSubjectHash,
+	// 	proposal_hash: T::Hash,
+	// 	yes_votes: MemberCount,
+	// 	seats: MemberCount,
+	// ) ->  DispatchResult {
+	// 	log::info!("******* RUN match_fun.");
+	// 	let proposal_refuse: T::Proposal = pallet_atocha::Call::<T>::refuse_challenge {
+	// 		puzzle_hash
+	// 	}.into();
+	// 	log::info!("******* RUN 2");
+	// 	let origin = RawOrigin::Members(yes_votes.clone(), seats.clone()).into();
+	// 	let result = proposal_refuse.dispatch(origin);
+	// 	log::info!("******* RUN 3");
+	// 	Self::deposit_event(Event::ExecutedRefuse {
+	// 		result: result.map(|_| ()).map_err(|e| e.error),
+	// 	});
+	// 	log::info!("******* RUN 4");
+	// 	Ok(())
+	// }
+
 	fn check_challenge_call<FA, FB>(
 		proposal: <T as Config<I>>::Proposal,
 		proposal_hash: T::Hash,
@@ -983,14 +991,8 @@ impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I> {
 	fn challenge_propose(puzzle_hash: PuzzleSubjectHash) -> DispatchResult
 	{
 		// proposal: Box<<T as Config<I>>::Proposal>
+		// TODO: Update threshold for D
 		let threshold = 3;
-		// let proposal = Call::System(pallet_atocha::Call::<T>::recognition_challenge{puzzle_hash});
-		// let proposal: T::Proposal = SystemCall::<T>::remark {
-		// 	remark: Vec::new()
-		// }.into();
-		// let proposal: T::Proposal = SystemCall::<T>::set_heap_pages {
-		// 	pages: 13
-		// }.into();
 
 		let proposal: T::Proposal = pallet_atocha::Call::<T>::recognition_challenge {
 			puzzle_hash

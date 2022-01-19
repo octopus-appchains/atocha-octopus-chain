@@ -5,8 +5,10 @@ pub use pallet::*;
 
 use frame_support::sp_runtime::app_crypto::TryFrom;
 use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
-use frame_support::sp_runtime::MultiSignature;
+use frame_support::sp_runtime::{DispatchResult, MultiSignature};
 use frame_support::sp_runtime::MultiSigner;
+use frame_support::ensure;
+
 use hex::ToHex;
 use sha2::Digest;
 use sp_application_crypto::sr25519;
@@ -14,6 +16,10 @@ use sp_application_crypto::sr25519::Public;
 use sp_application_crypto::sr25519::Signature;
 use sp_runtime::SaturatedConversion;
 use sp_core::sp_std::vec::Vec;
+use pallet_atofinance::traits::IAtoChallenge;
+use pallet_atofinance::types::ChallengeStatus;
+use crate::types::PuzzleSubjectHash;
+use crate::types::PuzzleStatus;
 
 mod traits;
 pub mod types;
@@ -162,20 +168,21 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		PuzzleAlreadyExist,
 		AnswerAlreadyExist,
-		WrongAnswer,
+		BeingChallenged,
+		ChallengePeriodIsNotEnd,
+		ChallengeListNotEmpty,
+		ChallengePeriodIsEnd,
+		NoRightToReward,
 		PuzzleNotExist,
 		PuzzleHasBeenSolved,
 		PuzzleStatusErr,
 		PuzzleMinBonusInsufficient,
 		ExplainTooLong,
+		PuzzleAlreadyExist,
 		PuzzleNotSolvedChallengeFailed,
-		ChallengePeriodIsNotEnd,
-		ChallengeListNotEmpty,
-		ChallengePeriodIsEnd,
-		BeingChallenged,
-		NoRightToReward,
+		WrongAnswer,
+
 	}
 
 	#[pallet::hooks]
@@ -184,6 +191,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	{
+
 		#[pallet::weight(0)]
 		pub fn create_puzzle(
 			origin: OriginFor<T>,
@@ -534,36 +542,36 @@ pub mod pallet {
 		}
 
 		// refuse_challenge
-		#[pallet::weight(0)]
-		pub fn refuse_challenge(
-			origin: OriginFor<T>,
-			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-		) -> DispatchResult {
-			// check signer
-			T::CouncilOrigin::ensure_origin(origin)?;
-			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
-			ensure!(
-				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
-				Error::<T>::PuzzleStatusErr
-			);
-			//
-			// let reveal_bn = puzzle_content.reveal_bn.unwrap();
-
-			//Get challenge list
-			let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
-			ensure!(
-				beneficiaries.len() > 0 as usize,
-				Error::<T>::ChallengeListNotEmpty
-			);
-
-			//
-			let current_block_number = <frame_system::Pallet<T>>::block_number();
-
-			T::AtoChallenge::challenge_failed(&puzzle_hash);
-			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
-
-			Ok(().into())
-		}
+		// #[pallet::weight(0)]
+		// pub fn refuse_challenge(
+		// 	origin: OriginFor<T>,
+		// 	puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+		// ) -> DispatchResult {
+		// 	// check signer
+		// 	T::CouncilOrigin::ensure_origin(origin)?;
+		// 	let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+		// 	ensure!(
+		// 		puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+		// 		Error::<T>::PuzzleStatusErr
+		// 	);
+		// 	//
+		// 	// let reveal_bn = puzzle_content.reveal_bn.unwrap();
+		//
+		// 	//Get challenge list
+		// 	let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+		// 	ensure!(
+		// 		beneficiaries.len() > 0 as usize,
+		// 		Error::<T>::ChallengeListNotEmpty
+		// 	);
+		//
+		// 	//
+		// 	let current_block_number = <frame_system::Pallet<T>>::block_number();
+		//
+		// 	T::AtoChallenge::challenge_failed(&puzzle_hash);
+		// 	T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
+		//
+		// 	Ok(().into())
+		// }
 
 		// // refuse_challenge
 		// #[pallet::weight(0)]
@@ -604,6 +612,33 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T>
 {
+
+	pub fn refuse_challenge(
+		puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+	) -> DispatchResult {
+
+		let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+		ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
+
+		//Get challenge list
+		let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+		ensure!(
+				beneficiaries.len() > 0 as usize,
+				Error::<T>::ChallengeListNotEmpty
+			);
+
+		//
+		let current_block_number = <frame_system::Pallet<T>>::block_number();
+
+		T::AtoChallenge::challenge_failed(&puzzle_hash);
+		T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
+
+		Ok(().into())
+	}
+
 	fn check_signed_valid(public_id: Public, signature: &[u8], msg: &[u8]) -> bool {
 		let signature = Signature::try_from(signature);
 		let signature = signature.unwrap();

@@ -790,7 +790,6 @@ fn test_take_answer_reward_with_challenge_faild() {
 
 		//
 		assert_ok!(AtochaModule::refuse_challenge (
-			Origin::root(),
 			puzzle_hash.clone(),
 		));
 

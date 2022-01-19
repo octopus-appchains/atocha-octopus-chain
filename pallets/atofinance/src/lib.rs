@@ -52,138 +52,43 @@ pub mod pallet {
 		},
 		weights::Weight,
 	};
+	use frame_support::traits::ExistenceRequirement;
 	use frame_system::pallet_prelude::*;
 	use sp_core::sp_std::vec::Vec;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Because this pallet emits events, it depends on the runtime's definition of an event.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		type AtoPropose: IAtoPropose<PuzzleSubjectHash>;
 
 		/// The staking balance.
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-		/// Handler for the slashed deposits.
-		type SlashHandler: OnUnbalanced<NegativeImbalanceOf<Self>>;
-
-		/// Handler for the rewards.
-		type RewardHandler: OnUnbalanced<PositiveImbalanceOf<Self>>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		// #[pallet::constant]
-		// type BasicDollars: Get<BalanceOf<Self>>;
-
-		// #[pallet::constant]
-		// type TicketFee: Get<BalanceOf<Self>>;
-
-		// #[pallet::constant]
-		// type DepositFee: Get<BalanceOf<Self>>;
-
-		// #[pallet::constant]
-		// type DayBlockCount: Get<u32>;
-
-		// #[pallet::constant]
-		// type StakingPeriod: Get<u32>;
-
 		#[pallet::constant]
 		type PerEraOfBlockNumber: Get<Self::BlockNumber>;
 
-		type AtoPropose: IAtoPropose<PuzzleSubjectHash>;
-		// // type PuzzleStatus: IPuzzleStatus<PuzzleSubjectHash>;
-		// #[pallet::constant]
-		// type TargetIssuanceRate: Get<Permill>;
+		/// Handler for the rewards.
+		type RewardHandler: OnUnbalanced<PositiveImbalanceOf<Self>>;
+
+		/// Handler for the slashed deposits.
+		type SlashHandler: OnUnbalanced<NegativeImbalanceOf<Self>>;
+
+		#[pallet::constant]
+		type StorageBaseFee: Get<BalanceOf<Self>>;
+
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
-	// The pallet's runtime storage items.
-	// https://substrate.dev/docs/en/knowledgebase/runtime/storage
-	// #[pallet::storage]
-	// #[pallet::getter(fn something)]
-	// // Learn more about declaring storage items:
-	// // https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
-	// pub type Something<T> = StorageValue<_, u32>;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_staking_fee)]
-	// pub type AtoStakingFee<T> = StorageValue<_, BalanceOf<T>>;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_deposit_fee)]
-	// pub type AtoDepositFee<T> = StorageDoubleMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	PuzzleSubjectHash, // puzlle_hash,
-	// 	Blake2_128Concat,
-	// 	<T as frame_system::Config>::AccountId, // pay or pay to account. ,,
-	// 	(BalanceOf<T>, <T as frame_system::Config>::BlockNumber),
-	// 	ValueQuery,
-	// >;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_staking_pool)]
-	// pub type AtoStakingPool<T> = StorageDoubleMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	PuzzleSubjectHash, // puzlle_hash,
-	// 	Blake2_128Concat,
-	// 	<T as frame_system::Config>::AccountId, // pay or pay to account. ,,
-	// 	Vec<(BalanceOf<T>, <T as frame_system::Config>::BlockNumber)>,
-	// 	ValueQuery,
-	// >;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_staking_trace)]
-	// pub type AtoStakingTrace<T> = StorageDoubleMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	<T as frame_system::Config>::AccountId, // account id .
-	// 	Blake2_128Concat,
-	// 	PuzzleSubjectHash, // puzzle hash key
-	// 	BalanceOf<T>,
-	// 	ValueQuery,
-	// >;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_sponsor_fee)]
-	// pub type AtoSponsorFee<T> = StorageDoubleMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	PuzzleSubjectHash, // puzzle hash key
-	// 	Blake2_128Concat,
-	// 	<T as frame_system::Config>::AccountId, // account id .
-	// 	BalanceOf<T>,
-	// 	ValueQuery,
-	// >;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_ticket_fee)]
-	// pub type AtoTicketFee<T> = StorageDoubleMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	PuzzleSubjectHash, // puzzle hash key
-	// 	Blake2_128Concat,
-	// 	<T as frame_system::Config>::AccountId, // account id .
-	// 	(BalanceOf<T>, <T as frame_system::Config>::BlockNumber),
-	// 	ValueQuery,
-	// >;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_staking_interest_rate)]
-	// pub type AtoStakingInterestRate<T> = StorageMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	AtoStakingPeriod, // puzzle hash key
-	// 	AtoInterestRate,
-	// 	ValueQuery,
-	// >;
 
 	//
 	#[pallet::storage]
@@ -260,6 +165,21 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn storage_ledger)]
+	pub type StorageLedger<T> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		StorageHash,
+		Blake2_128Concat,
+		StorageLength,
+		(
+			<T as frame_system::Config>::AccountId,
+		 	<T as frame_system::Config>::BlockNumber
+		),
+	>;
+
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub _pt: PhantomData<T>,
@@ -294,64 +214,91 @@ pub mod pallet {
 	#[pallet::error]
 	#[derive(PartialEq, Eq)]
 	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
 		//
-		DepositAlreadyExists,
-		//
-		InsufficientBalance,
-		//
-		DepositNotFound,
-		//
-		TicketFeeHasBeenPaid,
-		//
-		TicketFeeNotPaid,
-		//
-		RefundFailed,
-		//
-		NeedARefundFirst,
-		//
-		ChallengeStatusError,
-		//
-		ReserveFailed,
-		//
-		PuzzlePeriodError,
-		//
-		StakingNotFound,
-		//
-		PuzzleNotExists,
+		BeneficiaryListNotEmpty,
 		//
 		ChallengeAlreadyExists,
 		//
 		ChallengeNotExists,
 		//
-		RaisingPeriodExpired,
+		ChallengeStatusError,
+		//
+		DepositAlreadyExists,
+		//
+		DepositNotFound,
 		//
 		EndOfRaising,
 		//
-		RewardHasBeenClaimed,
+		ExceededMaximumFeeLimit,
 		//
-		BeneficiaryListNotEmpty,
+		InsufficientBalance,
 		//
-		WrongPaymentRatio,
+		InsufficientPoint,
+		//
+		LedgerOwnerNotMatch,
+		//
+		NeedARefundFirst,
 		//
 		NotAnswer,
 		//
 		NotCreator,
-		//
-		LedgerOwnerNotMatch,
-		//
-		InsufficientPoint,
+		/// Error names should be descriptive.
+		NoneValue,
 		//
 		NotPointToken,
 		//
+		ReserveFailed,
+		//
+		RefundFailed,
+		//
 		PointTokenIncreaseFailure,
+		//
+		PuzzlePeriodError,
+		//
+		PuzzleNotExists,
+		//
+		StakingNotFound,
+		/// Errors should have helpful documentation associated with them.
+		StorageOverflow,
+		//
+		StorageFeesTooHigh,
+		//
+		TicketFeeHasBeenPaid,
+		//
+		TicketFeeNotPaid,
+		//
+		RaisingPeriodExpired,
+		//
+		RewardHasBeenClaimed,
+		//
+		WrongPaymentRatio,
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		//
+		#[pallet::weight(0)]
+		pub fn pre_storage(
+			origin: OriginFor<T>,
+			storage_hash: StorageHash, // Arweave tx - id
+			storage_length: StorageLength,
+			max_fee: BalanceOf<T>,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+			// get fee.
+			let storage_fee = Self::calculate_storage_fee(storage_length);
+			ensure!(storage_fee.is_some(), Error::<T>::StorageFeesTooHigh);
+			let storage_fee = storage_fee.unwrap();
+			ensure!(storage_fee <= max_fee, Error::<T>::ExceededMaximumFeeLimit);
+			//
+			T::Currency::transfer(&who, &Self::account_id(), storage_fee, ExistenceRequirement::KeepAlive)?;
+
+			StorageLedger::<T>::insert(storage_hash, storage_length, (who, Self::get_current_bn()));
+
+			Ok(().into())
+		}
+	}
 }
 
 impl<T: Config> Pallet<T> {
@@ -368,6 +315,14 @@ impl<T: Config> Pallet<T> {
 
 	pub fn get_current_bn() -> T::BlockNumber {
 		<frame_system::Pallet<T>>::block_number()
+	}
+
+	pub fn calculate_storage_fee(data_length: u64) -> Option<BalanceOf<T>> {
+		let base_length_balance: Result<BalanceOf<T>, _> = data_length.try_into();
+		if let Ok(data_balance) = base_length_balance {
+			return Some(T::StorageBaseFee::get().saturating_mul(data_balance));
+		}
+		None
 	}
 }
 

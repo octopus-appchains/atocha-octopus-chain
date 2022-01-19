@@ -32,6 +32,10 @@ pub type AtoStakingPeriod = u64;
 
 pub type PointToken = u128;
 
+pub type StorageHash = Vec<u8>;
+
+pub type StorageLength = u64;
+
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct AtoInterestRate {
 	pub permill: Permill,

@@ -112,6 +112,7 @@ parameter_types! {
 	// pub TargetIssuanceRate: Permill = Permill::from_float(0.1);
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub RaisingPeriodLength: BlockNumber = 5;
+	pub StorageBaseFee: Balance = 1000;
 }
 
 impl pallet_atofinance::imps::challenge_manager::Config for Test {
@@ -127,6 +128,7 @@ impl pallet_atofinance::Config for Test {
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
 	type AtoPropose = ();
+	type StorageBaseFee = StorageBaseFee;
 }
 
 parameter_types! {
