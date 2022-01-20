@@ -11,6 +11,7 @@ use frame_support::sp_runtime::{Perbill, Permill, SaturatedConversion};
 use frame_support::sp_std::convert::{TryFrom, TryInto};
 use frame_support::storage::types::{OptionQuery, StorageMap};
 use frame_support::traits::{Currency, ExistenceRequirement, Get, OnUnbalanced, StorageInstance};
+use sp_runtime::generic::Era;
 use sp_std::marker::PhantomData;
 
 /// Edit this file to define custom logic or remove it if it is not needed.
@@ -150,6 +151,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn ato_point_total)]
 	pub type AtoPointTotal<T> = StorageValue<_, PointToken>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn ato_point_top_list)]
+	pub type AtoPointTopList<T> = StorageValue<_, Vec<(<T as frame_system::Config>::AccountId, PointToken)>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn puzzle_challenge_info)]
@@ -430,3 +435,4 @@ impl<T: Config>
 		Ok(())
 	}
 }
+

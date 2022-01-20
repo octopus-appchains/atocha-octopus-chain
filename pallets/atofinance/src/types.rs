@@ -36,6 +36,15 @@ pub type StorageHash = Vec<u8>;
 
 pub type StorageLength = u64;
 
+pub type ExchangeEra = u64;
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct ExchangeInfo <PToken, BalanceOf, PerVal: PerThing>{
+	pub proportion: PerVal,
+	pub pay_point: PToken,
+	pub take_token: BalanceOf,
+}
+
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct AtoInterestRate {
 	pub permill: Permill,

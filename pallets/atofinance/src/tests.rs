@@ -14,6 +14,7 @@ use frame_support::{
 use sp_runtime::{traits::Hash, Perbill};
 
 mod test_IAtoChallenge;
+mod test_IPointExchange;
 mod test_IPuzzleLedger;
 mod test_IPuzzlePoints;
 mod test_IPuzzleReward_Of_Points;

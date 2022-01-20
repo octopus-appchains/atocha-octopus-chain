@@ -2,6 +2,7 @@
 use super::*;
 
 pub mod challenge_manager;
+pub mod point_exchange;
 pub mod point_manager;
 pub mod point_reward;
 pub mod token_reward;

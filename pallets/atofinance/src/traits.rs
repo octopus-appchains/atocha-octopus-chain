@@ -61,7 +61,6 @@ pub trait IPuzzlePoints<AccountId, PToken, BlockNumber, PuzzleHash, DResult> {
 	fn increase_points_to(who: &AccountId, pt: PToken) -> DResult;
 	fn reduce_points_to(who: &AccountId, pt: PToken) -> DResult;
 	fn get_issuance_points() -> PToken;
-	fn get_top_list() -> Vec<(AccountId, PToken)> ;
 	fn calculate_points_of_puzzle(
 		current_bn: BlockNumber,
 		pid: &PuzzleHash,
@@ -86,6 +85,15 @@ pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Erro
 
 pub trait IAtoPropose<PuzzleHash>  {
 	fn challenge_propose(puzzle_hash: PuzzleHash) -> DispatchResult ;
+}
+
+pub trait IPointExchange<AccountId, BlockNumber, Era, PToken, Info>  {
+	fn apply_exchange(who :AccountId) -> DispatchResult ;
+	fn get_current_era() -> Era;
+	fn get_era_length() -> BlockNumber;
+	fn get_max_reward_count() -> u32;
+	fn get_reward_list(era: Era) -> Vec<(AccountId, PToken, Option<Info>)>;
+	fn get_history_depth() -> u32;
 }
 
 impl IAtoPropose<Vec<u8>> for () {

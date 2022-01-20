@@ -1,6 +1,6 @@
 use super::*;
 use crate::imps::PointManager;
-use crate::AtoFinanceLedger;
+use crate::{AtoFinanceLedger, AtoPointTopList};
 
 // fn get_total_points() -> PToken;
 // fn increase_points_to(who: &AccountId) -> DResult;
@@ -14,6 +14,13 @@ fn test_point_manager() {
 
 		const ACCOUNT_ID_1: u64 = 1;
 		const ACCOUNT_ID_2: u64 = 2;
+		const ACCOUNT_ID_3: u64 = 3;
+		const ACCOUNT_ID_4: u64 = 4;
+		const ACCOUNT_ID_5: u64 = 5;
+		const ACCOUNT_ID_6: u64 = 6;
+		const ACCOUNT_ID_7: u64 = 7;
+		const ACCOUNT_ID_8: u64 = 8;
+		const ACCOUNT_ID_9: u64 = 9;
 
 		// Dispatch a signed extrinsic.
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_1), 0);
@@ -25,6 +32,68 @@ fn test_point_manager() {
 		assert_eq!(<PointManager<Test>>::get_issuance_points(), 150_000_000_000_000);
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_1), 100_000_000_000_000);
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_2), 50_000_000_000_000);
+
+		// assert_eq!(<PointManager<Test>>::get_ranking_safety_count(), 3);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// 	(ACCOUNT_ID_2, 50_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_2, 50_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 200_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// 	(ACCOUNT_ID_2, 100_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_2, 50_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 250_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_2, 150_000_000_000_000),
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_3, 300_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 550_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_3, 300_000_000_000_000),
+		// 	(ACCOUNT_ID_2, 150_000_000_000_000),
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_4, 50_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 600_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_3, 300_000_000_000_000),
+		// 	(ACCOUNT_ID_2, 150_000_000_000_000),
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_5, 50_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 650_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_3, 300_000_000_000_000),
+		// 	(ACCOUNT_ID_2, 150_000_000_000_000),
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::reduce_points_to(&ACCOUNT_ID_3, 200_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 350_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_2, 150_000_000_000_000),
+		// 	(ACCOUNT_ID_3, 100_000_000_000_000),
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// ]);
+		//
+		// assert_ok!(<PointManager<Test>>::reduce_points_to(&ACCOUNT_ID_2, 150_000_000_000_000));
+		// assert_eq!(<PointManager<Test>>::get_issuance_points(), 200_000_000_000_000);
+		// assert_eq!(<PointManager<Test>>::get_ranking_list(), vec![
+		// 	(ACCOUNT_ID_3, 100_000_000_000_000),
+		// 	(ACCOUNT_ID_1, 100_000_000_000_000),
+		// 	(ACCOUNT_ID_4, 50_000_000_000_000),
+		// ]);
+
+
 	});
 }
 
