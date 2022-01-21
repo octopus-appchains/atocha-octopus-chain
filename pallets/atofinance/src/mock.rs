@@ -121,7 +121,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
-			(1, 100000000000000),
+			(1, 100_000_000_000_000),
 			(2, 200000000000000),
 			(3, 300000000000000),
 			(4, 400000000000000),

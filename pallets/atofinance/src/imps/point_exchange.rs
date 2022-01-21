@@ -11,6 +11,11 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		todo!()
 	}
 
+	fn execute_exchange(era: ExchangeEra) -> DispatchResult {
+		ensure!(era < Self::get_current_era(), Error::<T>::EraNotEnded );
+		Ok(())
+	}
+
 	fn get_current_era() -> ExchangeEra {
 		let current_bn = <frame_system::Pallet<T>>::block_number();
 		(current_bn / Self::get_era_length()).unique_saturated_into()

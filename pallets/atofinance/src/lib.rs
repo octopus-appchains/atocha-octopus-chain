@@ -234,11 +234,19 @@ pub mod pallet {
 		//
 		EndOfRaising,
 		//
+		EraNotEnded,
+		//
 		ExceededMaximumFeeLimit,
+		//
+		ExchangeListIsEmpty,
+		//
+		ExchangeApplyAlreadyExists,
 		//
 		InsufficientBalance,
 		//
 		InsufficientPoint,
+		//
+		LastExchangeRewardClearing,
 		//
 		LedgerOwnerNotMatch,
 		//
@@ -271,6 +279,8 @@ pub mod pallet {
 		TicketFeeHasBeenPaid,
 		//
 		TicketFeeNotPaid,
+		//
+		TooFewPoints,
 		//
 		RaisingPeriodExpired,
 		//
