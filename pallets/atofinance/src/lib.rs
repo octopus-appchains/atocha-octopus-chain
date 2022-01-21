@@ -261,6 +261,8 @@ pub mod pallet {
 		//
 		ExchangeApplyAlreadyExists,
 		//
+		ExchangeRewardEnded,
+		//
 		InsufficientBalance,
 		//
 		InsufficientPoint,

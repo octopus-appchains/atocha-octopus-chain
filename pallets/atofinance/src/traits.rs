@@ -90,7 +90,7 @@ pub trait IAtoPropose<PuzzleHash>  {
 pub trait IPointExchange<AccountId, BlockNumber, Era, PToken, Balance, Info>  {
 	fn apply_exchange(who :AccountId) -> DispatchResult ;
 	fn execute_exchange(era: Era, mint_balance: Balance) -> DispatchResult;
-	fn update_apply_list_point();
+	fn update_apply_list_point() -> bool;
 	fn get_current_era() -> Era;
 	fn get_era_length() -> BlockNumber;
 	fn get_max_reward_count() -> u32;
