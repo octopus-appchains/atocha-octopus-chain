@@ -156,6 +156,11 @@ pub mod pallet {
 	#[pallet::getter(fn ato_point_top_list)]
 	pub type AtoPointTopList<T> = StorageValue<_, Vec<(<T as frame_system::Config>::AccountId, PointToken)>>;
 
+
+	#[pallet::storage]
+	#[pallet::getter(fn last_update_block_info_of_point_exchage)]
+	pub type LastUpdateBlockInfoOfPointExchage<T> = StorageValue<_, <T as frame_system::Config>::BlockNumber>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn puzzle_challenge_info)]
 	pub type PuzzleChallengeInfo<T> = StorageMap<
@@ -167,6 +172,20 @@ pub mod pallet {
 			<T as frame_system::Config>::BlockNumber,
 			BalanceOf<T>, Perbill,
 		>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn point_exchange_info)]
+	pub type PointExchangeInfo<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		ExchangeEra, //
+		Vec<(
+			<T as frame_system::Config>::AccountId,
+			PointToken,
+			Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>
+		)>,
 		ValueQuery,
 	>;
 

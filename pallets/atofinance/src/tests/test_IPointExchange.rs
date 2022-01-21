@@ -4,10 +4,8 @@ use crate::imps::point_exchange::PointExchange;
 use crate::imps::PointManager;
 
 #[test]
-fn test_do_bonus() {
+fn test_point_exchange() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(5);
-
 		System::set_block_number(5);
 		assert_eq!(<PointExchange<Test>>::get_max_reward_count(), 3);
 		assert_eq!(<PointExchange<Test>>::get_history_depth(), 3);
