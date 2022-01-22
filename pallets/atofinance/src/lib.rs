@@ -162,6 +162,10 @@ pub mod pallet {
 	pub type LastUpdateBlockInfoOfPointExchage<T> = StorageValue<_, <T as frame_system::Config>::BlockNumber>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn last_exchange_reward_era)]
+	pub type LastExchangeRewardEra<T> = StorageValue<_, ExchangeEra>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn puzzle_challenge_info)]
 	pub type PuzzleChallengeInfo<T> = StorageMap<
 		_,

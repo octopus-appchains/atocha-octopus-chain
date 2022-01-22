@@ -8,15 +8,21 @@ pub struct PointExchange<T>(PhantomData<T>);
 // <T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
 impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointToken, BalanceOf<T>, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>> for PointExchange<T> {
 	fn apply_exchange(who: T::AccountId) -> DispatchResult {
+		let current_era = Self::get_current_era();
+		ensure!(current_era > Zero::zero(), Error::<T>::LastExchangeRewardClearing);
+
+		if PointExchangeInfo::<T>::contains_key(current_era.saturating_sub(1)) {
+			let previous_reward_era = LastExchangeRewardEra::<T>::get();
+			ensure!(previous_reward_era.is_some(), Error::<T>::LastExchangeRewardClearing);
+			ensure!(previous_reward_era.unwrap() == current_era.saturating_sub(1), Error::<T>::LastExchangeRewardClearing);
+		}
+
 		// Get use point value .
 		let apply_point = PointManager::<T>::get_total_points(&who);
 		ensure!(apply_point > 0, Error::<T>::TooFewPoints);
-
 		// Update and sort list.
 		ensure!(Self::update_apply_list_point(), Error::<T>::ExchangeRewardEnded);
 
-		// let mut apply_list = PointExchangeInfo::<T>::get(&Self::get_current_era());
-		let current_era = Self::get_current_era();
 		let mut apply_list = Self::get_reward_list(current_era);
 		if apply_list.is_empty() {
 			apply_list.push((who, apply_point, None));
@@ -54,6 +60,12 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 			}
 			false
 		});
+		let current_bn = <frame_system::Pallet<T>>::block_number();
+		if let Some(last_update_bn) = LastUpdateBlockInfoOfPointExchage::<T>::get() {
+			if last_update_bn == current_bn {
+				return true;
+			}
+		}
 		if !have_final_info {
 			let new_apply_list:  Vec<(
 				T::AccountId,
@@ -63,6 +75,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 				let new_point = PointManager::<T>::get_total_points(&who);
 				(who, new_point, info_data)
 			}).collect();
+			LastUpdateBlockInfoOfPointExchage::<T>::put(current_bn);
 			PointExchangeInfo::<T>::insert(&Self::get_current_era(), new_apply_list);
 			return true;
 		}
@@ -72,6 +85,24 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 	fn execute_exchange(era: ExchangeEra, mint_balance: BalanceOf<T>) -> DispatchResult {
 		ensure!(era < Self::get_current_era(), Error::<T>::EraNotEnded );
 		ensure!(PointExchangeInfo::<T>::contains_key(era), Error::<T>::ExchangeListIsEmpty);
+		if let Some(last_exec_era) = LastExchangeRewardEra::<T>::get() {
+			ensure!(last_exec_era < era, Error::<T>::ExchangeRewardEnded);
+		}
+		Self::update_apply_list_point();
+		// count total point.
+		let exchange_list = PointExchangeInfo::<T>::get(era);
+		ensure!(exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
+		// let total_point = exchange_list.into_iter().map(|(_, exchange_point, info_data)|{
+		// 	// ensure!(info_data.is_none, Error::<T>::ExchangeRewardEnded);
+		// 	exchange_point
+		// }).collect::<Vec<PointToken>>();
+
+		let total_point: PointToken = Zero::zero();
+		for x in exchange_list.into_iter() {
+			total_point.saturating_add(x.1);
+		}
+
+		println!("total_point = {:?}", total_point);
 
 		Ok(())
 	}
