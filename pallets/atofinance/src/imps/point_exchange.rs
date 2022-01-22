@@ -85,24 +85,57 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 	fn execute_exchange(era: ExchangeEra, mint_balance: BalanceOf<T>) -> DispatchResult {
 		ensure!(era < Self::get_current_era(), Error::<T>::EraNotEnded );
 		ensure!(PointExchangeInfo::<T>::contains_key(era), Error::<T>::ExchangeListIsEmpty);
+		println!(" RUN A 1 ");
 		if let Some(last_exec_era) = LastExchangeRewardEra::<T>::get() {
 			ensure!(last_exec_era < era, Error::<T>::ExchangeRewardEnded);
 		}
 		Self::update_apply_list_point();
 		// count total point.
 		let exchange_list = PointExchangeInfo::<T>::get(era);
-		ensure!(exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
+		println!(" RUN A 2 = {:?}", exchange_list);
+		ensure!(!exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
+		println!(" RUN A 3 ");
 		// let total_point = exchange_list.into_iter().map(|(_, exchange_point, info_data)|{
 		// 	// ensure!(info_data.is_none, Error::<T>::ExchangeRewardEnded);
 		// 	exchange_point
 		// }).collect::<Vec<PointToken>>();
 
-		let total_point: PointToken = Zero::zero();
-		for x in exchange_list.into_iter() {
-			total_point.saturating_add(x.1);
+		let mut total_point: PointToken = Zero::zero();
+		for x in exchange_list.clone().into_iter() {
+			total_point = total_point.saturating_add(x.1);
 		}
-
 		println!("total_point = {:?}", total_point);
+		//
+		let mut sum_proportion: Perbill = Perbill::from_percent(0);
+		let mut all_pay: BalanceOf<T> = Zero::zero();
+		for (idx, (who, apply_point, mut info_data)) in exchange_list.clone().into_iter().enumerate() {
+			let mut current_proportion = Perbill::from_percent(0);;
+			if idx == exchange_list.len().saturating_sub(1) {
+				current_proportion = Perbill::from_percent(100) - sum_proportion ;
+				let take_token = mint_balance - all_pay;
+				info_data = Some(ExchangeInfo {
+					proportion: current_proportion.clone(),
+					pay_point: apply_point,
+					take_token: take_token,
+				});
+				all_pay += take_token;
+			} else {
+				current_proportion = Perbill::from_rational(apply_point, total_point);
+				let take_token = current_proportion * mint_balance;
+				info_data = Some(ExchangeInfo {
+					proportion: current_proportion.clone(),
+					pay_point: apply_point,
+					take_token: take_token,
+				});
+				all_pay += take_token;
+			}
+			sum_proportion = sum_proportion + current_proportion;
+			println!("current_proportion = {:?}, {:?}, {:?}, {:?}", &current_proportion, &sum_proportion, all_pay, info_data);
+		}
+		assert_eq!(mint_balance, all_pay);
+		assert_eq!(sum_proportion, Perbill::from_percent(100));
+
+		// min balance.
 
 		Ok(())
 	}
