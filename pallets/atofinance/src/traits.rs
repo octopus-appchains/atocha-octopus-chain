@@ -92,8 +92,9 @@ pub trait IPointExchange<AccountId, BlockNumber, Era, PToken, Balance, Info>  {
 	fn execute_exchange(era: Era, mint_balance: Balance) -> DispatchResult;
 	fn update_apply_list_point() -> bool;
 	fn get_current_era() -> Era;
+	fn get_last_reward_era() -> Era;
 	fn get_era_length() -> BlockNumber;
-	fn get_max_reward_count() -> u32;
+	fn get_max_reward_list_size() -> u32;
 	fn get_reward_list(era: Era) -> Vec<(AccountId, PToken, Option<Info>)>;
 	fn get_history_depth() -> u32;
 }

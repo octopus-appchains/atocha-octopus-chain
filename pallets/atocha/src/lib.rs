@@ -192,7 +192,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	{
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn create_puzzle(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -235,7 +235,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn additional_sponsorship(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -282,7 +282,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn answer_puzzle(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
@@ -368,7 +368,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn take_answer_reward(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
@@ -423,7 +423,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn commit_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -460,7 +460,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn challenge_crowdloan(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -484,7 +484,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn recognition_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id

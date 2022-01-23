@@ -78,8 +78,12 @@ impl system::Config for Test {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	pub const PerEraOfBlockNumber: BlockNumber = 5;
+	pub const ExchangeEraLength: BlockNumber = 10;
+	pub const ExchangeHistoryDepth: u32 = 3;
+	pub const ExchangeMaxRewardListSize: u32 = 3;
+	pub const IssuancePerDay: BalanceOf<Test> = 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
+	pub const PerEraOfBlockNumber: BlockNumber = 5;
 	pub RaisingPeriodLength: BlockNumber = 5;
 	pub PenaltyOfCP: Perbill = Perbill::from_float(0.1);
 	pub StorageBaseFee: BalanceOf<Test> = 1000;
@@ -93,6 +97,10 @@ impl crate::imps::challenge_manager::Config for Test {
 impl crate::Config for Test {
 	type AtoPropose = ();
 	type Currency = pallet_balances::Pallet<Self>;
+	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
+	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
+	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
+	type IssuancePerDay = IssuancePerDay;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;

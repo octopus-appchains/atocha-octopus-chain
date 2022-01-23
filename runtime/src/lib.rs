@@ -387,6 +387,10 @@ impl pallet_atocha::Config for Runtime {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
+	pub const ExchangeEraLength: BlockNumber = 1 * HOURS; // Will 7 * DAYS
+	pub const ExchangeHistoryDepth: u32 = 10;
+	pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product.
+	pub const IssuancePerDay: Balance = 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES;
 	pub ChallengeThreshold: Perbill = Perbill::from_percent(60);
 	pub RaisingPeriodLength: BlockNumber = 10 * MINUTES;
@@ -400,9 +404,13 @@ impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
 
 impl pallet_atofinance::Config for Runtime {
 	type AtoPropose = Council;
+	type Currency = pallet_balances::Pallet<Self>;
+	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
+	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
+	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
+	type IssuancePerDay = IssuancePerDay;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
-	type Currency = pallet_balances::Pallet<Self>;
 	type SlashHandler = ();
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;

@@ -56,6 +56,7 @@ pub mod pallet {
 	use frame_support::traits::ExistenceRequirement;
 	use frame_system::pallet_prelude::*;
 	use sp_core::sp_std::vec::Vec;
+	use crate::imps::point_exchange::PointExchange;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -67,6 +68,19 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
+
+		#[pallet::constant]
+		type ExchangeEraLength: Get<Self::BlockNumber>; // 10
+
+		#[pallet::constant]
+		type ExchangeHistoryDepth: Get<u32>; // 3
+
+		#[pallet::constant]
+		type ExchangeMaxRewardListSize: Get<u32>; // 3
+
+		#[pallet::constant]
+		type IssuancePerDay: Get<BalanceOf<Self>>;
 
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -230,12 +244,30 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(now: T::BlockNumber) -> Weight {
+			if 0 != PointExchange::<T>::get_current_era() &&
+				PointExchange::<T>::get_last_reward_era().saturating_add(2) == PointExchange::<T>::get_current_era()
+			{
+					PointExchange::<T>::execute_exchange(
+						PointExchange::<T>::get_current_era().saturating_sub(1),
+						Self::get_point_issuance(PointExchange::<T>::get_era_length())
+					);
+					return 100;
+			}
+			0
+		}
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		ApplyPointReward(T::AccountId),
+		ChallengeStatusChange(ChallengeStatus<T::BlockNumber, Perbill>),
 		SomethingStored(u32, T::AccountId),
 		StakingInterestRate(AtoInterestRate, AtoStakingPeriod),
-		ChallengeStatusChange(ChallengeStatus<T::BlockNumber, Perbill>),
+		PreStorage(T::AccountId, BalanceOf<T>, StorageHash, StorageLength),
 	}
 
 	// Errors inform users that something went wrong.
@@ -317,7 +349,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		//
-		#[pallet::weight(0)]
+		#[pallet::weight(100)]
 		pub fn pre_storage(
 			origin: OriginFor<T>,
 			storage_hash: StorageHash, // Arweave tx - id
@@ -333,9 +365,27 @@ pub mod pallet {
 			ensure!(storage_fee <= max_fee, Error::<T>::ExceededMaximumFeeLimit);
 			//
 			T::Currency::transfer(&who, &Self::account_id(), storage_fee, ExistenceRequirement::KeepAlive)?;
+			StorageLedger::<T>::insert(storage_hash.clone(), storage_length, (who.clone(), Self::get_current_bn()));
+			Self::deposit_event(Event::<T>::PreStorage(
+				who,
+				storage_fee,
+				storage_hash,
+				storage_length,
+			));
+			Ok(().into())
+		}
 
-			StorageLedger::<T>::insert(storage_hash, storage_length, (who, Self::get_current_bn()));
-
+		#[pallet::weight(100)]
+		pub fn apply_point_reward(
+			origin: OriginFor<T>,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+			// get fee.
+			PointExchange::<T>::apply_exchange(who.clone())?;
+			Self::deposit_event(Event::<T>::ApplyPointReward(
+				who.clone(),
+			));
 			Ok(().into())
 		}
 	}
@@ -363,6 +413,14 @@ impl<T: Config> Pallet<T> {
 			return Some(T::StorageBaseFee::get().saturating_mul(data_balance));
 		}
 		None
+	}
+
+	pub fn get_point_issuance(duration_len: T::BlockNumber) -> BalanceOf<T> {
+		// 100000000 * 0.1 / 365  = 27 397.260273973
+		// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+		let duration_num: u32 = duration_len.unique_saturated_into();
+		let issuance_per_day = T::IssuancePerDay::get();
+		issuance_per_day.saturating_mul(duration_num.into())
 	}
 }
 

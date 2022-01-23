@@ -37,14 +37,12 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		if let Some((original_who, original_point, origin_info)) = apply_list.pop() {
 			ensure!(apply_point > original_point, Error::<T>::TooFewPoints);
 			apply_list.push((who, apply_point, None));
-			if (apply_list.len() < Self::get_max_reward_count() as usize) {
+			if (apply_list.len() < Self::get_max_reward_list_size() as usize) {
 				apply_list.push((original_who, original_point, origin_info));
 			}
-			println!("RUN2 : {:?}", &apply_list);
 			apply_list.sort_by(|(_, point_a, _),(_, point_b, _)|{
 				point_b.cmp(point_a)
 			});
-			println!("RUN3 : {:?}", &apply_list);
 			LastUpdateBlockInfoOfPointExchage::<T>::put(<frame_system::Pallet<T>>::block_number());
 			PointExchangeInfo::<T>::insert(current_era, apply_list);
 		}
@@ -85,29 +83,23 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 	fn execute_exchange(era: ExchangeEra, mint_balance: BalanceOf<T>) -> DispatchResult {
 		ensure!(era < Self::get_current_era(), Error::<T>::EraNotEnded );
 		ensure!(PointExchangeInfo::<T>::contains_key(era), Error::<T>::ExchangeListIsEmpty);
-		println!(" RUN A 1 ");
 		if let Some(last_exec_era) = LastExchangeRewardEra::<T>::get() {
 			ensure!(last_exec_era < era, Error::<T>::ExchangeRewardEnded);
 		}
 		Self::update_apply_list_point();
 		// count total point.
 		let exchange_list = PointExchangeInfo::<T>::get(era);
-		println!(" RUN A 2 = {:?}", exchange_list);
 		ensure!(!exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
-		println!(" RUN A 3 ");
-		// let total_point = exchange_list.into_iter().map(|(_, exchange_point, info_data)|{
-		// 	// ensure!(info_data.is_none, Error::<T>::ExchangeRewardEnded);
-		// 	exchange_point
-		// }).collect::<Vec<PointToken>>();
 
 		let mut total_point: PointToken = Zero::zero();
 		for x in exchange_list.clone().into_iter() {
 			total_point = total_point.saturating_add(x.1);
 		}
-		println!("total_point = {:?}", total_point);
+
 		//
 		let mut sum_proportion: Perbill = Perbill::from_percent(0);
 		let mut all_pay: BalanceOf<T> = Zero::zero();
+		let mut new_exchange_list = Vec::new();
 		for (idx, (who, apply_point, mut info_data)) in exchange_list.clone().into_iter().enumerate() {
 			let mut current_proportion = Perbill::from_percent(0);;
 			if idx == exchange_list.len().saturating_sub(1) {
@@ -129,13 +121,19 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 				});
 				all_pay += take_token;
 			}
+			new_exchange_list.push((who, apply_point, info_data.clone()));
 			sum_proportion = sum_proportion + current_proportion;
-			println!("current_proportion = {:?}, {:?}, {:?}, {:?}", &current_proportion, &sum_proportion, all_pay, info_data);
 		}
 		assert_eq!(mint_balance, all_pay);
 		assert_eq!(sum_proportion, Perbill::from_percent(100));
+		for (who, apply_point, info_data) in new_exchange_list.clone() {
+			let info_data = info_data.unwrap();
+			PointManager::<T>::reduce_points_to(&who, info_data.pay_point);
+			T::Currency::deposit_creating(&who, info_data.take_token);
+		}
 
-		// min balance.
+		PointExchangeInfo::<T>::insert(era, new_exchange_list);
+		LastExchangeRewardEra::<T>::put(era);
 
 		Ok(())
 	}
@@ -145,25 +143,34 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		(current_bn / Self::get_era_length()).unique_saturated_into()
 	}
 
-	fn get_max_reward_count() -> u32 {
-		3
+	fn get_last_reward_era() -> ExchangeEra {
+		if let Some(era) = LastExchangeRewardEra::<T>::get() {
+			return era;
+		}
+		0
+	}
+
+	fn get_max_reward_list_size() -> u32 {
+		T::ExchangeMaxRewardListSize::get() // 3
 	}
 
 	fn get_era_length() -> T::BlockNumber {
-		10u32.into()
+		// T::ExchangeHistoryDepth::get(); // 3
+		// T::ExchangeMaxRewardListSize::get(); // 3
+		T::ExchangeEraLength::get() // 10
 	}
 
 	fn get_reward_list(era: ExchangeEra) -> Vec<(T::AccountId, PointToken, Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>)> {
 		// get max_reward_count .
 		let mut apply_list = PointExchangeInfo::<T>::get(&Self::get_current_era());
-		if apply_list.len() <= Self::get_max_reward_count() as usize {
+		if apply_list.len() <= Self::get_max_reward_list_size() as usize {
 			return apply_list;
 		}
-		apply_list.split_off(Self::get_max_reward_count() as usize);
+		apply_list.split_off(Self::get_max_reward_list_size() as usize);
 		apply_list
 	}
 
 	fn get_history_depth() -> u32 {
-		3
+		T::ExchangeHistoryDepth::get() // 3
 	}
 }
