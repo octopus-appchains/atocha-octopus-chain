@@ -166,9 +166,9 @@ pub mod pallet {
 	#[pallet::getter(fn ato_point_total)]
 	pub type AtoPointTotal<T> = StorageValue<_, PointToken>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn ato_point_top_list)]
-	pub type AtoPointTopList<T> = StorageValue<_, Vec<(<T as frame_system::Config>::AccountId, PointToken)>>;
+	// #[pallet::storage]
+	// #[pallet::getter(fn ato_point_top_list)]
+	// pub type AtoPointTopList<T> = StorageValue<_, Vec<(<T as frame_system::Config>::AccountId, PointToken)>>;
 
 
 	#[pallet::storage]

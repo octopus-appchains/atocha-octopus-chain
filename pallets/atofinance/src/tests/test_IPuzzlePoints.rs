@@ -1,6 +1,6 @@
 use super::*;
 use crate::imps::PointManager;
-use crate::{AtoFinanceLedger, AtoPointTopList};
+use crate::{AtoFinanceLedger};
 
 // fn get_total_points() -> PToken;
 // fn increase_points_to(who: &AccountId) -> DResult;
