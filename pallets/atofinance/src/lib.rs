@@ -80,7 +80,7 @@ pub mod pallet {
 		type ExchangeMaxRewardListSize: Get<u32>; // 3
 
 		#[pallet::constant]
-		type IssuancePerDay: Get<BalanceOf<Self>>;
+		type IssuancePerBlock: Get<BalanceOf<Self>>;
 
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -180,6 +180,10 @@ pub mod pallet {
 	pub type LastExchangeRewardEra<T> = StorageValue<_, ExchangeEra>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn current_exchange_reward_era)]
+	pub type CurrentExchangeRewardEra<T> = StorageValue<_, ExchangeEra>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn puzzle_challenge_info)]
 	pub type PuzzleChallengeInfo<T> = StorageMap<
 		_,
@@ -247,16 +251,28 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
-			if 0 != PointExchange::<T>::get_current_era() &&
-				PointExchange::<T>::get_last_reward_era().saturating_add(2) == PointExchange::<T>::get_current_era()
+			let mut result_width: Weight = 0;
+			let current_era = PointExchange::<T>::get_current_era();
+			if 0 != current_era &&
+				PointExchange::<T>::get_last_reward_era().saturating_add(2) <= current_era
 			{
+					// TODO:: Collect error information for debug.
 					PointExchange::<T>::execute_exchange(
-						PointExchange::<T>::get_current_era().saturating_sub(1),
+						current_era.saturating_sub(1),
 						Self::get_point_issuance(PointExchange::<T>::get_era_length())
 					);
-					return 100;
+				result_width += 10;
 			}
-			0
+
+			//
+			let storage_exchange_reward_era = CurrentExchangeRewardEra::<T>::get();
+			if storage_exchange_reward_era.is_none() ||
+				storage_exchange_reward_era.unwrap() != current_era
+			{
+				result_width += 1;
+				CurrentExchangeRewardEra::<T>::put(current_era);
+			}
+			result_width
 		}
 	}
 
@@ -419,7 +435,7 @@ impl<T: Config> Pallet<T> {
 		// 100000000 * 0.1 / 365  = 27 397.260273973
 		// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 		let duration_num: u32 = duration_len.unique_saturated_into();
-		let issuance_per_day = T::IssuancePerDay::get();
+		let issuance_per_day = T::IssuancePerBlock::get();
 		issuance_per_day.saturating_mul(duration_num.into())
 	}
 }

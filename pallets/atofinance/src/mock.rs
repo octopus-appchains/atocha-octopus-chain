@@ -81,7 +81,7 @@ parameter_types! {
 	pub const ExchangeEraLength: BlockNumber = 10;
 	pub const ExchangeHistoryDepth: u32 = 3;
 	pub const ExchangeMaxRewardListSize: u32 = 3;
-	pub const IssuancePerDay: BalanceOf<Test> = 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+	pub const IssuancePerBlock: BalanceOf<Test> = 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub const PerEraOfBlockNumber: BlockNumber = 5;
 	pub RaisingPeriodLength: BlockNumber = 5;
@@ -100,7 +100,7 @@ impl crate::Config for Test {
 	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
 	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
 	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
-	type IssuancePerDay = IssuancePerDay;
+	type IssuancePerBlock = IssuancePerBlock;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;

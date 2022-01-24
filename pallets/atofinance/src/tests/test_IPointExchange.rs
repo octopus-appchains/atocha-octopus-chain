@@ -1,5 +1,5 @@
 use super::*;
-use crate::AtoFinanceLedger;
+use crate::{AtoFinanceLedger, CurrentExchangeRewardEra};
 use crate::imps::point_exchange::PointExchange;
 use crate::imps::PointManager;
 
@@ -7,18 +7,28 @@ use crate::imps::PointManager;
 fn test_point_exchange() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
+		AtochaPot::on_initialize(5);
 		assert_eq!(<PointExchange<Test>>::get_max_reward_list_size(), 3);
 		assert_eq!(<PointExchange<Test>>::get_history_depth(), 3);
 		assert_eq!(<PointExchange<Test>>::get_era_length(), 10);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 0);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(0));
 		System::set_block_number(10);
+		AtochaPot::on_initialize(5);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 1);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(1));
 		System::set_block_number(15);
+		AtochaPot::on_initialize(15);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 1);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(1));
 		System::set_block_number(20);
+		AtochaPot::on_initialize(20);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 2);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(2));
 		System::set_block_number(25);
+		AtochaPot::on_initialize(25);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 2);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(2));
 		assert_eq!(<PointExchange<Test>>::get_reward_list(2), vec![]);
 
 		// apply
@@ -82,6 +92,7 @@ fn test_point_exchange() {
 
 		//
 		System::set_block_number(30);
+		AtochaPot::on_initialize(30);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 3);
 		// If old era not be clean, new apply will be deny.
 		assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4), Error::<Test>::LastExchangeRewardClearing);

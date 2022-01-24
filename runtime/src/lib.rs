@@ -350,7 +350,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 parameter_types! {
 	pub const MinBonusOfPuzzle: Balance = 100 * DOLLARS;
-	pub const ChallengePeriodLength: BlockNumber = 1 * HOURS;
+	pub const ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
 	pub const TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
 	pub const TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
 	pub const TaxOfTI: Perbill = Perbill::from_percent(10);
@@ -387,11 +387,11 @@ impl pallet_atocha::Config for Runtime {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	pub const ExchangeEraLength: BlockNumber = 1 * HOURS; // Will 7 * DAYS
+	pub const ExchangeEraLength: BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
 	pub const ExchangeHistoryDepth: u32 = 10;
-	pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product.
-	pub const IssuancePerDay: Balance = 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
-	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES;
+	pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product. // MyBe 10 size
+	pub const IssuancePerBlock: Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
 	pub ChallengeThreshold: Perbill = Perbill::from_percent(60);
 	pub RaisingPeriodLength: BlockNumber = 10 * MINUTES;
 	pub StorageBaseFee: Balance = 10000;
@@ -408,7 +408,7 @@ impl pallet_atofinance::Config for Runtime {
 	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
 	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
 	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
-	type IssuancePerDay = IssuancePerDay;
+	type IssuancePerBlock = IssuancePerBlock;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type SlashHandler = ();

@@ -103,13 +103,11 @@ impl crate::Config for Test {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	// pub const BasicDollars: Balance = DOLLARS;
-	// pub const TicketFee: Balance = 5 * DOLLARS;
-	// pub const DepositFee: Balance = 100 * DOLLARS;
-	// pub const DayBlockCount: u32 = 14400;
-	// pub const StakingPeriod: u32 = 10;
+	pub const ExchangeEraLength: BlockNumber = 10;
+	pub const ExchangeHistoryDepth: u32 = 3;
+	pub const ExchangeMaxRewardListSize: u32 = 3;
+	pub const IssuancePerBlock: Balance = 1902587519025900000;
 	pub const PerEraOfBlockNumber: BlockNumber = 5;
-	// pub TargetIssuanceRate: Permill = Permill::from_float(0.1);
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub RaisingPeriodLength: BlockNumber = 5;
 	pub StorageBaseFee: Balance = 1000;
@@ -121,13 +119,17 @@ impl pallet_atofinance::imps::challenge_manager::Config for Test {
 }
 
 impl pallet_atofinance::Config for Test {
+	type AtoPropose = ();
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type Currency = pallet_balances::Pallet<Self>;
+	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
+	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
+	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
 	type SlashHandler = ();
+	type IssuancePerBlock = IssuancePerBlock;
 	type RewardHandler = ();
 	type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	type AtoPropose = ();
 	type StorageBaseFee = StorageBaseFee;
 }
 
