@@ -89,6 +89,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		Self::update_apply_list_point();
 		// count total point.
 		let exchange_list = PointExchangeInfo::<T>::get(era);
+		ensure!(exchange_list.len() > 0, Error::<T>::ExchangeListIsEmpty);
 		ensure!(!exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
 
 		let mut total_point: PointToken = Zero::zero();
@@ -100,6 +101,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		let mut sum_proportion: Perbill = Perbill::from_percent(0);
 		let mut all_pay: BalanceOf<T> = Zero::zero();
 		let mut new_exchange_list = Vec::new();
+
 		for (idx, (who, apply_point, mut info_data)) in exchange_list.clone().into_iter().enumerate() {
 			let mut current_proportion = Perbill::from_percent(0);;
 			if idx == exchange_list.len().saturating_sub(1) {
@@ -124,8 +126,25 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 			new_exchange_list.push((who, apply_point, info_data.clone()));
 			sum_proportion = sum_proportion + current_proportion;
 		}
-		assert_eq!(mint_balance, all_pay);
-		assert_eq!(sum_proportion, Perbill::from_percent(100));
+
+		if mint_balance != all_pay {
+			log::warn!(
+				"execute_exchange error on `KickAwaySickExchange` because: mint_balance != all_pay {:?} != {:?}",
+				&mint_balance,
+				&all_pay
+			);
+			return DispatchResult::Err(Error::<T>::KickAwaySickExchange.into());
+		}
+		// ensure!(mint_balance == all_pay, Error::<T>::KickAwaySickExchange);
+		if sum_proportion != Perbill::from_percent(100) {
+			log::warn!(
+				"execute_exchange error on `KickAwaySickExchange` because: sum_proportion {:?} != 100% ",
+				&sum_proportion
+			);
+			return DispatchResult::Err(Error::<T>::KickAwaySickExchange.into());
+		}
+		// ensure!(sum_proportion == Perbill::from_percent(100), Error::<T>::KickAwaySickExchange);
+
 		for (who, apply_point, info_data) in new_exchange_list.clone() {
 			let info_data = info_data.unwrap();
 			PointManager::<T>::reduce_points_to(&who, info_data.pay_point);

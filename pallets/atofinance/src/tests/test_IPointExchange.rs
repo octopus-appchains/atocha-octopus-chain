@@ -92,11 +92,12 @@ fn test_point_exchange() {
 
 		//
 		System::set_block_number(30);
-		AtochaPot::on_initialize(30);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 3);
 		// If old era not be clean, new apply will be deny.
 		assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4), Error::<Test>::LastExchangeRewardClearing);
 
+		// on_initialize will call execute_exchange(2
+		// AtochaPot::on_initialize(30);
 		assert_ok!(<PointExchange<Test>>::execute_exchange(2, 1_000_000_000_000_000));
 
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_1), 100);

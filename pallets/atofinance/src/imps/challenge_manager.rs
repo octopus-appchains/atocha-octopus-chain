@@ -104,7 +104,10 @@ impl<T: Config>
 
 	fn get_total_raise(pid: &PuzzleSubjectHash) -> BalanceOf<T> {
 		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
-		challenge_info.raised_total
+		if challenge_info.is_none() {
+			return Zero::zero();
+		}
+		challenge_info.unwrap().raised_total
 	}
 
 	fn challenge_crowdloan(
@@ -161,7 +164,7 @@ impl<T: Config>
 			return None;
 		}
 		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
-		Some(challenge_info.status)
+		Some(challenge_info.unwrap().status)
 	}
 
 
@@ -169,10 +172,14 @@ impl<T: Config>
 	fn check_get_active_challenge_info(
 		pid: &PuzzleSubjectHash,
 	) -> Result<PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>, Perbill>, Error<T>> {
-		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
+
+		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+		if challenge_info.is_none() {
 			return Err(Error::<T>::ChallengeNotExists);
 		}
-		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+
+		let challenge_info = challenge_info.unwrap();
+
 		let period_len = T::RaisingPeriodLength::get();
 
 		match challenge_info.status {
@@ -192,12 +199,18 @@ impl<T: Config>
 	}
 
 	fn has_the_raising_period_expired(pid: &PuzzleSubjectHash) -> bool {
-		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
+		// if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
+		// 	return true;
+		// }
+		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+		if challenge_info.is_none() {
 			return true;
 		}
+		let challenge_info = challenge_info.unwrap();
+
 		let period_len = T::RaisingPeriodLength::get();
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
-		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+
 		current_block_number > challenge_info.create_bn.saturating_add(period_len)
 	}
 
@@ -284,7 +297,10 @@ impl<T: Config>
 	}
 
 	fn final_challenge(pid: &PuzzleSubjectHash, status: ChallengeStatus<T::BlockNumber, Perbill>) -> DispatchResult {
-		ensure!(<PuzzleChallengeInfo<T>>::contains_key(&pid), Error::<T>::ChallengeNotExists);
+		// ensure!(<PuzzleChallengeInfo<T>>::contains_key(&pid), Error::<T>::ChallengeNotExists);
+		let mut challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+		ensure!(challenge_info.is_some(), Error::<T>::ChallengeNotExists);
+		let mut challenge_info = challenge_info.unwrap();
 
 		let in_status = match status {
 			ChallengeStatus::Raise(_) => {None}
@@ -295,7 +311,6 @@ impl<T: Config>
 		};
 
 		if let Some(s) = in_status {
-			let mut challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
 			let bn = match challenge_info.status {
 				ChallengeStatus::RaiseBackFunds(x, _) => {x},
 				_ => {Zero::zero()}

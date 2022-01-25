@@ -194,7 +194,7 @@ pub mod pallet {
 			<T as frame_system::Config>::BlockNumber,
 			BalanceOf<T>, Perbill,
 		>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	#[pallet::storage]
@@ -253,14 +253,24 @@ pub mod pallet {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			let mut result_width: Weight = 0;
 			let current_era = PointExchange::<T>::get_current_era();
+			// println!("get_last_reward_era = {:?}, {:?} ", &PointExchange::<T>::get_last_reward_era(), &current_era);
 			if 0 != current_era &&
 				PointExchange::<T>::get_last_reward_era().saturating_add(2) <= current_era
 			{
-					// TODO:: Collect error information for debug.
-					PointExchange::<T>::execute_exchange(
-						current_era.saturating_sub(1),
-						Self::get_point_issuance(PointExchange::<T>::get_era_length())
-					);
+				log::info!(
+					"AtoFinance - on_initialize = last reward era = {:?}, current era = {:?}",
+					&PointExchange::<T>::get_last_reward_era(),
+					&current_era
+				);
+				// TODO:: Collect error information for debug.
+				let execute_result = PointExchange::<T>::execute_exchange(
+					current_era.saturating_sub(1),
+					Self::get_point_issuance(PointExchange::<T>::get_era_length())
+				);
+				log::info!(
+					"AtoFinance - execute_result = {:?}",
+					&execute_result
+				);
 				result_width += 10;
 			}
 
@@ -318,6 +328,8 @@ pub mod pallet {
 		InsufficientBalance,
 		//
 		InsufficientPoint,
+		//
+		KickAwaySickExchange,
 		//
 		LastExchangeRewardClearing,
 		//

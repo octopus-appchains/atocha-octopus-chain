@@ -81,7 +81,7 @@ parameter_types! {
 	pub const ExchangeEraLength: BlockNumber = 10;
 	pub const ExchangeHistoryDepth: u32 = 3;
 	pub const ExchangeMaxRewardListSize: u32 = 3;
-	pub const IssuancePerBlock: BalanceOf<Test> = 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+	pub const IssuancePerBlock: BalanceOf<Test> = 1902587519025900000 ;// 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub const PerEraOfBlockNumber: BlockNumber = 5;
 	pub RaisingPeriodLength: BlockNumber = 5;

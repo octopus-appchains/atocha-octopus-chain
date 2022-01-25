@@ -24,6 +24,7 @@ pallet-balances = { default-features = false, git = "https://github.com/parityte
 hex = { version = "0.4", default-features = false }
 sp-std = {default-features = false, version = '3.0.0'}
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]
 serde = { version = '1.0.119' }
@@ -42,6 +43,7 @@ std = [
     'sp-application-crypto/std',
     'pallet-balances/std',
     'sp-core/std',
+    'log/std',
     'hex/std',
 ]
 try-runtime = ['frame-support/try-runtime']
