@@ -193,49 +193,6 @@ pub mod pallet {
 	{
 
 		#[pallet::weight(100)]
-		pub fn create_puzzle(
-			origin: OriginFor<T>,
-			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-			answer_hash: PuzzleAnswerHash,
-			#[pallet::compact] amount: BalanceOf<T>,
-			puzzle_version: PuzzleVersion,
-		) -> DispatchResultWithPostInfo {
-			// check signer
-			let who = ensure_signed(origin)?;
-			ensure!(!<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleAlreadyExist);
-
-			// Check amount > MinBonus
-			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
-
-			//
-			let current_block_number = <frame_system::Pallet<T>>::block_number();
-
-			// pid: PuzzleHash, who: AccountId, amount: BalanceOf, create_bn: BlockNumber,
-			T::PuzzleLedger::do_bonus(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number)?;
-
-			let puzzle_content = PuzzleInfoData {
-				account: who.clone(),
-				answer_hash,
-				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
-				create_bn: current_block_number,
-				reveal_answer: None,
-				reveal_bn: None,
-				puzzle_version,
-			};
-			<PuzzleInfo<T>>::insert(puzzle_hash.clone(), puzzle_content);
-
-			// send event
-			Self::deposit_event(Event::PuzzleCreated(
-				who,
-				puzzle_hash,
-				current_block_number.into(),
-				amount,
-			));
-			//
-			Ok(().into())
-		}
-
-		#[pallet::weight(100)]
 		pub fn additional_sponsorship(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -369,57 +326,45 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(100)]
-		pub fn take_answer_reward(
+		pub fn create_puzzle(
 			origin: OriginFor<T>,
-			puzzle_hash: PuzzleSubjectHash,
-		) -> DispatchResult {
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+			answer_hash: PuzzleAnswerHash,
+			#[pallet::compact] amount: BalanceOf<T>,
+			puzzle_version: PuzzleVersion,
+		) -> DispatchResultWithPostInfo {
 			// check signer
 			let who = ensure_signed(origin)?;
-			// 1\ Check puzzle status is PUZZLE_STATUS_IS_SOLVED AND current_bn - Some(reveal_bn)  > T::ChallengePeriodLength
-			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
-			ensure!(
-				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
-				Error::<T>::PuzzleStatusErr
-			);
+			ensure!(!<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleAlreadyExist);
 
-			// NoRightToReward
-			// Get winner answer.
-			ensure!(puzzle_content.reveal_answer == Some(who.clone()), Error::<T>::NoRightToReward);
+			// Check amount > MinBonus
+			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
-			let reveal_bn = puzzle_content.reveal_bn.unwrap();
-			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
-			ensure!(
-				current_block_number - reveal_bn > T::ChallengePeriodLength::get(),
-				Error::<T>::ChallengePeriodIsNotEnd
-			);
 
-			// Check Challenged
-			let challenge_info = T::AtoChallenge::check_get_active_challenge_info(&puzzle_hash);
-			ensure!(
-				challenge_info.is_err(),
-				Error::<T>::BeingChallenged
-			);
+			// pid: PuzzleHash, who: AccountId, amount: BalanceOf, create_bn: BlockNumber,
+			T::PuzzleLedger::do_bonus(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number)?;
 
-			let tax_fee = |acc| {
-				if acc == &who {
-					T::TaxOfTVS::get()
-				}else{
-					T::TaxOfTVO::get()
-				}
+			let puzzle_content = PuzzleInfoData {
+				account: who.clone(),
+				answer_hash,
+				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
+				create_bn: current_block_number,
+				reveal_answer: None,
+				reveal_bn: None,
+				puzzle_version,
 			};
+			<PuzzleInfo<T>>::insert(puzzle_hash.clone(), puzzle_content);
 
-			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
-			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
-
-			let creator_acc = puzzle_content.account.clone();
-
-			// Take points.
-			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee(&creator_acc))?;
-			// Take balance.
-			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee(&creator_acc))?;
-
+			// send event
+			Self::deposit_event(Event::PuzzleCreated(
+				who,
+				puzzle_hash,
+				current_block_number.into(),
+				amount,
+			));
+			//
 			Ok(().into())
 		}
 
@@ -481,6 +426,61 @@ pub mod pallet {
 				deposit.clone(),
 			));
 			//
+			Ok(().into())
+		}
+
+		#[pallet::weight(100)]
+		pub fn take_answer_reward(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+			// 1\ Check puzzle status is PUZZLE_STATUS_IS_SOLVED AND current_bn - Some(reveal_bn)  > T::ChallengePeriodLength
+			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			ensure!(
+				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
+				Error::<T>::PuzzleStatusErr
+			);
+
+			// NoRightToReward
+			// Get winner answer.
+			ensure!(puzzle_content.reveal_answer == Some(who.clone()), Error::<T>::NoRightToReward);
+
+			//
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			let reveal_bn = puzzle_content.reveal_bn.unwrap();
+			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
+			ensure!(
+				current_block_number - reveal_bn > T::ChallengePeriodLength::get(),
+				Error::<T>::ChallengePeriodIsNotEnd
+			);
+
+			// Check Challenged
+			let challenge_info = T::AtoChallenge::check_get_active_challenge_info(&puzzle_hash);
+			ensure!(
+				challenge_info.is_err(),
+				Error::<T>::BeingChallenged
+			);
+
+			let tax_fee = |acc| {
+				if acc == &who {
+					T::TaxOfTVS::get()
+				}else{
+					T::TaxOfTVO::get()
+				}
+			};
+
+			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
+			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
+
+			let creator_acc = puzzle_content.account.clone();
+
+			// Take points.
+			T::PuzzleRewardOfPoint::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee(&creator_acc))?;
+			// Take balance.
+			T::PuzzleRewardOfToken::answer_get_reward(&puzzle_hash, who.clone(), reveal_bn, tax_fee(&creator_acc))?;
+
 			Ok(().into())
 		}
 
