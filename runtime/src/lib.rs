@@ -54,6 +54,7 @@ use sp_runtime::{
 	transaction_validity::TransactionPriority,
 };
 use static_assertions::const_assert;
+use pallet_atofinance::Config;
 
 /// Import the template pallet.
 pub use pallet_template;
@@ -349,12 +350,13 @@ impl pallet_elections_phragmen::Config for Runtime {
 // --------
 
 parameter_types! {
-	pub const MinBonusOfPuzzle: Balance = 100 * DOLLARS;
-	pub const ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
-	pub const TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
-	pub const TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
-	pub const TaxOfTI: Perbill = Perbill::from_percent(10);
-	pub const PenaltyOfCP: Perbill = Perbill::from_percent(10);
+	pub MinBonusOfPuzzle: Balance = 100 * DOLLARS;
+	pub ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
+	pub TaxOfTCR: Perbill = Perbill::from_percent(10);
+	pub TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
+	pub TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
+	pub TaxOfTI: Perbill = Perbill::from_percent(10);
+	pub PenaltyOfCP: Perbill = Perbill::from_percent(10);
 	pub const MaxSponsorExplainLen: u32 = 256;
 	pub const MaxAnswerExplainLen: u32 = 1024;
 }
@@ -376,6 +378,7 @@ impl pallet_atocha::Config for Runtime {
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
 	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
+	type TaxOfTCR = TaxOfTCR;
 	type TaxOfTVS = TaxOfTVS;
 	type TaxOfTVO = TaxOfTVO;
 	type TaxOfTI = TaxOfTI;
@@ -383,6 +386,7 @@ impl pallet_atocha::Config for Runtime {
 	type MaxSponsorExplainLen = MaxSponsorExplainLen;
 	type MaxAnswerExplainLen = MaxAnswerExplainLen;
 	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
+
 }
 
 parameter_types! {
