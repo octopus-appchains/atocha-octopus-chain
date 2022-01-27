@@ -117,6 +117,7 @@ pub mod pallet {
 			PuzzleChallengeData<<Self as frame_system::Config>::AccountId, Self::BlockNumber, BalanceOf<Self>, Perbill>,
 			ChallengeStatus<Self::BlockNumber, Perbill>,
 			pallet_atofinance::Error<Self>,
+			Self::BlockNumber,
 		>;
 
 		type AtoPointsManage: IPuzzlePoints<
@@ -415,10 +416,9 @@ pub mod pallet {
 		pub fn challenge_pull_out(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-			#[pallet::compact] deposit: BalanceOf<T>,
 		) -> DispatchResult {
 			// check signer
-			let who = ensure_signed(origin)?;
+			let _who = ensure_signed(origin)?;
 
 			let challenge_status = T::AtoChallenge::get_challenge_status(&puzzle_hash);
 			ensure!(challenge_status.is_some(), Error::<T>::ChallengeNotExists);
@@ -427,8 +427,7 @@ pub mod pallet {
 			let challenge_status = challenge_status.unwrap();
 			match  challenge_status {
 				ChallengeStatus::Raise(raise_bn) => {
-					// ensure!(current_bn - raise_bn > T::ChallengeCrowdloanPeriodLength::get(), Error::<T>::ChallengeCrowdloanPeriodNotEnd )
-					ensure!(T::AtoChallenge::check_get_active_challenge_info(&puzzle_hash).is_ok(), Error::<T>::ChallengeCrowdloanPeriodNotEnd );
+					ensure!(current_bn - raise_bn > T::AtoChallenge::get_raising_period_Length(), Error::<T>::ChallengeCrowdloanPeriodNotEnd )
 				},
 				ChallengeStatus::RaiseBackFunds(_raise_bn, _) => {
 					return DispatchResult::Err(Error::<T>::ChallengeHasBeenDisbanded.into());
@@ -439,7 +438,7 @@ pub mod pallet {
 			}
 
 			//
-			T::AtoChallenge::back_challenge_crowdloan(&puzzle_hash, T::TaxOfTCR::get());
+			T::AtoChallenge::back_challenge_crowdloan(&puzzle_hash, T::TaxOfTCR::get())?;
 
 			//
 			Ok(().into())

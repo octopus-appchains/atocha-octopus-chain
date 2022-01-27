@@ -26,6 +26,7 @@ impl<T: Config>
 		PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>, Perbill>,
 		ChallengeStatus<T::BlockNumber, Perbill>,
 		Error<T>,
+		T::BlockNumber,
 	> for ChallengeManager<T>
 {
 	fn issue_challenge(
@@ -163,44 +164,6 @@ impl<T: Config>
 		Ok(())
 	}
 
-	fn get_challenge_status(pid: &PuzzleSubjectHash) -> Option<ChallengeStatus<T::BlockNumber, Perbill>> {
-		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
-			return None;
-		}
-		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
-		Some(challenge_info.unwrap().status)
-	}
-
-	/// Check and get the active challenges.
-	fn check_get_active_challenge_info(
-		pid: &PuzzleSubjectHash,
-	) -> Result<PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>, Perbill>, Error<T>> {
-
-		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
-		if challenge_info.is_none() {
-			return Err(Error::<T>::ChallengeNotExists);
-		}
-
-		let challenge_info = challenge_info.unwrap();
-
-		let period_len = T::RaisingPeriodLength::get();
-
-		match challenge_info.status {
-			ChallengeStatus::Raise(bn) => {
-				let current_block_number = <frame_system::Pallet<T>>::block_number();
-				if current_block_number > bn.saturating_add(period_len) {
-					return Err(Error::<T>::RaisingPeriodExpired);
-				}
-			},
-			ChallengeStatus::RaiseCompleted(bn) => {},
-			_ => {
-				return Err(Error::<T>::EndOfRaising);
-			}
-		};
-
-		Ok(challenge_info)
-	}
-
 	fn has_the_raising_period_expired(pid: &PuzzleSubjectHash) -> bool {
 		// if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
 		// 	return true;
@@ -217,10 +180,31 @@ impl<T: Config>
 		current_block_number > challenge_info.create_bn.saturating_add(period_len)
 	}
 
+	fn get_challenge_status(pid: &PuzzleSubjectHash) -> Option<ChallengeStatus<T::BlockNumber, Perbill>> {
+		if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
+			return None;
+		}
+		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+		Some(challenge_info.unwrap().status)
+	}
+
+	fn recognition_challenge(pid: &PuzzleSubjectHash) -> DispatchResult {
+		Self::back_challenge_crowdloan(pid, Perbill::from_percent(0))
+	}
+
 	fn back_challenge_crowdloan(pid: &PuzzleSubjectHash, tax: Perbill) -> DispatchResult {
-		let challenge_data = Self::check_get_active_challenge_info(pid);
-		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
+		// let challenge_data = Self::check_get_active_challenge_info(pid);
+		let challenge_data = <PuzzleChallengeInfo<T>>::get(&pid);
+		ensure!(challenge_data.is_some(), Error::<T>::ChallengeNotExists);
+
 		let mut challenge_data = challenge_data.unwrap();
+		let is_allown = match challenge_data.status {
+			ChallengeStatus::RaiseBackFunds(_, _) => false,
+			ChallengeStatus::JudgePassed(_) => false,
+			ChallengeStatus::JudgeRejected(_) => false,
+			_ => true,
+		};
+		ensure!(is_allown, Error::<T>::ChallengeStatusError);
 
 		let pot_infos = crate::Pallet::<T>::pot();
 		ensure!(pot_infos.1 >= challenge_data.raised_total, Error::<T>::InsufficientBalance);
@@ -248,15 +232,38 @@ impl<T: Config>
 		Ok(())
 	}
 
-	fn challenge_failed(pid: &PuzzleSubjectHash ) -> Result<(), Error<T>> {
-		let challenge_data = Self::check_get_active_challenge_info(pid);
-		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
-		// let mut challenge_data = challenge_data.unwrap();
-		// let raised_total = challenge_data.raised_total;
-		// let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), raised_total);
-		// T::SlashHandler::on_unbalanced(im_balance.0);
-		Self::back_challenge_crowdloan(pid, Perbill::from_percent(100));
-		Ok(())
+	/// Check and get the active challenges.
+	fn check_get_active_challenge_info(
+		pid: &PuzzleSubjectHash,
+	) -> Result<PuzzleChallengeData<T::AccountId, T::BlockNumber, BalanceOf<T>, Perbill>, Error<T>> {
+
+		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+		if challenge_info.is_none() {
+			return Err(Error::<T>::ChallengeNotExists);
+		}
+
+		let challenge_info = challenge_info.unwrap();
+
+		let period_len = Self::get_raising_period_Length(); // T::RaisingPeriodLength::get();
+
+		match challenge_info.status {
+			ChallengeStatus::Raise(bn) => {
+				let current_block_number = <frame_system::Pallet<T>>::block_number();
+				if current_block_number > bn.saturating_add(period_len) {
+					return Err(Error::<T>::RaisingPeriodExpired);
+				}
+			},
+			ChallengeStatus::RaiseCompleted(bn) => {},
+			_ => {
+				return Err(Error::<T>::EndOfRaising);
+			}
+		};
+
+		Ok(challenge_info)
+	}
+
+	fn get_raising_period_Length() -> T::BlockNumber {
+		T::RaisingPeriodLength::get()
 	}
 
 	fn get_list_of_challengers(pid: &PuzzleSubjectHash) -> Vec<(T::AccountId, Perbill)> {
@@ -295,10 +302,6 @@ impl<T: Config>
 		result_vec
 	}
 
-	fn recognition_challenge(pid: &PuzzleSubjectHash) -> DispatchResult {
-		Self::back_challenge_crowdloan(pid, Perbill::from_percent(0))
-	}
-
 	fn final_challenge(pid: &PuzzleSubjectHash, status: ChallengeStatus<T::BlockNumber, Perbill>) -> DispatchResult {
 		// ensure!(<PuzzleChallengeInfo<T>>::contains_key(&pid), Error::<T>::ChallengeNotExists);
 		let mut challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
@@ -327,5 +330,16 @@ impl<T: Config>
 			return Ok(());
 		};
 		DispatchResult::Err(Error::<T>::ChallengeStatusError.into())
+	}
+
+	fn challenge_failed(pid: &PuzzleSubjectHash ) -> Result<(), Error<T>> {
+		let challenge_data = Self::check_get_active_challenge_info(pid);
+		ensure!(challenge_data.is_ok(), Error::<T>::ChallengeNotExists);
+		// let mut challenge_data = challenge_data.unwrap();
+		// let raised_total = challenge_data.raised_total;
+		// let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), raised_total);
+		// T::SlashHandler::on_unbalanced(im_balance.0);
+		Self::back_challenge_crowdloan(pid, Perbill::from_percent(100));
+		Ok(())
 	}
 }

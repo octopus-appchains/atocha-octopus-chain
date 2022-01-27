@@ -437,7 +437,115 @@ fn test_take_answer_reward_with_other() {
 fn test_challenge_pull_out() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
-		assert!(false, "todo!");
+
+		// Create a puzzle.
+		let puzzle_hash = toVec("PUZZLE_TX_ID");
+		let answer_plain_txt = toVec("ANSWER_HASH_256");
+		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
+
+		// Create puzzle hash on the chain.
+		handle_create_puzzle(
+			toAid(CONST_ORIGIN_IS_CREATOR),
+			puzzle_hash.clone(),
+			answer_hash.clone(),
+		);
+		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
+
+		// Answer puzzle .
+		System::set_block_number(15);
+
+		assert_ok!(AtochaModule::answer_puzzle(
+			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+			puzzle_hash.clone(),
+			answer_plain_txt.clone(),
+			vec![]
+		));
+
+		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
+
+		System::set_block_number(15 + 100);
+		// Commit challenge.
+		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)), 4000000000000000);
+		// Challenge puzzle.
+		assert_ok!(AtochaModule::commit_challenge(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				puzzle_hash.clone(),
+				10 * DOLLARS
+		));
+		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)), 4000000000000000 - 10 * DOLLARS );
+
+		System::set_block_number(15 + 101);
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::take_answer_reward(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::BeingChallenged
+		);
+
+		// Try pull out challenge deposit on faild.
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::challenge_pull_out(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::ChallengeCrowdloanPeriodNotEnd
+		);
+
+		System::set_block_number(15 + 105);
+
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::take_answer_reward(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::BeingChallenged
+		);
+
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::challenge_pull_out(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::ChallengeCrowdloanPeriodNotEnd
+		);
+
+		System::set_block_number(15 + 106);
+
+		assert_ok!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::take_answer_reward(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				puzzle_hash.clone(),
+			)
+		);
+
+		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)), (4000 - 10) * DOLLARS );
+		assert_ok!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::challenge_pull_out(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				puzzle_hash.clone(),
+			)
+		);
+		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)),  (4000 - 1)  * DOLLARS );
+
+		assert_noop!(
+			// Try to call create answer, but the puzzle not exists.
+			AtochaModule::challenge_pull_out(
+				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				puzzle_hash.clone(),
+			),
+			Error::<Test>::ChallengeHasBeenDisbanded
+		);
+
 	});
 }
 

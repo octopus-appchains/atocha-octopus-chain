@@ -68,7 +68,7 @@ pub trait IPuzzlePoints<AccountId, PToken, BlockNumber, PuzzleHash, DResult> {
 	) -> PToken;
 }
 
-pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Error> {
+pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Error, BlockNumber> {
 	fn issue_challenge(who: AccountId, pid: &PuzzleHash, deposit: BalanceOf) -> DispatchResult;
 	fn get_balance_threshold(pid: &PuzzleHash) -> BalanceOf;
 	fn get_total_raise(pid: &PuzzleHash) -> BalanceOf;
@@ -78,6 +78,7 @@ pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Erro
 	fn recognition_challenge(pid: &PuzzleHash) -> DispatchResult;
 	fn back_challenge_crowdloan(pid: &PuzzleHash, tax: Perbill) -> DispatchResult;
 	fn check_get_active_challenge_info(pid: &PuzzleHash) -> Result<DataInfo, Error>;
+	fn get_raising_period_Length() -> BlockNumber;
 	fn get_list_of_challengers(pid: &PuzzleHash) ->  Vec<(AccountId, Perbill)>;
 	fn final_challenge(pid: &PuzzleHash, status: Status) -> DispatchResult;
 	fn challenge_failed(pid: &PuzzleHash) -> Result<(), Error>;

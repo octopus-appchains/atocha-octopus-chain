@@ -84,9 +84,9 @@ parameter_types! {
 	pub const IssuancePerBlock: BalanceOf<Test> = 1902587519025900000 ;// 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 	pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
 	pub const PerEraOfBlockNumber: BlockNumber = 5;
-	pub RaisingPeriodLength: BlockNumber = 5;
+	pub const RaisingPeriodLength: BlockNumber = 5;
 	pub PenaltyOfCP: Perbill = Perbill::from_float(0.1);
-	pub StorageBaseFee: BalanceOf<Test> = 1000;
+	pub const StorageBaseFee: BalanceOf<Test> = 1000;
 }
 
 impl crate::imps::challenge_manager::Config for Test {
