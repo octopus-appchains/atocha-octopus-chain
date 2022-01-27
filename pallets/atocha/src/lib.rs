@@ -65,6 +65,9 @@ pub mod pallet {
 		type ChallengePeriodLength: Get<Self::BlockNumber>;
 
 		#[pallet::constant]
+		type TaxOfTCR: Get<Perbill> ;
+
+		#[pallet::constant]
 		type TaxOfTVS: Get<Perbill> ;
 
 		#[pallet::constant]
@@ -160,7 +163,7 @@ pub mod pallet {
 		AnswerCreated(T::AccountId, PuzzleAnswerHash, PuzzleSubjectHash, CreateBn<T::BlockNumber>),
 		AnswerMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
 		AnswerMisMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
-		IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
+		// IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
 		CrowdloanChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
 		CreatorPointSlash(PuzzleSubjectHash, PointSlashData<T::AccountId, Perbill, PointToken>),
 		ChallengePassed(PuzzleSubjectHash,ChallendRewardData<T::AccountId, Perbill>),
@@ -170,9 +173,13 @@ pub mod pallet {
 	pub enum Error<T> {
 		AnswerAlreadyExist,
 		BeingChallenged,
+		ChallengeCrowdloanPeriodNotEnd,
 		ChallengePeriodIsNotEnd,
 		ChallengeListNotEmpty,
 		ChallengePeriodIsEnd,
+		ChallengeHasBeenSubmitted,
+		ChallengeNotExists,
+		ChallengeHasBeenDisbanded,
 		NoRightToReward,
 		PuzzleNotExist,
 		PuzzleHasBeenSolved,
@@ -182,7 +189,6 @@ pub mod pallet {
 		PuzzleAlreadyExist,
 		PuzzleNotSolvedChallengeFailed,
 		WrongAnswer,
-
 	}
 
 	#[pallet::hooks]
@@ -395,11 +401,45 @@ pub mod pallet {
 			);
 			//
 			T::AtoChallenge::issue_challenge(who.clone(), &puzzle_hash, deposit)?;
-			Self::deposit_event(Event::<T>::IssueChallenge(
-				who.clone(),
-				puzzle_hash.clone(),
-				deposit.clone(),
-			));
+			// Self::deposit_event(Event::<T>::IssueChallenge(
+			// 	who.clone(),
+			// 	puzzle_hash.clone(),
+			// 	deposit.clone(),
+			// ));
+
+			//
+			Ok(().into())
+		}
+
+		#[pallet::weight(100)]
+		pub fn challenge_pull_out(
+			origin: OriginFor<T>,
+			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
+			#[pallet::compact] deposit: BalanceOf<T>,
+		) -> DispatchResult {
+			// check signer
+			let who = ensure_signed(origin)?;
+
+			let challenge_status = T::AtoChallenge::get_challenge_status(&puzzle_hash);
+			ensure!(challenge_status.is_some(), Error::<T>::ChallengeNotExists);
+
+			let current_bn = <frame_system::Pallet<T>>::block_number();
+			let challenge_status = challenge_status.unwrap();
+			match  challenge_status {
+				ChallengeStatus::Raise(raise_bn) => {
+					// ensure!(current_bn - raise_bn > T::ChallengeCrowdloanPeriodLength::get(), Error::<T>::ChallengeCrowdloanPeriodNotEnd )
+					ensure!(T::AtoChallenge::check_get_active_challenge_info(&puzzle_hash).is_ok(), Error::<T>::ChallengeCrowdloanPeriodNotEnd );
+				},
+				ChallengeStatus::RaiseBackFunds(_raise_bn, _) => {
+					return DispatchResult::Err(Error::<T>::ChallengeHasBeenDisbanded.into());
+				},
+				_ => {
+					return DispatchResult::Err(Error::<T>::ChallengeHasBeenSubmitted.into());
+				}
+			}
+
+			//
+			T::AtoChallenge::back_challenge_crowdloan(&puzzle_hash, T::TaxOfTCR::get());
 
 			//
 			Ok(().into())
@@ -420,11 +460,11 @@ pub mod pallet {
 			);
 			//
 			T::AtoChallenge::challenge_crowdloan(who.clone(), &puzzle_hash, deposit)?;
-			Self::deposit_event(Event::<T>::IssueChallenge(
-				who.clone(),
-				puzzle_hash.clone(),
-				deposit.clone(),
-			));
+			// Self::deposit_event(Event::<T>::IssueChallenge(
+			// 	who.clone(),
+			// 	puzzle_hash.clone(),
+			// 	deposit.clone(),
+			// ));
 			//
 			Ok(().into())
 		}

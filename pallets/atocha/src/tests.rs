@@ -433,6 +433,13 @@ fn test_take_answer_reward_with_other() {
 	});
 }
 
+#[test]
+fn test_challenge_pull_out() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(5);
+		assert!(false, "todo!");
+	});
+}
 
 #[test]
 fn test_take_answer_reward_with_challenge_win() {

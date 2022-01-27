@@ -74,6 +74,7 @@ impl frame_system::Config for Test {
 parameter_types! {
 	pub const MinBonusOfPuzzle: Balance = 100 * DOLLARS;
 	pub const ChallengePeriodLength: BlockNumber = 100;
+	pub const TaxOfTCR: Perbill = Perbill::from_percent(10);
 	pub const TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
 	pub const TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
 	pub const TaxOfTI: Perbill = Perbill::from_percent(10);
@@ -92,6 +93,7 @@ impl crate::Config for Test {
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
 	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
+	type TaxOfTCR = TaxOfTCR;
 	type TaxOfTVS = TaxOfTVS;
 	type TaxOfTVO = TaxOfTVO;
 	type TaxOfTI = TaxOfTI;

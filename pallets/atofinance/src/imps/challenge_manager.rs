@@ -49,6 +49,8 @@ impl<T: Config>
 			ExistenceRequirement::KeepAlive,
 		)?;
 
+		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit(who.clone(), real_deposit.clone()));
+
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 
 		let mut raise_group: Vec<(T::AccountId, BalanceOf<T>)> = Vec::new();
@@ -126,6 +128,8 @@ impl<T: Config>
 			deposit,
 			ExistenceRequirement::KeepAlive,
 		)?;
+		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit(who.clone(), deposit.clone()));
+
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 		let raised_total = challenge_data.raised_total.saturating_add(deposit);
 		let challenge_status = || {
@@ -166,7 +170,6 @@ impl<T: Config>
 		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
 		Some(challenge_info.unwrap().status)
 	}
-
 
 	/// Check and get the active challenges.
 	fn check_get_active_challenge_info(

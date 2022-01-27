@@ -53,19 +53,19 @@ fn test_point_exchange() {
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_5), 500_000_000_000_000);
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_6), 600_000_000_000_000);
 
-		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_3));
+		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4));
 		// Vec<(T::AccountId, PointToken, Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>)>
 		assert_eq!(<PointExchange<Test>>::get_reward_list(2), vec![
-			(ACCOUNT_ID_3, 300, None),
+			(ACCOUNT_ID_4, 400, None),
 		]);
 
 		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_5));
 		assert_eq!(<PointExchange<Test>>::get_reward_list(2), vec![
 			(ACCOUNT_ID_5, 500, None),
-			(ACCOUNT_ID_3, 300, None),
+			(ACCOUNT_ID_4, 400, None),
 		]);
 
-		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4));
+		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_3));
 		assert_eq!(<PointExchange<Test>>::get_reward_list(2), vec![
 			(ACCOUNT_ID_5, 500, None),
 			(ACCOUNT_ID_4, 400, None),

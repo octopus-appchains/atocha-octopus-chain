@@ -290,6 +290,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		ApplyPointReward(T::AccountId),
+		ChallengeDeposit(T::AccountId, BalanceOf<T>),
 		ChallengeStatusChange(ChallengeStatus<T::BlockNumber, Perbill>),
 		SomethingStored(u32, T::AccountId),
 		StakingInterestRate(AtoInterestRate, AtoStakingPeriod),

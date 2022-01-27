@@ -32,13 +32,15 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		}
 
 		ensure!( !apply_list.iter().any(|x|&x.0 == &who), Error::<T>::ExchangeApplyAlreadyExists );
-
+		let origin_list_length = apply_list.len();
 		// Update old list point.
 		if let Some((original_who, original_point, origin_info)) = apply_list.pop() {
-			ensure!(apply_point > original_point, Error::<T>::TooFewPoints);
-			apply_list.push((who, apply_point, None));
-			if (apply_list.len() < Self::get_max_reward_list_size() as usize) {
+			if (origin_list_length < Self::get_max_reward_list_size() as usize) {
+				apply_list.push((who, apply_point, None));
 				apply_list.push((original_who, original_point, origin_info));
+			}else{
+				ensure!(apply_point > original_point, Error::<T>::TooFewPoints);
+				apply_list.push((who, apply_point, None));
 			}
 			apply_list.sort_by(|(_, point_a, _),(_, point_b, _)|{
 				point_b.cmp(point_a)
@@ -89,7 +91,10 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		Self::update_apply_list_point();
 		// count total point.
 		let exchange_list = PointExchangeInfo::<T>::get(era);
-		ensure!(exchange_list.len() > 0, Error::<T>::ExchangeListIsEmpty);
+		if exchange_list.len() == 0 {
+			LastExchangeRewardEra::<T>::put(era);
+			return DispatchResult::Err(Error::<T>::ExchangeListIsEmpty.into());
+		}
 		ensure!(!exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
 
 		let mut total_point: PointToken = Zero::zero();

@@ -392,9 +392,9 @@ parameter_types! {
 	pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product. // MyBe 10 size
 	pub const IssuancePerBlock: Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
-	pub ChallengeThreshold: Perbill = Perbill::from_percent(60);
-	pub RaisingPeriodLength: BlockNumber = 10 * MINUTES;
-	pub StorageBaseFee: Balance = 10000;
+	pub const ChallengeThreshold: Perbill = Perbill::from_percent(60);
+	pub const RaisingPeriodLength: BlockNumber = 10 * MINUTES;
+	pub const StorageBaseFee: Balance = 10000;
 }
 
 impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
