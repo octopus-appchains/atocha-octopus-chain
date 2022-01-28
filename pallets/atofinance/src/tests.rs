@@ -50,7 +50,7 @@ fn test_PreStorage() {
 
 		assert_eq!(
 			AtochaPot::storage_ledger("STORAGE_HASH".as_bytes().to_vec(), 9000),
-			Some((ACCOUNT_ID_1, current_bn)),
+			Some((ACCOUNT_ID_1, current_bn, 1000 * 9000)),
 		);
 
 		assert_eq!(

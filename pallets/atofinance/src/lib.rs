@@ -221,7 +221,8 @@ pub mod pallet {
 		StorageLength,
 		(
 			<T as frame_system::Config>::AccountId,
-		 	<T as frame_system::Config>::BlockNumber
+		 	<T as frame_system::Config>::BlockNumber,
+			BalanceOf<T>,
 		),
 	>;
 
@@ -394,7 +395,7 @@ pub mod pallet {
 			ensure!(storage_fee <= max_fee, Error::<T>::ExceededMaximumFeeLimit);
 			//
 			T::Currency::transfer(&who, &Self::account_id(), storage_fee, ExistenceRequirement::KeepAlive)?;
-			StorageLedger::<T>::insert(storage_hash.clone(), storage_length, (who.clone(), Self::get_current_bn()));
+			StorageLedger::<T>::insert(storage_hash.clone(), storage_length, (who.clone(), Self::get_current_bn(), storage_fee.clone()));
 			Self::deposit_event(Event::<T>::PreStorage(
 				who,
 				storage_fee,
