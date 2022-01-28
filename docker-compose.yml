@@ -14,7 +14,7 @@ services:
     volumes:
       - ./data/atocha/one:/data
     command: >
-      atocha-node --chain atocha-chain-spec-raw.json --name ato_one --execution Native --pruning archive
+      atocha-node --chain /usr/local/bin/atocha-chain-spec-raw.json --name ato_one --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
       --port 30333
@@ -38,7 +38,7 @@ services:
     volumes:
       - ./data/atocha/two:/data
     command: >
-      atocha-node --chain atocha-chain-spec-raw.json --name ato_two --execution Native --pruning archive
+      atocha-node --chain /usr/local/bin/atocha-chain-spec-raw.json --name ato_two --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
       --port 30333
@@ -62,7 +62,7 @@ services:
     volumes:
       - ./data/atocha/three:/data
     command: >
-      atocha-node --chain atocha-chain-spec-raw.json --name ato_three --execution Native --pruning archive
+      atocha-node --chain /usr/local/bin/atocha-chain-spec-raw.json --name ato_three --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
       --port 30333
