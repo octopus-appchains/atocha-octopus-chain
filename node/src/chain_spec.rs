@@ -90,7 +90,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	let mut properties = serde_json::map::Map::new();
 	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("tokenSymbol".into(), "ATO".into());
-	properties.insert("SS58Prefix".into(), 1024.into());
+	properties.insert("SS58Prefix".into(), 50.into());
 	Ok(ChainSpec::from_genesis(
 		// Name
 		"Atocha Testnet",
@@ -134,7 +134,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 	let mut properties = serde_json::map::Map::new();
 	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("tokenSymbol".into(), "ATO".into());
-	properties.insert("SS58Prefix".into(), 1024.into());
+	properties.insert("SS58Prefix".into(), 50.into());
 
 	Ok(ChainSpec::from_genesis(
 		// Name
