@@ -50,7 +50,10 @@ impl<T: Config>
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit(who.clone(), real_deposit.clone()));
+		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit{
+			who: who.clone(),
+			deposit: real_deposit.clone()
+		});
 
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 
@@ -86,7 +89,9 @@ impl<T: Config>
 
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
-				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_data.status.clone()));
+				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange {
+					challenge_status: challenge_data.status.clone()
+				});
 				T::AtoPropose::challenge_propose(pid.clone());
 			},
 			_ => {}
@@ -129,7 +134,11 @@ impl<T: Config>
 			deposit,
 			ExistenceRequirement::KeepAlive,
 		)?;
-		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit(who.clone(), deposit.clone()));
+
+		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit{
+			who: who.clone(),
+			deposit: deposit.clone()
+		});
 
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 		let raised_total = challenge_data.raised_total.saturating_add(deposit);
@@ -155,7 +164,9 @@ impl<T: Config>
 
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
-				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_data.status.clone()));
+				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
+					challenge_status: challenge_data.status.clone()
+				});
 				T::AtoPropose::challenge_propose(pid.clone());
 			},
 			_ => {}
@@ -212,7 +223,9 @@ impl<T: Config>
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 		challenge_data.status = ChallengeStatus::RaiseBackFunds(current_block_number, tax);
 		<PuzzleChallengeInfo<T>>::insert(&pid, challenge_data.clone());
-		crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_data.status.clone()));
+		crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
+			challenge_status: challenge_data.status.clone()
+		});
 
 		let mut total_pay: BalanceOf<T> = Zero::zero();
 		for (acc, deposit) in challenge_data.raised_group {
@@ -326,7 +339,9 @@ impl<T: Config>
 			ensure!(bn != Zero::zero(), Error::<T>::NeedARefundFirst);
 			challenge_info.status = s.clone();
 			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info.clone());
-			crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange(challenge_info.status));
+			crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
+				challenge_status: challenge_info.status
+			});
 			return Ok(());
 		};
 		DispatchResult::Err(Error::<T>::ChallengeStatusError.into())

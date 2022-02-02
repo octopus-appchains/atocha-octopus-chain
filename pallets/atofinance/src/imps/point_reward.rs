@@ -63,6 +63,11 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, T::Bl
 			beneficiaries,
 		};
 		<AtoPointReward<T>>::insert(pid, pot_reward);
+		super::Pallet::<T>::deposit_event(Event::<T>::TakePointReward {
+			pid: pid.clone(),
+			payout: payout.clone(),
+			fee: tax_fee.clone(),
+		});
 		Ok(())
 	}
 

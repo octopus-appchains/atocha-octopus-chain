@@ -290,12 +290,13 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		ApplyPointReward(T::AccountId),
-		ChallengeDeposit(T::AccountId, BalanceOf<T>),
-		ChallengeStatusChange(ChallengeStatus<T::BlockNumber, Perbill>),
-		SomethingStored(u32, T::AccountId),
-		StakingInterestRate(AtoInterestRate, AtoStakingPeriod),
-		PreStorage(T::AccountId, BalanceOf<T>, StorageHash, StorageLength),
+		ApplyPointReward { who: T::AccountId , apply_era: ExchangeEra},
+		ChallengeDeposit { who: T::AccountId, deposit: BalanceOf<T> },
+		ChallengeStatusChange { challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
+		PreStorage { who: T::AccountId, fee: BalanceOf<T>, storage_hash: StorageHash, storage_length: StorageLength },
+		TakeTokenReward { pid: PuzzleSubjectHash, payout: BalanceOf<T>, fee: BalanceOf<T> },
+		TakePointReward { pid: PuzzleSubjectHash, payout: PointToken, fee: PointToken },
+		PointsExchange { era: ExchangeEra, exchange_list: Vec<(T::AccountId, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>)> }
 	}
 
 	// Errors inform users that something went wrong.
@@ -396,12 +397,13 @@ pub mod pallet {
 			//
 			T::Currency::transfer(&who, &Self::account_id(), storage_fee, ExistenceRequirement::KeepAlive)?;
 			StorageLedger::<T>::insert(storage_hash.clone(), storage_length, (who.clone(), Self::get_current_bn(), storage_fee.clone()));
-			Self::deposit_event(Event::<T>::PreStorage(
-				who,
-				storage_fee,
+			//who: T::AccountId, fee: BalanceOf<T>, storage_hash: StorageHash, storage_length: StorageLength
+			Self::deposit_event(Event::<T>::PreStorage {
+				who: who.clone(),
+				fee: storage_fee,
 				storage_hash,
 				storage_length,
-			));
+			});
 			Ok(().into())
 		}
 
@@ -413,9 +415,11 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			// get fee.
 			PointExchange::<T>::apply_exchange(who.clone())?;
-			Self::deposit_event(Event::<T>::ApplyPointReward(
-				who.clone(),
-			));
+
+			Self::deposit_event(Event::<T>::ApplyPointReward {
+				who: who.clone(),
+				apply_era: PointExchange::<T>::get_current_era(),
+			});
 			Ok(().into())
 		}
 	}

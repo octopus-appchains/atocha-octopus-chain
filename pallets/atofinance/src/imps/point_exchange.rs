@@ -149,15 +149,21 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 			return DispatchResult::Err(Error::<T>::KickAwaySickExchange.into());
 		}
 		// ensure!(sum_proportion == Perbill::from_percent(100), Error::<T>::KickAwaySickExchange);
-
+		let mut event_list = Vec::new();
 		for (who, apply_point, info_data) in new_exchange_list.clone() {
 			let info_data = info_data.unwrap();
 			PointManager::<T>::reduce_points_to(&who, info_data.pay_point);
 			T::Currency::deposit_creating(&who, info_data.take_token);
+			event_list.push((who.clone(), info_data.clone()));
 		}
 
-		PointExchangeInfo::<T>::insert(era, new_exchange_list);
+		PointExchangeInfo::<T>::insert(era, new_exchange_list.clone());
 		LastExchangeRewardEra::<T>::put(era);
+
+		crate::Pallet::<T>::deposit_event(Event::PointsExchange{
+			era: era,
+			exchange_list: event_list,
+		});
 
 		Ok(())
 	}

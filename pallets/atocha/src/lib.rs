@@ -159,15 +159,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// creator id, puzzle_hash, create block number , duration block number,
-		PuzzleCreated(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>, BalanceOf<T>), // remove . DurationBn
-		AdditionalSponsorship(T::AccountId, PuzzleSubjectHash, CreateBn<T::BlockNumber>, BalanceOf<T>, PuzzleSponsorExplain), // remove . DurationBn
-		AnswerCreated(T::AccountId, PuzzleAnswerHash, PuzzleSubjectHash, CreateBn<T::BlockNumber>),
-		AnswerMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
-		AnswerMisMatch(PuzzleSubjectHash, Vec<u8>, PuzzleAnswerHash,PuzzleAnswerHash),
+		PuzzleCreated { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T> }, // remove . DurationBn
+		AdditionalSponsorship { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>, reason: PuzzleSponsorExplain }, // remove . DurationBn
+		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber> },
+		AnswerMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
+		AnswerMisMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
 		// IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
-		CrowdloanChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
-		CreatorPointSlash(PuzzleSubjectHash, PointSlashData<T::AccountId, Perbill, PointToken>),
-		ChallengePassed(PuzzleSubjectHash,ChallendRewardData<T::AccountId, Perbill>),
+		// CrowdloanChallenge { who: T::AccountId, pid: PuzzleSubjectHash, deposit: BalanceOf<T>, },
+		CreatorPointSlash { pid: PuzzleSubjectHash, point_slash_data: PointSlashData<T::AccountId, Perbill, PointToken> },
+		ChallengePassed { pid: PuzzleSubjectHash, reward_data: ChallengeRewardData<T::AccountId, Perbill> },
 	}
 
 	#[pallet::error]
@@ -235,13 +235,13 @@ pub mod pallet {
 			T::PuzzleLedger::do_sponsorship(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number, reason_v8.clone())?;
 
 			// send event
-			Self::deposit_event(Event::AdditionalSponsorship(
+			Self::deposit_event(Event::AdditionalSponsorship{
 				who,
-				puzzle_hash,
-				current_block_number.into(),
-				amount,
-				reason_v8,
-			));
+				pid: puzzle_hash,
+				create_bn: current_block_number.into(),
+				deposit: amount,
+				reason: reason_v8.clone(),
+			});
 			//
 			Ok(().into())
 		}
@@ -288,21 +288,21 @@ pub mod pallet {
 					update_puzzle_content.reveal_answer = Some(who.clone());
 					<PuzzleInfo<T>>::insert(&puzzle_hash, update_puzzle_content);
 
-					Self::deposit_event(Event::<T>::AnswerMatch(
-						puzzle_hash.clone(),
-						answer_hash.clone(),
-						update_answer_sign.clone(),
-						puzzle_content.answer_hash.clone()
-					));
+					Self::deposit_event(Event::<T>::AnswerMatch{
+						pid: puzzle_hash.clone(),
+						aid: answer_hash.clone(),
+						submitted_hash: update_answer_sign.clone(),
+						correct_hash: puzzle_content.answer_hash.clone()
+					});
 
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
-					Self::deposit_event(Event::<T>::AnswerMisMatch(
-						puzzle_hash.clone(),
-						answer_hash.clone(),
-						update_answer_sign.clone(),
-						puzzle_content.answer_hash.clone()
-					));
+					Self::deposit_event(Event::<T>::AnswerMisMatch {
+						pid: puzzle_hash.clone(),
+						aid: answer_hash.clone(),
+						submitted_hash: update_answer_sign.clone(),
+						correct_hash: puzzle_content.answer_hash.clone()
+					});
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH
 				}
 			};
@@ -322,12 +322,12 @@ pub mod pallet {
 			);
 
 			// send event
-			Self::deposit_event(Event::AnswerCreated(
+			Self::deposit_event(Event::AnswerCreated{
 				who,
-				answer_hash,
-				puzzle_hash,
-				current_block_number,
-			));
+				aid: answer_hash,
+				pid: puzzle_hash,
+				create_bn: current_block_number,
+			});
 			//
 			Ok(().into())
 		}
@@ -365,12 +365,12 @@ pub mod pallet {
 			<PuzzleInfo<T>>::insert(puzzle_hash.clone(), puzzle_content);
 
 			// send event
-			Self::deposit_event(Event::PuzzleCreated(
+			Self::deposit_event(Event::PuzzleCreated{
 				who,
-				puzzle_hash,
-				current_block_number.into(),
-				amount,
-			));
+				pid: puzzle_hash,
+				create_bn: current_block_number.into(),
+				deposit: amount,
+			});
 			//
 			Ok(().into())
 		}
@@ -558,93 +558,27 @@ pub mod pallet {
 			if create_total_point > 0 {
 				let cut_down_point = T::PenaltyOfCP::get() * create_total_point;
 				T::AtoPointsManage::reduce_points_to(&puzzle_content.account, cut_down_point)?;
-				Self::deposit_event(Event::<T>::CreatorPointSlash(
-					puzzle_hash.clone(),
-					PointSlashData {
+				Self::deposit_event(Event::<T>::CreatorPointSlash{
+					pid: puzzle_hash.clone(),
+					point_slash_data: PointSlashData {
 						who: puzzle_content.account.clone(),
 						rate_cp: T::PenaltyOfCP::get(),
 						total: create_total_point.clone(),
 						slash: cut_down_point.clone(),
 					},
-				));
+				});
 			}
 
-			Self::deposit_event(Event::<T>::ChallengePassed(
-				puzzle_hash.clone(),
-				ChallendRewardData {
+			Self::deposit_event(Event::<T>::ChallengePassed{
+				pid: puzzle_hash.clone(),
+				reward_data: ChallengeRewardData {
 					beneficiaries: beneficiaries.clone(),
 					rate_ti: T::TaxOfTI::get(),
 				}
-			));
+			});
 
 			Ok(().into())
 		}
-
-		// refuse_challenge
-		// #[pallet::weight(0)]
-		// pub fn refuse_challenge(
-		// 	origin: OriginFor<T>,
-		// 	puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-		// ) -> DispatchResult {
-		// 	// check signer
-		// 	T::CouncilOrigin::ensure_origin(origin)?;
-		// 	let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
-		// 	ensure!(
-		// 		puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
-		// 		Error::<T>::PuzzleStatusErr
-		// 	);
-		// 	//
-		// 	// let reveal_bn = puzzle_content.reveal_bn.unwrap();
-		//
-		// 	//Get challenge list
-		// 	let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
-		// 	ensure!(
-		// 		beneficiaries.len() > 0 as usize,
-		// 		Error::<T>::ChallengeListNotEmpty
-		// 	);
-		//
-		// 	//
-		// 	let current_block_number = <frame_system::Pallet<T>>::block_number();
-		//
-		// 	T::AtoChallenge::challenge_failed(&puzzle_hash);
-		// 	T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
-		//
-		// 	Ok(().into())
-		// }
-
-		// // refuse_challenge
-		// #[pallet::weight(0)]
-		// pub fn cancel_challenge_crowdloan(
-		// 	origin: OriginFor<T>,
-		// 	puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-		// ) -> DispatchResult {
-		// 	// check signer
-		// 	let who = ensure_signed(origin)?;
-		// 	//Get beneficiarie list
-		// 	let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
-		//
-		//
-		// 	let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
-		// 	ensure!(
-		// 		puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
-		// 		Error::<T>::PuzzleStatusErr
-		// 	);
-		// 	//
-		// 	// let reveal_bn = puzzle_content.reveal_bn.unwrap();
-		//
-		// 	//Get challenge list
-		// 	let beneficiaries = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
-		// 	ensure!(
-		// 		beneficiaries.len() > 0 as usize,
-		// 		Error::<T>::ChallengeListNotEmpty
-		// 	);
-		//
-		// 	//
-		// 	let current_block_number = <frame_system::Pallet<T>>::block_number();
-		// 	T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
-		//
-		// 	Ok(().into())
-		// }
 
 	}
 }

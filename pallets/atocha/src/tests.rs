@@ -59,9 +59,14 @@ fn test_create_puzzle() {
 				puzzle_version: 1,
 			}
 		);
-		//
+		// who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>
 		System::assert_last_event(
-			AtochaEvent::PuzzleCreated(toAid(CONST_ORIGIN_IS_CREATOR), puzzle_hash, 5, 100 * DOLLARS)
+			AtochaEvent::PuzzleCreated{
+				who: toAid(CONST_ORIGIN_IS_CREATOR),
+				pid: puzzle_hash,
+				create_bn: 5,
+				deposit: 100 * DOLLARS
+			}
 			.into(),
 		);
 	});

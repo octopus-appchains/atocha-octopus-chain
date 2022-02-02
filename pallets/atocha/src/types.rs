@@ -90,7 +90,7 @@ pub struct PointSlashData<Account, PerThing, PointNum> {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct ChallendRewardData<Account, PerThing> {
+pub struct ChallengeRewardData<Account, PerThing> {
 	pub beneficiaries: Vec<(Account, PerThing)>,
 	pub rate_ti: PerThing,
 }
