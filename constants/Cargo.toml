@@ -1,0 +1,10 @@
+[package]
+name = 'atocha-constants'
+version = '1.0.0'
+description = 'Atocha chain constants.'
+authors = ['Atocha protocol']
+homepage = 'https://'
+edition = '2018'
+license = 'Apache-2.0'
+publish = false
+repository = 'https://github.com/atocha-protocol'

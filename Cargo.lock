@@ -390,6 +390,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "atocha-constants"
+version = "1.0.0"
+
+[[package]]
 name = "atocha-node"
 version = "3.0.0-monthly-2021-10"
 dependencies = [
@@ -3974,6 +3978,7 @@ dependencies = [
 name = "pallet-atocha"
 version = "1.0.0"
 dependencies = [
+ "atocha-constants",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

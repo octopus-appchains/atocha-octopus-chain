@@ -94,3 +94,16 @@ pub struct ChallengeRewardData<Account, PerThing> {
 	pub beneficiaries: Vec<(Account, PerThing)>,
 	pub rate_ti: PerThing,
 }
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct AtoConfig<Balance, BlockNumber, PerThing> {
+	pub min_bonus_of_puzzle: Balance, // MinBonusOfPuzzle: Balance = 100 * DOLLARS;
+	pub challenge_period_length: BlockNumber, // ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
+	pub tax_of_tcr: PerThing, // TaxOfTCR: Perbill = Perbill::from_percent(10);
+	pub tax_of_tvs: PerThing, // TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
+	pub tax_of_tvo: PerThing, // TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
+	pub tax_of_ti: PerThing, // TaxOfTI: Perbill = Perbill::from_percent(10);
+	pub penalty_of_cp: PerThing, // PenaltyOfCP: Perbill = Perbill::from_percent(10);
+	pub max_sponsor_explain_len: u32, // const MaxSponsorExplainLen: u32 = 256;
+	pub max_answer_explain_len: u32, // const MaxAnswerExplainLen: u32 = 1024;
+}

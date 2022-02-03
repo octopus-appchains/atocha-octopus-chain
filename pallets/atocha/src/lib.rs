@@ -34,7 +34,9 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use atocha_constants::*;
 	use frame_support::sp_runtime::{Perbill, RuntimeDebug};
+	use frame_support::parameter_types;
 	use crate::types::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
 	use frame_support::dispatch::Dispatchable;
@@ -48,10 +50,11 @@ pub mod pallet {
 	use pallet_atofinance::traits::{*};
 	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
 
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// The staking balance.
+
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -190,6 +193,70 @@ pub mod pallet {
 		PuzzleAlreadyExist,
 		PuzzleNotSolvedChallengeFailed,
 		WrongAnswer,
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub min_bonus_of_puzzle: BalanceOf<T>, // (100 * DOLLARS).into(),
+		pub challenge_period_length: T::BlockNumber,
+		pub tax_of_tcr: Perbill,
+		pub tax_of_tvs: Perbill,
+		pub tax_of_tvo: Perbill,
+		pub tax_of_ti: Perbill,
+		pub penalty_of_cp: Perbill,
+		pub max_sponsor_explain_len: u32,
+		pub max_answer_explain_len: u32
+	}
+
+	// pub min_bonus_of_puzzle: Balance, // MinBonusOfPuzzle: Balance = 100 * DOLLARS;
+	// pub challenge_period_length: BlockNumber, // ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
+	// pub tax_of_tcr: PerThing, // TaxOfTCR: Perbill = Perbill::from_percent(10);
+	// pub tax_of_tvs: PerThing, // TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
+	// pub tax_of_tvo: PerThing, // TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
+	// pub tax_of_ti: PerThing, // TaxOfTI: Perbill = Perbill::from_percent(10);
+	// pub penalty_of_cp: PerThing, // PenaltyOfCP: Perbill = Perbill::from_percent(10);
+	// pub max_sponsor_explain_len: u32, // const MaxSponsorExplainLen: u32 = 256;
+	// pub max_answer_explain_len: u32, // const MaxAnswerExplainLen: u32 = 1024;
+
+	// min_bonus_of_puzzle: 1u32.into(), // (100 * DOLLARS).into(),
+	// challenge_period_length: MINUTES.saturating_mul(2).into(),
+	// tax_of_tcr: Perbill::from_percent(10),
+	// tax_of_tvs: Perbill::from_percent(5),
+	// tax_of_tvo: Perbill::from_percent(10),
+	// tax_of_ti: Perbill::from_percent(10),
+	// penalty_of_cp: Perbill::from_percent(10),
+	// max_sponsor_explain_len: 256,
+	// max_answer_explain_len: 1024
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+
+		fn default() -> Self {
+
+			Self {
+				min_bonus_of_puzzle: 3u32.into(), // (100 * DOLLARS).into(),
+				challenge_period_length: MINUTES.saturating_mul(2).into(),
+				tax_of_tcr: Perbill::from_percent(10),
+				tax_of_tvs: Perbill::from_percent(5),
+				tax_of_tvo: Perbill::from_percent(10),
+				tax_of_ti: Perbill::from_percent(10),
+				penalty_of_cp: Perbill::from_percent(10),
+				max_sponsor_explain_len: 256,
+				max_answer_explain_len: 1024
+			}
+		}
+	}
+
+
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			// let finance_account = <Pallet<T>>::account_id();
+			// if T::Currency::total_balance(&finance_account).is_zero() {
+			// 	T::Currency::deposit_creating(&finance_account, T::Currency::minimum_balance());
+			// }
+		}
 	}
 
 	#[pallet::hooks]

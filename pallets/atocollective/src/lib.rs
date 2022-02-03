@@ -992,7 +992,14 @@ impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I> {
 	{
 		// proposal: Box<<T as Config<I>>::Proposal>
 		// TODO: Update threshold for D
-		let threshold = 3;
+		let mut threshold = 1;
+
+		let members = <Members<T, I>>::get();
+		let members_count:u32 = members.len() as u32;
+		if members_count > 1 {
+			threshold = members_count / 2 + 1;
+		}
+
 
 		let proposal: T::Proposal = pallet_atocha::Call::<T>::recognition_challenge {
 			puzzle_hash
