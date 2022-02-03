@@ -234,6 +234,8 @@ fn testnet_genesis(
 	const STASH: Balance = 1000 * DOLLARS;
 
 	GenesisConfig {
+		atocha_finace: Default::default(),
+		atocha_module: Default::default(),
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
@@ -279,7 +281,6 @@ fn testnet_genesis(
 			validators,
 			premined_amount: 1024 * DOLLARS,
 		},
-		atocha_finace: Default::default(),
 		octopus_lpos: OctopusLposConfig { era_payout: 2 * DOLLARS, ..Default::default() },
 	}
 }

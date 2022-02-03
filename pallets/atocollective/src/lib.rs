@@ -991,7 +991,6 @@ impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I> {
 	fn challenge_propose(puzzle_hash: PuzzleSubjectHash) -> DispatchResult
 	{
 		// proposal: Box<<T as Config<I>>::Proposal>
-		// TODO: Update threshold for D
 		let mut threshold = 1;
 
 		let members = <Members<T, I>>::get();

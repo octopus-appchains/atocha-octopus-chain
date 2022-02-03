@@ -8,17 +8,19 @@ use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
 use frame_support::sp_runtime::{DispatchResult, MultiSignature};
 use frame_support::sp_runtime::MultiSigner;
 use frame_support::ensure;
+use frame_support::sp_std::convert::TryInto;
 
 use hex::ToHex;
 use sha2::Digest;
 use sp_application_crypto::sr25519;
 use sp_application_crypto::sr25519::Public;
 use sp_application_crypto::sr25519::Signature;
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{Perbill, SaturatedConversion};
 use sp_core::sp_std::vec::Vec;
+use atocha_constants::{DOLLARS, MINUTES};
 use pallet_atofinance::traits::IAtoChallenge;
 use pallet_atofinance::types::ChallengeStatus;
-use crate::types::PuzzleSubjectHash;
+use crate::types::{BalanceOf, ConfigData, PuzzleSubjectHash};
 use crate::types::PuzzleStatus;
 
 mod traits;
@@ -61,32 +63,32 @@ pub mod pallet {
 
 		// type Call: Dispatchable + Debug;
 
-		#[pallet::constant]
-		type MinBonusOfPuzzle: Get<BalanceOf<Self>>;
+		// #[pallet::constant]
+		// type MinBonusOfPuzzle: Get<BalanceOf<Self>>;
 
-		#[pallet::constant]
-		type ChallengePeriodLength: Get<Self::BlockNumber>;
+		// #[pallet::constant]
+		// type ChallengePeriodLength: Get<Self::BlockNumber>;
 
-		#[pallet::constant]
-		type TaxOfTCR: Get<Perbill> ;
+		// #[pallet::constant]
+		// type TaxOfTCR: Get<Perbill> ;
+		//
+		// #[pallet::constant]
+		// type TaxOfTVS: Get<Perbill> ;
+		//
+		// #[pallet::constant]
+		// type TaxOfTVO: Get<Perbill> ;
+		//
+		// #[pallet::constant]
+		// type TaxOfTI: Get<Perbill> ;
+		//
+		// #[pallet::constant]
+		// type PenaltyOfCP: Get<Perbill>;
 
-		#[pallet::constant]
-		type TaxOfTVS: Get<Perbill> ;
-
-		#[pallet::constant]
-		type TaxOfTVO: Get<Perbill> ;
-
-		#[pallet::constant]
-		type TaxOfTI: Get<Perbill> ;
-
-		#[pallet::constant]
-		type PenaltyOfCP: Get<Perbill>;
-
-		#[pallet::constant]
-		type MaxSponsorExplainLen: Get<u32>;
-
-		#[pallet::constant]
-		type MaxAnswerExplainLen: Get<u32>;
+		// #[pallet::constant]
+		// type MaxSponsorExplainLen: Get<u32>;
+		//
+		// #[pallet::constant]
+		// type MaxAnswerExplainLen: Get<u32>;
 
 		type PuzzleLedger: IPuzzleLedger<
 			<Self as frame_system::Config>::AccountId,
@@ -137,6 +139,10 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::storage]
+	#[pallet::getter(fn ato_config)]
+	pub type AtoConfig<T: Config> = StorageValue<_, ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn puzzle_info)]
@@ -230,19 +236,18 @@ pub mod pallet {
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
-
 		fn default() -> Self {
-
+			let ato_config = Pallet::<T>::get_ato_config();
 			Self {
-				min_bonus_of_puzzle: 3u32.into(), // (100 * DOLLARS).into(),
-				challenge_period_length: MINUTES.saturating_mul(2).into(),
-				tax_of_tcr: Perbill::from_percent(10),
-				tax_of_tvs: Perbill::from_percent(5),
-				tax_of_tvo: Perbill::from_percent(10),
-				tax_of_ti: Perbill::from_percent(10),
-				penalty_of_cp: Perbill::from_percent(10),
-				max_sponsor_explain_len: 256,
-				max_answer_explain_len: 1024
+				min_bonus_of_puzzle: ato_config.min_bonus_of_puzzle,
+				challenge_period_length: ato_config.challenge_period_length,
+				tax_of_tcr: ato_config.tax_of_tcr,
+				tax_of_tvs: ato_config.tax_of_tvs,
+				tax_of_tvo: ato_config.tax_of_tvo,
+				tax_of_ti: ato_config.tax_of_ti,
+				penalty_of_cp: ato_config.penalty_of_cp,
+				max_sponsor_explain_len: ato_config.max_sponsor_explain_len,
+				max_answer_explain_len: ato_config.max_answer_explain_len
 			}
 		}
 	}
@@ -252,10 +257,17 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			// let finance_account = <Pallet<T>>::account_id();
-			// if T::Currency::total_balance(&finance_account).is_zero() {
-			// 	T::Currency::deposit_creating(&finance_account, T::Currency::minimum_balance());
-			// }
+			AtoConfig::<T>::put(ConfigData {
+				min_bonus_of_puzzle: self.min_bonus_of_puzzle,
+				challenge_period_length: self.challenge_period_length,
+				tax_of_tcr: self.tax_of_tcr,
+				tax_of_tvs: self.tax_of_tvs,
+				tax_of_tvo: self.tax_of_tvo,
+				tax_of_ti: self.tax_of_ti,
+				penalty_of_cp: self.penalty_of_cp,
+				max_sponsor_explain_len: self.max_sponsor_explain_len,
+				max_answer_explain_len: self.max_answer_explain_len
+			});
 		}
 	}
 
@@ -276,15 +288,17 @@ pub mod pallet {
 			// check signer
 			let who = ensure_signed(origin)?;
 
+			let ato_config = Self::get_ato_config();
+
 			// Check amount > MinBonus
-			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
+			ensure!(amount >= ato_config.min_bonus_of_puzzle, Error::<T>::PuzzleMinBonusInsufficient);
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 
 			let mut reason_v8 = Vec::new();
 			if let Some(r) = reason {
-				ensure!(r.len() as u32 <= T::MaxSponsorExplainLen::get(), Error::<T>::ExplainTooLong);
+				ensure!(r.len() as u32 <= ato_config.max_sponsor_explain_len , Error::<T>::ExplainTooLong);
 				reason_v8 = r;
 			}
 
@@ -323,7 +337,9 @@ pub mod pallet {
 			// check signer
 			let who = ensure_signed(origin)?;
 
-			ensure!(answer_explain.len() as u32 <= T::MaxAnswerExplainLen::get(), Error::<T>::ExplainTooLong);
+			let ato_config = Self::get_ato_config();
+
+			ensure!(answer_explain.len() as u32 <= ato_config.max_answer_explain_len, Error::<T>::ExplainTooLong);
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -411,8 +427,11 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(!<PuzzleInfo<T>>::contains_key(&puzzle_hash), Error::<T>::PuzzleAlreadyExist);
 
+			//
+			let ato_config = Self::get_ato_config();
+
 			// Check amount > MinBonus
-			ensure!(amount >= T::MinBonusOfPuzzle::get(), Error::<T>::PuzzleMinBonusInsufficient);
+			ensure!(amount >= ato_config.min_bonus_of_puzzle, Error::<T>::PuzzleMinBonusInsufficient);
 
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -463,8 +482,9 @@ pub mod pallet {
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
 			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
+			let ato_config = Self::get_ato_config();
 			ensure!(
-				current_block_number - reveal_bn <= T::ChallengePeriodLength::get(),
+				current_block_number - reveal_bn <= ato_config.challenge_period_length,
 				Error::<T>::ChallengePeriodIsEnd
 			);
 			//
@@ -504,8 +524,9 @@ pub mod pallet {
 				}
 			}
 
+			let ato_config = Self::get_ato_config();
 			//
-			T::AtoChallenge::back_challenge_crowdloan(&puzzle_hash, T::TaxOfTCR::get())?;
+			T::AtoChallenge::back_challenge_crowdloan(&puzzle_hash,  ato_config.tax_of_tcr)?;
 
 			//
 			Ok(().into())
@@ -556,9 +577,11 @@ pub mod pallet {
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
-			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
+
+			let ato_config = Self::get_ato_config();
+
 			ensure!(
-				current_block_number - reveal_bn > T::ChallengePeriodLength::get(),
+				current_block_number - reveal_bn > ato_config.challenge_period_length,
 				Error::<T>::ChallengePeriodIsNotEnd
 			);
 
@@ -569,11 +592,13 @@ pub mod pallet {
 				Error::<T>::BeingChallenged
 			);
 
+			let ato_config = Self::get_ato_config();
+
 			let tax_fee = |acc| {
 				if acc == &who {
-					T::TaxOfTVS::get()
+					ato_config.tax_of_tvs
 				}else{
-					T::TaxOfTVO::get()
+					ato_config.tax_of_tvo
 				}
 			};
 
@@ -613,7 +638,9 @@ pub mod pallet {
 			);
 			//
 
-			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries.clone(), reveal_bn, T::TaxOfTI::get())?;
+			let ato_config = Self::get_ato_config();
+
+			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries.clone(), reveal_bn, ato_config.tax_of_ti)?;
 			T::AtoChallenge::recognition_challenge(&puzzle_hash)?;
 
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -623,13 +650,13 @@ pub mod pallet {
 
 			let create_total_point = T::AtoPointsManage::get_total_points(&puzzle_content.account);
 			if create_total_point > 0 {
-				let cut_down_point = T::PenaltyOfCP::get() * create_total_point;
+				let cut_down_point = ato_config.penalty_of_cp * create_total_point;
 				T::AtoPointsManage::reduce_points_to(&puzzle_content.account, cut_down_point)?;
 				Self::deposit_event(Event::<T>::CreatorPointSlash{
 					pid: puzzle_hash.clone(),
 					point_slash_data: PointSlashData {
 						who: puzzle_content.account.clone(),
-						rate_cp: T::PenaltyOfCP::get(),
+						rate_cp: ato_config.penalty_of_cp,
 						total: create_total_point.clone(),
 						slash: cut_down_point.clone(),
 					},
@@ -640,10 +667,40 @@ pub mod pallet {
 				pid: puzzle_hash.clone(),
 				reward_data: ChallengeRewardData {
 					beneficiaries: beneficiaries.clone(),
-					rate_ti: T::TaxOfTI::get(),
+					rate_ti: ato_config.tax_of_ti,
 				}
 			});
 
+			Ok(().into())
+		}
+
+		#[pallet::weight(100)]
+		pub fn update_config(
+			origin: OriginFor<T>,
+			#[pallet::compact] min_bonus_of_puzzle: BalanceOf<T>, // MinBonusOfPuzzle: Balance = 100 * DOLLARS;
+			challenge_period_length: T::BlockNumber, // ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
+			tax_of_tcr: Perbill, // TaxOfTCR: Perbill = Perbill::from_percent(10);
+			tax_of_tvs: Perbill, // TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
+			tax_of_tvo: Perbill, // TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
+			tax_of_ti: Perbill, // TaxOfTI: Perbill = Perbill::from_percent(10);
+			penalty_of_cp: Perbill, // PenaltyOfCP: Perbill = Perbill::from_percent(10);
+			max_sponsor_explain_len: u32, // const MaxSponsorExplainLen: u32 = 256;
+			max_answer_explain_len: u32, // const MaxAnswerExplainLen: u32 = 1024;
+		) -> DispatchResultWithPostInfo {
+			// check signer
+			T::CouncilOrigin::ensure_origin(origin)?;
+			let config_data = ConfigData{
+				min_bonus_of_puzzle,
+				challenge_period_length,
+				tax_of_tcr,
+				tax_of_tvs,
+				tax_of_tvo,
+				tax_of_ti,
+				penalty_of_cp,
+				max_sponsor_explain_len,
+				max_answer_explain_len
+			};
+			AtoConfig::<T>::put(config_data);
 			Ok(().into())
 		}
 
@@ -652,6 +709,26 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T>
 {
+	pub fn get_ato_config() -> ConfigData<BalanceOf<T>, T::BlockNumber, Perbill> {
+		let config = AtoConfig::<T>::get();
+		if config.is_some() {
+			return config.unwrap();
+		}
+
+		let min_bonus = DOLLARS.saturating_mul(100u128);
+		let min_bonus: Option<BalanceOf<T>> = min_bonus.try_into().ok();
+		ConfigData {
+			min_bonus_of_puzzle: min_bonus.unwrap(), // (100 * DOLLARS).into(),
+			challenge_period_length: MINUTES.saturating_mul(2).into(),
+			tax_of_tcr: Perbill::from_percent(10),
+			tax_of_tvs: Perbill::from_percent(5),
+			tax_of_tvo: Perbill::from_percent(10),
+			tax_of_ti: Perbill::from_percent(10),
+			penalty_of_cp: Perbill::from_percent(10),
+			max_sponsor_explain_len: 256,
+			max_answer_explain_len: 1024
+		}
+	}
 
 	pub fn refuse_challenge(
 		puzzle_hash: PuzzleSubjectHash, // Arweave tx - id

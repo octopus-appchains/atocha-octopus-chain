@@ -86,20 +86,20 @@ parameter_types! {
 impl crate::Config for Test {
 	type Event = Event;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
-	type MinBonusOfPuzzle = MinBonusOfPuzzle;
-	type ChallengePeriodLength = ChallengePeriodLength;
+	// type MinBonusOfPuzzle = MinBonusOfPuzzle;
+	// type ChallengePeriodLength = ChallengePeriodLength;
 	type PuzzleLedger = AtochaPot; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
 	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
-	type TaxOfTCR = TaxOfTCR;
-	type TaxOfTVS = TaxOfTVS;
-	type TaxOfTVO = TaxOfTVO;
-	type TaxOfTI = TaxOfTI;
-	type PenaltyOfCP = PenaltyOfCP;
-	type MaxSponsorExplainLen = MaxSponsorExplainLen;
-	type MaxAnswerExplainLen = MaxAnswerExplainLen;
+	// type TaxOfTCR = TaxOfTCR;
+	// type TaxOfTVS = TaxOfTVS;
+	// type TaxOfTVO = TaxOfTVO;
+	// type TaxOfTI = TaxOfTI;
+	// type PenaltyOfCP = PenaltyOfCP;
+	// type MaxSponsorExplainLen = MaxSponsorExplainLen;
+	// type MaxAnswerExplainLen = MaxAnswerExplainLen;
 	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
@@ -167,9 +167,19 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-	// crate::GenesisConfig::<Test> { _pt: Default::default() }
-	// 	.assimilate_storage(&mut t)
-	// 	.unwrap();
+	crate::GenesisConfig::<Test> {
+		min_bonus_of_puzzle: 100 * DOLLARS,
+		challenge_period_length: 100,
+		tax_of_tcr: Perbill::from_percent(10),
+		tax_of_tvs: Perbill::from_percent(5),
+		tax_of_tvo: TaxOfTVO::get(),
+		tax_of_ti: Perbill::from_percent(10),
+		penalty_of_cp: Perbill::from_percent(10),
+		max_sponsor_explain_len: 256,
+		max_answer_explain_len: 1024
+	}
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 	pallet_atofinance::GenesisConfig::<Test> { _pt: Default::default() }
 		.assimilate_storage(&mut t)

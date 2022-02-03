@@ -96,7 +96,7 @@ pub struct ChallengeRewardData<Account, PerThing> {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct AtoConfig<Balance, BlockNumber, PerThing> {
+pub struct ConfigData<Balance, BlockNumber, PerThing> {
 	pub min_bonus_of_puzzle: Balance, // MinBonusOfPuzzle: Balance = 100 * DOLLARS;
 	pub challenge_period_length: BlockNumber, // ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
 	pub tax_of_tcr: PerThing, // TaxOfTCR: Perbill = Perbill::from_percent(10);
