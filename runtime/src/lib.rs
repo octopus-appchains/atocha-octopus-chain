@@ -47,7 +47,7 @@ use frame_system::{limits::{BlockLength, BlockWeights}, EnsureRoot, EnsureOneOf}
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
 use pallet_session::historical as pallet_session_historical;
-use sp_core::u32_trait::{_1, _2};
+use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_runtime::{
 	generic::Era,
 	traits::{self, ConvertInto, Keccak256, OpaqueKeys, SaturatedConversion, StaticLookup},
@@ -294,6 +294,36 @@ impl pallet_ato_collective::Config<CouncilCollective> for Runtime {
 	type WeightInfo = pallet_ato_collective::weights::SubstrateWeight<Runtime>;
 }
 
+pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_ato_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
+>;
+
+parameter_types! {
+	pub const TechnicalMotionDuration: BlockNumber = 5 * DAYS;
+	pub const TechnicalMaxProposals: u32 = 100;
+	pub const TechnicalMaxMembers: u32 = 20;
+}
+
+type TechnicalCollective = pallet_ato_collective::Instance2;
+impl pallet_ato_collective::Config<TechnicalCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = TechnicalMotionDuration;
+	type MaxProposals = TechnicalMaxProposals;
+	type MaxMembers = TechnicalMaxMembers;
+	type DefaultVote = pallet_ato_collective::PrimeDefaultVote;
+	type WeightInfo = pallet_ato_collective::weights::SubstrateWeight<Runtime>;
+}
+
+pub type EnsureRootOrHalfTechnicalCommittee = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_ato_collective::EnsureProportionAtLeast<_1, _2, AccountId, TechnicalCollective>,
+>;
+
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
@@ -361,12 +391,6 @@ impl pallet_elections_phragmen::Config for Runtime {
 // 	pub const MaxAnswerExplainLen: u32 = 1024;
 // }
 
-pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
-	AccountId,
-	EnsureRoot<AccountId>,
-	pallet_ato_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
->;
-
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
 	// type Call = Call;
@@ -386,8 +410,6 @@ impl pallet_atocha::Config for Runtime {
 	// type PenaltyOfCP = PenaltyOfCP;
 	// type MaxSponsorExplainLen = MaxSponsorExplainLen;
 	// type MaxAnswerExplainLen = MaxAnswerExplainLen;
-
-
 }
 
 parameter_types! {
@@ -402,6 +424,41 @@ parameter_types! {
 	// pub const StorageBaseFee: Balance = 10000;
 }
 
+
+parameter_types! {
+	pub const Burn: Permill = Permill::from_percent(5);
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	pub const SpendPeriod: BlockNumber = 1 * DAYS;
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub const MaxApprovals: u32 = 100;
+}
+
+impl pallet_treasury::Config for Runtime {
+	type PalletId = TreasuryPalletId;
+	type Currency = Balances;
+	type ApproveOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_ato_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
+	>;
+	type RejectOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_ato_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+	>;
+	type Event = Event;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BurnDestination = ();
+	type SpendFunds = ();
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+	type MaxApprovals = MaxApprovals;
+}
+
 impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
 	// type ChallengeThreshold = ChallengeThreshold;
 	// type RaisingPeriodLength = RaisingPeriodLength;
@@ -409,7 +466,7 @@ impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
 
 impl pallet_atofinance::Config for Runtime {
 	type AtoPropose = Council;
-	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
+	type CouncilOrigin = EnsureRootOrHalfTechnicalCommittee;
 	type Currency = pallet_balances::Pallet<Self>;
 	// type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
 	// type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
@@ -422,7 +479,6 @@ impl pallet_atofinance::Config for Runtime {
 	// type PerEraOfBlockNumber = PerEraOfBlockNumber;
 	// type StorageBaseFee = StorageBaseFee;
 }
-
 // ------------------------- ATOCHA Pallets Config end.
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
@@ -780,6 +836,8 @@ construct_runtime!(
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		TechnicalCommittee: pallet_ato_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
 		OctopusAppchain: pallet_octopus_appchain::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned}, // must before session
 		OctopusLpos: pallet_octopus_lpos::{Pallet, Call, Config, Storage, Event<T>},
 		OctopusUpwardMessages: pallet_octopus_upward_messages::{Pallet, Call, Storage, Event<T>},

@@ -239,7 +239,23 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let ato_config = Pallet::<T>::get_ato_config();
+
+			// let ato_config = Pallet::<T>::get_ato_config();
+
+			let min_bonus = DOLLARS.saturating_mul(100u128);
+			let min_bonus: Option<BalanceOf<T>> = min_bonus.try_into().ok();
+			let ato_config = ConfigData {
+				min_bonus_of_puzzle: min_bonus.unwrap(), // (100 * DOLLARS).into(),
+				challenge_period_length: MINUTES.saturating_mul(2).into(),
+				tax_of_tcr: Perbill::from_percent(10),
+				tax_of_tvs: Perbill::from_percent(5),
+				tax_of_tvo: Perbill::from_percent(10),
+				tax_of_ti: Perbill::from_percent(10),
+				penalty_of_cp: Perbill::from_percent(10),
+				max_sponsor_explain_len: 256,
+				max_answer_explain_len: 1024
+			};
+
 			Self {
 				min_bonus_of_puzzle: ato_config.min_bonus_of_puzzle,
 				challenge_period_length: ato_config.challenge_period_length,

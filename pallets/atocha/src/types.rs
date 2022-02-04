@@ -107,3 +107,21 @@ pub struct ConfigData<Balance, BlockNumber, PerThing> {
 	pub max_sponsor_explain_len: u32, // const MaxSponsorExplainLen: u32 = 256;
 	pub max_answer_explain_len: u32, // const MaxAnswerExplainLen: u32 = 1024;
 }
+
+// impl <T: Config> Default for ConfigData<T> {
+// 	fn default() -> Self {
+// 		let min_bonus = DOLLARS.saturating_mul(100u128);
+// 		let min_bonus: Option<BalanceOf<T>> = min_bonus.try_into().ok();
+// 		Self {
+// 			min_bonus_of_puzzle: min_bonus.unwrap(), // (100 * DOLLARS).into(),
+// 			challenge_period_length: MINUTES.saturating_mul(2).into(),
+// 			tax_of_tcr: Perbill::from_percent(10),
+// 			tax_of_tvs: Perbill::from_percent(5),
+// 			tax_of_tvo: Perbill::from_percent(10),
+// 			tax_of_ti: Perbill::from_percent(10),
+// 			penalty_of_cp: Perbill::from_percent(10),
+// 			max_sponsor_explain_len: 256,
+// 			max_answer_explain_len: 1024
+// 		}
+// 	}
+// }

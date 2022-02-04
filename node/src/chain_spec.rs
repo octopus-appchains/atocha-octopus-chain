@@ -1,7 +1,7 @@
 use appchain_barnacle_runtime::{
 	opaque::Block, opaque::SessionKeys, AccountId, BabeConfig, Balance, BalancesConfig,
 	GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig,CouncilConfig,ElectionsConfig,
-	SessionConfig, Signature, SudoConfig, SystemConfig, DOLLARS, WASM_BINARY,
+	SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY,
 };
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -112,7 +112,17 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Dave"),
 					get_account_id_from_seed::<sr25519::Public>("Eve"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
 				]),
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+				],
 				true,
 			)
 		},
@@ -187,6 +197,12 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					hex!["e8c5a9677a1047f7b721e50b60d3ce6e80be136af1ad5427c1cbba151b62c36a"].into(),
 					hex!["4ace5ba9a9c16c25f1eeec05a9d2757c1bab6dc777f3d97c97e9c0f1ca9e0e5a"].into(),
 				]),
+				vec![
+					hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
+					hex!["d8301ff8160af5fd870c18a1d8c19ed04c67a705eeb4bb8ee68dee8b6d08b03d"].into(),
+					hex!["6af5c7ab6d40dda6e3bc997fda6c264d579b1456100f2138dbbb52c15ac22433"].into(),
+					hex!["c4362617bcba50a389ff636e263323a5f6fcd351db826926e32d74f9e3513a44"].into(),
+				],
 				true,
 			)
 		},
@@ -209,6 +225,7 @@ fn testnet_genesis(
 	initial_authorities: Vec<(AccountId, BabeId, GrandpaId, ImOnlineId, BeefyId, OctopusId)>,
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
+	council_members: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
@@ -282,5 +299,10 @@ fn testnet_genesis(
 			premined_amount: 1024 * DOLLARS,
 		},
 		octopus_lpos: OctopusLposConfig { era_payout: 2 * DOLLARS, ..Default::default() },
+		technical_committee: TechnicalCommitteeConfig {
+			phantom: Default::default(),
+			members: council_members.clone(),
+		},
+		treasury: Default::default(),
 	}
 }

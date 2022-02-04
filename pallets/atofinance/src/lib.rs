@@ -58,6 +58,7 @@ pub mod pallet {
 	use frame_support::traits::ExistenceRequirement;
 	use frame_system::pallet_prelude::*;
 	use sp_core::sp_std::vec::Vec;
+	use atocha_constants::MINUTES;
 	use crate::imps::point_exchange::PointExchange;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -252,7 +253,19 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let ato_config = Pallet::<T>::get_ato_config();
+			let issuance_per_block: Option<BalanceOf<T>> = 1902587519025900000u128.try_into().ok();
+			let issuance_per_block = issuance_per_block.unwrap();
+			let ato_config = ConfigData {
+				exchange_era_length: MINUTES.saturating_mul(6).into(),
+				exchange_history_depth: 10,
+				exchange_max_reward_list_size: 3,
+				issuance_per_block,
+				per_era_of_block_number: MINUTES.saturating_mul(1).into(),
+				challenge_threshold: Perbill::from_percent(60),
+				raising_period_length: MINUTES.saturating_mul(10).into(),
+				storage_base_fee: 10000u32.into()
+			};
+
 			Self {
 				exchange_era_length: ato_config.exchange_era_length,
 				exchange_history_depth: ato_config.exchange_history_depth,
@@ -496,6 +509,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+
 	pub fn account_id() -> T::AccountId {
 		T::PalletId::get().into_account()
 	}
@@ -505,7 +519,6 @@ impl<T: Config> Pallet<T> {
 		if config.is_some() {
 			return config.unwrap();
 		}
-
 		let issuance_per_block: Option<BalanceOf<T>> = 1902587519025900000u128.try_into().ok();
 		let issuance_per_block = issuance_per_block.unwrap();
 		ConfigData {
@@ -518,6 +531,7 @@ impl<T: Config> Pallet<T> {
 			raising_period_length: MINUTES.saturating_mul(10).into(),
 			storage_base_fee: 10000u32.into()
 		}
+		// ConfigData::<T>::default()
 	}
 
 	pub fn pot() -> (T::AccountId, BalanceOf<T>) {

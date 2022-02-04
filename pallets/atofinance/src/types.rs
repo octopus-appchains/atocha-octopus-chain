@@ -142,3 +142,21 @@ pub struct ConfigData<Balance, BlockNumber, PerThing> {
 	pub raising_period_length: BlockNumber, // BlockNumber = 10 * MINUTES;
 	pub storage_base_fee: Balance, // Balance = 10000;
 }
+
+// impl <T: Config> Default for ConfigData<T> {
+// 	fn default() -> Self {
+// 		let issuance_per_block: Option<BalanceOf<T>> = 1902587519025900000u128.try_into().ok();
+// 		let issuance_per_block = issuance_per_block.unwrap();
+// 		Self {
+// 			exchange_era_length: MINUTES.saturating_mul(6).into(),
+// 			exchange_history_depth: 10,
+// 			exchange_max_reward_list_size: 3,
+// 			issuance_per_block,
+// 			per_era_of_block_number: MINUTES.saturating_mul(1).into(),
+// 			challenge_threshold: Perbill::from_percent(60),
+// 			raising_period_length: MINUTES.saturating_mul(10).into(),
+// 			storage_base_fee: 10000u32.into()
+// 		}
+// 	}
+// }
+
