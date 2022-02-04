@@ -370,6 +370,7 @@ pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
 	// type Call = Call;
+	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
 	// type MinBonusOfPuzzle = MinBonusOfPuzzle;
 	// type ChallengePeriodLength = ChallengePeriodLength;
@@ -385,40 +386,41 @@ impl pallet_atocha::Config for Runtime {
 	// type PenaltyOfCP = PenaltyOfCP;
 	// type MaxSponsorExplainLen = MaxSponsorExplainLen;
 	// type MaxAnswerExplainLen = MaxAnswerExplainLen;
-	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
+
 
 }
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	pub const ExchangeEraLength: BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
-	pub const ExchangeHistoryDepth: u32 = 10;
-	pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product. // MyBe 10 size
-	pub const IssuancePerBlock: Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
-	pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
-	pub const ChallengeThreshold: Perbill = Perbill::from_percent(60);
-	pub const RaisingPeriodLength: BlockNumber = 10 * MINUTES;
-	pub const StorageBaseFee: Balance = 10000;
+	// pub const ExchangeEraLength: BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
+	// pub const ExchangeHistoryDepth: u32 = 10;
+	// pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product. // MyBe 10 size
+	// pub const IssuancePerBlock: Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+	// pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
+	// pub const ChallengeThreshold: Perbill = Perbill::from_percent(60);
+	// pub const RaisingPeriodLength: BlockNumber = 10 * MINUTES;
+	// pub const StorageBaseFee: Balance = 10000;
 }
 
 impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
-	type ChallengeThreshold = ChallengeThreshold;
-	type RaisingPeriodLength = RaisingPeriodLength;
+	// type ChallengeThreshold = ChallengeThreshold;
+	// type RaisingPeriodLength = RaisingPeriodLength;
 }
 
 impl pallet_atofinance::Config for Runtime {
 	type AtoPropose = Council;
+	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
 	type Currency = pallet_balances::Pallet<Self>;
-	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
-	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
-	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
-	type IssuancePerBlock = IssuancePerBlock;
+	// type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
+	// type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
+	// type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
+	// type IssuancePerBlock = IssuancePerBlock;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type SlashHandler = ();
 	type RewardHandler = ();
-	type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	type StorageBaseFee = StorageBaseFee;
+	// type PerEraOfBlockNumber = PerEraOfBlockNumber;
+	// type StorageBaseFee = StorageBaseFee;
 }
 
 // ------------------------- ATOCHA Pallets Config end.

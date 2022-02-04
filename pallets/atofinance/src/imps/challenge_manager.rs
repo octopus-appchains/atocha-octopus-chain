@@ -6,8 +6,8 @@ use super::*;
 pub struct ChallengeManager<T>(PhantomData<T>);
 
 pub trait Config: super::Config + pallet_balances::Config  {
-	type ChallengeThreshold: Get<Perbill>;
-	type RaisingPeriodLength: Get<<Self as frame_system::Config>::BlockNumber>;
+	// type ChallengeThreshold: Get<Perbill>;
+	// type RaisingPeriodLength: Get<<Self as frame_system::Config>::BlockNumber>;
 }
 
 // impl<T: Config> ChallengeManager<T> {
@@ -107,7 +107,9 @@ impl<T: Config>
 		}
 		let storage_ledger = storage_ledger.unwrap();
 		let storage_total_balance = storage_ledger.total;
-		T::ChallengeThreshold::get() * storage_total_balance
+		let ato_config = Pallet::<T>::get_ato_config();
+		// T::ChallengeThreshold::get() * storage_total_balance
+		ato_config.challenge_threshold * storage_total_balance
 	}
 
 	fn get_total_raise(pid: &PuzzleSubjectHash) -> BalanceOf<T> {
@@ -185,7 +187,9 @@ impl<T: Config>
 		}
 		let challenge_info = challenge_info.unwrap();
 
-		let period_len = T::RaisingPeriodLength::get();
+		let ato_config = Pallet::<T>::get_ato_config();
+
+		let period_len = ato_config.raising_period_length;
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 
 		current_block_number > challenge_info.create_bn.saturating_add(period_len)
@@ -276,7 +280,9 @@ impl<T: Config>
 	}
 
 	fn get_raising_period_Length() -> T::BlockNumber {
-		T::RaisingPeriodLength::get()
+		let ato_config = Pallet::<T>::get_ato_config();
+		// T::RaisingPeriodLength::get()
+		ato_config.raising_period_length
 	}
 
 	fn get_list_of_challengers(pid: &PuzzleSubjectHash) -> Vec<(T::AccountId, Perbill)> {

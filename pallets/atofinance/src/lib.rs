@@ -13,6 +13,7 @@ use frame_support::storage::types::{OptionQuery, StorageMap};
 use frame_support::traits::{Currency, ExistenceRequirement, Get, OnUnbalanced, StorageInstance};
 use sp_runtime::generic::Era;
 use sp_std::marker::PhantomData;
+use atocha_constants::MINUTES;
 
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
@@ -53,6 +54,7 @@ pub mod pallet {
 		},
 		weights::Weight,
 	};
+	use frame_support::sp_std::convert::TryInto;
 	use frame_support::traits::ExistenceRequirement;
 	use frame_system::pallet_prelude::*;
 	use sp_core::sp_std::vec::Vec;
@@ -64,31 +66,33 @@ pub mod pallet {
 
 		type AtoPropose: IAtoPropose<PuzzleSubjectHash>;
 
+		type CouncilOrigin: EnsureOrigin<Self::Origin>;
+
 		/// The staking balance.
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
 
-		#[pallet::constant]
-		type ExchangeEraLength: Get<Self::BlockNumber>; // 10
-
-		#[pallet::constant]
-		type ExchangeHistoryDepth: Get<u32>; // 3
-
-		#[pallet::constant]
-		type ExchangeMaxRewardListSize: Get<u32>; // 3
-
-		#[pallet::constant]
-		type IssuancePerBlock: Get<BalanceOf<Self>>;
+		// #[pallet::constant]
+		// type ExchangeEraLength: Get<Self::BlockNumber>; // 10
+		//
+		// #[pallet::constant]
+		// type ExchangeHistoryDepth: Get<u32>; // 3
+		//
+		// #[pallet::constant]
+		// type ExchangeMaxRewardListSize: Get<u32>; // 3
+		//
+		// #[pallet::constant]
+		// type IssuancePerBlock: Get<BalanceOf<Self>>;
 
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		#[pallet::constant]
-		type PerEraOfBlockNumber: Get<Self::BlockNumber>;
+		// #[pallet::constant]
+		// type PerEraOfBlockNumber: Get<Self::BlockNumber>;
 
 		/// Handler for the rewards.
 		type RewardHandler: OnUnbalanced<PositiveImbalanceOf<Self>>;
@@ -96,14 +100,19 @@ pub mod pallet {
 		/// Handler for the slashed deposits.
 		type SlashHandler: OnUnbalanced<NegativeImbalanceOf<Self>>;
 
-		#[pallet::constant]
-		type StorageBaseFee: Get<BalanceOf<Self>>;
+		// #[pallet::constant]
+		// type StorageBaseFee: Get<BalanceOf<Self>>;
 
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::storage]
+	#[pallet::getter(fn ato_config)]
+	pub type AtoConfig<T: Config> = StorageValue<_, ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, OptionQuery>;
+
 
 	//
 	#[pallet::storage]
@@ -165,6 +174,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn ato_point_total)]
 	pub type AtoPointTotal<T> = StorageValue<_, PointToken>;
+
 
 	// #[pallet::storage]
 	// #[pallet::getter(fn ato_point_top_list)]
@@ -229,13 +239,30 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub _pt: PhantomData<T>,
+		pub exchange_era_length: T::BlockNumber, // : BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
+		pub exchange_history_depth: u32, // u32 = 10;
+		pub exchange_max_reward_list_size: u32, // u32 = 3; // Will 10 to product. // MyBe 10 size
+		pub issuance_per_block: BalanceOf<T>, // Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+		pub per_era_of_block_number: T::BlockNumber, // BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
+		pub challenge_threshold: Perbill, // Perbill = Perbill::from_percent(60);
+		pub raising_period_length: T::BlockNumber, // BlockNumber = 10 * MINUTES;
+		pub storage_base_fee: BalanceOf<T>, // Balance = 10000;
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { _pt: Default::default() }
+			let ato_config = Pallet::<T>::get_ato_config();
+			Self {
+				exchange_era_length: ato_config.exchange_era_length,
+				exchange_history_depth: ato_config.exchange_history_depth,
+				exchange_max_reward_list_size: ato_config.exchange_max_reward_list_size,
+				issuance_per_block: ato_config.issuance_per_block,
+				per_era_of_block_number: ato_config.per_era_of_block_number,
+				challenge_threshold: ato_config.challenge_threshold,
+				raising_period_length: ato_config.raising_period_length,
+				storage_base_fee: ato_config.storage_base_fee
+			}
 		}
 	}
 
@@ -246,6 +273,17 @@ pub mod pallet {
 			if T::Currency::total_balance(&finance_account).is_zero() {
 				T::Currency::deposit_creating(&finance_account, T::Currency::minimum_balance());
 			}
+
+			AtoConfig::<T>::put(ConfigData{
+				exchange_era_length: self.exchange_era_length,
+				exchange_history_depth: self.exchange_history_depth,
+				exchange_max_reward_list_size: self.exchange_max_reward_list_size,
+				issuance_per_block: self.issuance_per_block,
+				per_era_of_block_number: self.per_era_of_block_number,
+				challenge_threshold: self.challenge_threshold,
+				raising_period_length: self.raising_period_length,
+				storage_base_fee: self.storage_base_fee
+			});
 		}
 	}
 
@@ -293,6 +331,7 @@ pub mod pallet {
 		ApplyPointReward { who: T::AccountId , apply_era: ExchangeEra},
 		ChallengeDeposit { who: T::AccountId, deposit: BalanceOf<T> },
 		ChallengeStatusChange { challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
+		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		PreStorage { who: T::AccountId, fee: BalanceOf<T>, storage_hash: StorageHash, storage_length: StorageLength },
 		TakeTokenReward { pid: PuzzleSubjectHash, payout: BalanceOf<T>, fee: BalanceOf<T> },
 		TakePointReward { pid: PuzzleSubjectHash, payout: PointToken, fee: PointToken },
@@ -422,12 +461,63 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
+
+		#[pallet::weight(100)]
+		pub fn update_config(
+			origin: OriginFor<T>,
+			challenge_threshold: Perbill, // = Perbill::from_percent(60);
+			exchange_era_length: T::BlockNumber, // = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
+			exchange_history_depth: u32, // = 10;
+			exchange_max_reward_list_size: u32, // = 3; // Will 10 to product. // MyBe 10 size
+			issuance_per_block: BalanceOf<T>, // = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+			per_era_of_block_number: T::BlockNumber, // = 1 * MINUTES; // MyBe 1 * DAY
+			raising_period_length: T::BlockNumber, // = 10 * MINUTES;
+			storage_base_fee: BalanceOf<T>, //= 10000;
+		) -> DispatchResultWithPostInfo {
+			// check signer
+			T::CouncilOrigin::ensure_origin(origin)?;
+			let config_data = ConfigData{
+				exchange_era_length,
+				exchange_history_depth,
+				exchange_max_reward_list_size,
+				issuance_per_block,
+				per_era_of_block_number,
+				challenge_threshold,
+				raising_period_length,
+				storage_base_fee
+			};
+			AtoConfig::<T>::put(config_data.clone());
+			Self::deposit_event(Event::<T>::AtoConfigUpdate {
+				config_data,
+			});
+			Ok(().into())
+		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
 	pub fn account_id() -> T::AccountId {
 		T::PalletId::get().into_account()
+	}
+
+	fn get_ato_config() -> ConfigData<BalanceOf<T>, T::BlockNumber, Perbill> {
+		let config = AtoConfig::<T>::get();
+		if config.is_some() {
+			return config.unwrap();
+		}
+
+		let issuance_per_block: Option<BalanceOf<T>> = 1902587519025900000u128.try_into().ok();
+		let issuance_per_block = issuance_per_block.unwrap();
+		ConfigData {
+			exchange_era_length: MINUTES.saturating_mul(6).into(),
+			exchange_history_depth: 10,
+			exchange_max_reward_list_size: 3,
+			issuance_per_block,
+			per_era_of_block_number: MINUTES.saturating_mul(1).into(),
+			challenge_threshold: Perbill::from_percent(60),
+			raising_period_length: MINUTES.saturating_mul(10).into(),
+			storage_base_fee: 10000u32.into()
+		}
 	}
 
 	pub fn pot() -> (T::AccountId, BalanceOf<T>) {
@@ -443,8 +533,9 @@ impl<T: Config> Pallet<T> {
 
 	pub fn calculate_storage_fee(data_length: u64) -> Option<BalanceOf<T>> {
 		let base_length_balance: Result<BalanceOf<T>, _> = data_length.try_into();
+		let ato_config = Pallet::<T>::get_ato_config();
 		if let Ok(data_balance) = base_length_balance {
-			return Some(T::StorageBaseFee::get().saturating_mul(data_balance));
+			return Some(ato_config.storage_base_fee.saturating_mul(data_balance));
 		}
 		None
 	}
@@ -453,7 +544,8 @@ impl<T: Config> Pallet<T> {
 		// 100000000 * 0.1 / 365  = 27 397.260273973
 		// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
 		let duration_num: u32 = duration_len.unique_saturated_into();
-		let issuance_per_day = T::IssuancePerBlock::get();
+		let ato_config = Pallet::<T>::get_ato_config();
+		let issuance_per_day = ato_config.issuance_per_block;
 		issuance_per_day.saturating_mul(duration_num.into())
 	}
 }
@@ -470,6 +562,7 @@ impl<T: Config>
 	IPuzzleLedger<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
 	for Pallet<T>
 {
+
 	fn do_bonus(
 		pid: PuzzleSubjectHash,
 		who: T::AccountId,

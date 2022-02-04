@@ -130,3 +130,15 @@ impl<BlockNumber: Default, PerVal: PerThing> Default for ChallengeStatus<BlockNu
 		Self::Raise(Default::default())
 	}
 }
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct ConfigData<Balance, BlockNumber, PerThing> {
+	pub exchange_era_length: BlockNumber, // : BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
+	pub exchange_history_depth: u32, // u32 = 10;
+	pub exchange_max_reward_list_size: u32, // u32 = 3; // Will 10 to product. // MyBe 10 size
+	pub issuance_per_block: Balance, // Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
+	pub per_era_of_block_number: BlockNumber, // BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
+	pub challenge_threshold: PerThing, // Perbill = Perbill::from_percent(60);
+	pub raising_period_length: BlockNumber, // BlockNumber = 10 * MINUTES;
+	pub storage_base_fee: Balance, // Balance = 10000;
+}

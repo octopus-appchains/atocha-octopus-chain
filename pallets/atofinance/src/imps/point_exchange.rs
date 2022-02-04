@@ -181,13 +181,17 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 	}
 
 	fn get_max_reward_list_size() -> u32 {
-		T::ExchangeMaxRewardListSize::get() // 3
+		// T::ExchangeMaxRewardListSize::get() // 3
+		let ato_config = Pallet::<T>::get_ato_config();
+		ato_config.exchange_max_reward_list_size
 	}
 
 	fn get_era_length() -> T::BlockNumber {
 		// T::ExchangeHistoryDepth::get(); // 3
 		// T::ExchangeMaxRewardListSize::get(); // 3
-		T::ExchangeEraLength::get() // 10
+		// T::ExchangeEraLength::get() // 10
+		let ato_config = Pallet::<T>::get_ato_config();
+		ato_config.exchange_era_length
 	}
 
 	fn get_reward_list(era: ExchangeEra) -> Vec<(T::AccountId, PointToken, Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>)> {
@@ -201,6 +205,8 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 	}
 
 	fn get_history_depth() -> u32 {
-		T::ExchangeHistoryDepth::get() // 3
+		// T::ExchangeHistoryDepth::get() // 3
+		let ato_config = Pallet::<T>::get_ato_config();
+		ato_config.exchange_history_depth
 	}
 }

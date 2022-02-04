@@ -12,8 +12,9 @@ use sp_runtime::{
 	Permill,Perbill,
 };
 
-use crate::types::PuzzleVersion;
+use crate::types::{BalanceOf, PuzzleVersion};
 use frame_support::assert_ok;
+use frame_support::sp_std::convert::TryInto;
 use frame_support::traits::{Contains, GenesisBuild};
 
 
@@ -116,23 +117,24 @@ parameter_types! {
 }
 
 impl pallet_atofinance::imps::challenge_manager::Config for Test {
-	type ChallengeThreshold = ChallengeThreshold;
-	type RaisingPeriodLength = RaisingPeriodLength;
+	// type ChallengeThreshold = ChallengeThreshold;
+	// type RaisingPeriodLength = RaisingPeriodLength;
 }
 
 impl pallet_atofinance::Config for Test {
 	type AtoPropose = ();
+	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type Currency = pallet_balances::Pallet<Self>;
-	type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
-	type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
-	type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
+	// type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
+	// type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
+	// type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
 	type SlashHandler = ();
-	type IssuancePerBlock = IssuancePerBlock;
+	// type IssuancePerBlock = IssuancePerBlock;
 	type RewardHandler = ();
-	type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	type StorageBaseFee = StorageBaseFee;
+	// type PerEraOfBlockNumber = PerEraOfBlockNumber;
+	// type StorageBaseFee = StorageBaseFee;
 }
 
 parameter_types! {
@@ -181,7 +183,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-	pallet_atofinance::GenesisConfig::<Test> { _pt: Default::default() }
+	let issuance_per_block: Option<BalanceOf<Test>> = 1902587519025900000u128.try_into().ok();
+	let issuance_per_block = issuance_per_block.unwrap();
+	pallet_atofinance::GenesisConfig::<Test> {
+		exchange_era_length: 10,
+		exchange_history_depth: 3,
+		exchange_max_reward_list_size: 3,
+		issuance_per_block ,
+		per_era_of_block_number: 5,
+		challenge_threshold: Perbill::from_float(0.6),
+		raising_period_length: 5,
+		storage_base_fee: 1000u32.into()
+	}
 		.assimilate_storage(&mut t)
 		.unwrap();
 

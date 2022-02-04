@@ -57,6 +57,26 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+		type AtoChallenge: IAtoChallenge<
+			<Self as frame_system::Config>::AccountId,
+			PuzzleSubjectHash,
+			BalanceOf<Self>,
+			PuzzleChallengeData<<Self as frame_system::Config>::AccountId, Self::BlockNumber, BalanceOf<Self>, Perbill>,
+			ChallengeStatus<Self::BlockNumber, Perbill>,
+			pallet_atofinance::Error<Self>,
+			Self::BlockNumber,
+		>;
+
+		type AtoPointsManage: IPuzzlePoints<
+			<Self as frame_system::Config>::AccountId,
+			PointToken,
+			<Self as frame_system::Config>::BlockNumber,
+			PuzzleSubjectHash,
+			DispatchResult
+		>;
+
+		type CouncilOrigin: EnsureOrigin<Self::Origin>;
+
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -114,26 +134,6 @@ pub mod pallet {
 			DispatchResult,
 			PerVal = Perbill,
 		>;
-
-		type AtoChallenge: IAtoChallenge<
-			<Self as frame_system::Config>::AccountId,
-			PuzzleSubjectHash,
-			BalanceOf<Self>,
-			PuzzleChallengeData<<Self as frame_system::Config>::AccountId, Self::BlockNumber, BalanceOf<Self>, Perbill>,
-			ChallengeStatus<Self::BlockNumber, Perbill>,
-			pallet_atofinance::Error<Self>,
-			Self::BlockNumber,
-		>;
-
-		type AtoPointsManage: IPuzzlePoints<
-			<Self as frame_system::Config>::AccountId,
-			PointToken,
-			<Self as frame_system::Config>::BlockNumber,
-			PuzzleSubjectHash,
-			DispatchResult
-		>;
-
-		type CouncilOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -173,10 +173,12 @@ pub mod pallet {
 		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber> },
 		AnswerMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
 		AnswerMisMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
+		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		// IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
 		// CrowdloanChallenge { who: T::AccountId, pid: PuzzleSubjectHash, deposit: BalanceOf<T>, },
 		CreatorPointSlash { pid: PuzzleSubjectHash, point_slash_data: PointSlashData<T::AccountId, Perbill, PointToken> },
 		ChallengePassed { pid: PuzzleSubjectHash, reward_data: ChallengeRewardData<T::AccountId, Perbill> },
+
 	}
 
 	#[pallet::error]
@@ -700,7 +702,10 @@ pub mod pallet {
 				max_sponsor_explain_len,
 				max_answer_explain_len
 			};
-			AtoConfig::<T>::put(config_data);
+			AtoConfig::<T>::put(config_data.clone());
+			Self::deposit_event(Event::<T>::AtoConfigUpdate {
+				config_data,
+			});
 			Ok(().into())
 		}
 

@@ -14,10 +14,12 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, T::Bl
 
 	fn get_total_bonus(pid: &PuzzleSubjectHash, cut_bn: T::BlockNumber) -> Option<PointToken> {
 		// Get current block number.
+		let ato_config = Pallet::<T>::get_ato_config();
 		Some(<PointManager<T>>::calculate_points_of_puzzle(
 			cut_bn,
 			pid,
-			T::PerEraOfBlockNumber::get(),
+			// T::PerEraOfBlockNumber::get(),
+			ato_config.per_era_of_block_number
 		))
 	}
 
