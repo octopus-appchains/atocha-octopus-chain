@@ -168,15 +168,23 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// creator id, puzzle_hash, create block number , duration block number,
+		/// Puzzle is created.
 		PuzzleCreated { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T> }, // remove . DurationBn
+		/// Add a Sponsorship to Puzzle.
 		AdditionalSponsorship { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>, reason: PuzzleSponsorExplain }, // remove . DurationBn
+		/// A new answers submitted.
 		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber> },
+		/// Puzzle answers are matched.
 		AnswerMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
+		/// Puzzle answers not matched.
 		AnswerMisMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
+		/// Update `AtoModule` module configuration.
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		// IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
 		// CrowdloanChallenge { who: T::AccountId, pid: PuzzleSubjectHash, deposit: BalanceOf<T>, },
+		/// Puzzle's `Points` are slashed by penalty.
 		CreatorPointSlash { pid: PuzzleSubjectHash, point_slash_data: PointSlashData<T::AccountId, Perbill, PointToken> },
+		/// Challenger proposal passed.
 		ChallengePassed { pid: PuzzleSubjectHash, reward_data: ChallengeRewardData<T::AccountId, Perbill> },
 
 	}

@@ -341,13 +341,21 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// Apply for `Points` to exchange `Ato-Tokens`.
 		ApplyPointReward { who: T::AccountId , apply_era: ExchangeEra},
+		/// Challenger increases deposit fee.
 		ChallengeDeposit { who: T::AccountId, deposit: BalanceOf<T> },
+		/// Challenger information status changed.
 		ChallengeStatusChange { challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
+		/// Update `AtoFinance` module configuration.
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
+		/// Pre-stored resources succeeded.
 		PreStorage { who: T::AccountId, fee: BalanceOf<T>, storage_hash: StorageHash, storage_length: StorageLength },
+		/// Answer received `ATO-Token` rewards.
 		TakeTokenReward { pid: PuzzleSubjectHash, payout: BalanceOf<T>, fee: BalanceOf<T> },
+		/// Answer received `Point` rewards.
 		TakePointReward { pid: PuzzleSubjectHash, payout: PointToken, fee: PointToken },
+		/// `Point` exchange `Ato-Token` is executed by the system.
 		PointsExchange { era: ExchangeEra, exchange_list: Vec<(T::AccountId, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>)> }
 	}
 
