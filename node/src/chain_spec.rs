@@ -198,10 +198,11 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					hex!["4ace5ba9a9c16c25f1eeec05a9d2757c1bab6dc777f3d97c97e9c0f1ca9e0e5a"].into(),
 				]),
 				vec![
-					hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
-					hex!["d8301ff8160af5fd870c18a1d8c19ed04c67a705eeb4bb8ee68dee8b6d08b03d"].into(),
-					hex!["6af5c7ab6d40dda6e3bc997fda6c264d579b1456100f2138dbbb52c15ac22433"].into(),
-					hex!["c4362617bcba50a389ff636e263323a5f6fcd351db826926e32d74f9e3513a44"].into(),
+					hex!["b40a552330da17bf1e03f3969b4ef133e4ea2ab770d60cec377d8165af9ec753"].into(),
+					hex!["5807c92ba5c98bf95582111fc7bf464b88878d4009c2d0414a53712c17f2de52"].into(),
+					hex!["3498c9d183df1f3f698ec833892da13a6906cd5e29c3c0b9b6a2c1a309992d7b"].into(),
+					hex!["76ea85cfd7e2fbcb4bcdafa56ccefe2b749b492e46f8fbeb2874098418886f54"].into(),
+					hex!["600cd23bfd87f6cb0ae22e29509da7c0986a6f14d08eddbcfd2494bf8df59132"].into(),
 				],
 				true,
 			)
@@ -247,7 +248,22 @@ fn testnet_genesis(
 
 	let validators = initial_authorities.iter().map(|x| (x.0.clone(), STASH)).collect::<Vec<_>>();
 
-	const ENDOWMENT: Balance = 10000000 * DOLLARS;
+	let per_members_balance: Balance = 3000;
+	let total_balance: Balance = 100000000 * DOLLARS;
+	let members_count: Balance = council_members.len() as Balance;
+	let endowed_count: Balance = endowed_accounts.len() as Balance;
+	let members_balance: Balance = DOLLARS.saturating_mul(members_count.into()).saturating_mul(per_members_balance);
+	let endowed_balance: Balance = total_balance.saturating_sub(members_balance);
+
+	let per_endowment_balance: Balance = endowed_balance/endowed_count;
+	let mut init_balance_account:Vec<(AccountId, Balance)> = Vec::new();
+	for x in endowed_accounts.clone() {
+		init_balance_account.push((x, per_endowment_balance));
+	}
+	for x in council_members.clone() {
+		init_balance_account.push((x, DOLLARS.saturating_mul(per_members_balance)));
+	}
+
 	const STASH: Balance = 1000 * DOLLARS;
 
 	GenesisConfig {
@@ -259,7 +275,8 @@ fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|x| (x, ENDOWMENT)).collect(),
+			// balances: endowed_accounts.iter().cloned().map(|x| (x, ENDOWMENT)).collect(),
+			balances: init_balance_account,
 		},
 		session: SessionConfig {
 			keys: initial_authorities
@@ -285,7 +302,7 @@ fn testnet_genesis(
 			epoch_config: Some(appchain_barnacle_runtime::BABE_GENESIS_EPOCH_CONFIG),
 		},
 		elections: ElectionsConfig {
-			members: endowed_accounts.iter().cloned().map(|member| (member, STASH)).collect(),
+			members: council_members.iter().cloned().map(|member| (member, STASH)).collect(),
 		},
 		council: CouncilConfig::default(),
 		im_online: ImOnlineConfig { keys: vec![] },

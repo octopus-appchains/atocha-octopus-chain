@@ -254,7 +254,7 @@ pub mod pallet {
 			let min_bonus: Option<BalanceOf<T>> = min_bonus.try_into().ok();
 			let ato_config = ConfigData {
 				min_bonus_of_puzzle: min_bonus.unwrap(), // (100 * DOLLARS).into(),
-				challenge_period_length: MINUTES.saturating_mul(2).into(),
+				challenge_period_length: MINUTES.saturating_mul(5).into(),
 				tax_of_tcr: Perbill::from_percent(10),
 				tax_of_tvs: Perbill::from_percent(5),
 				tax_of_tvo: Perbill::from_percent(10),
@@ -748,7 +748,7 @@ impl<T: Config> Pallet<T>
 		let min_bonus: Option<BalanceOf<T>> = min_bonus.try_into().ok();
 		ConfigData {
 			min_bonus_of_puzzle: min_bonus.unwrap(), // (100 * DOLLARS).into(),
-			challenge_period_length: MINUTES.saturating_mul(2).into(),
+			challenge_period_length: MINUTES.saturating_mul(5).into(),
 			tax_of_tcr: Perbill::from_percent(10),
 			tax_of_tvs: Perbill::from_percent(5),
 			tax_of_tvo: Perbill::from_percent(10),
