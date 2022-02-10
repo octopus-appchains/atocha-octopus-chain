@@ -173,11 +173,11 @@ pub mod pallet {
 		/// Add a Sponsorship to Puzzle.
 		AdditionalSponsorship { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>, reason: PuzzleSponsorExplain }, // remove . DurationBn
 		/// A new answers submitted.
-		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber> },
+		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, answer_status: PuzzleAnswerStatus, },
 		/// Puzzle answers are matched.
-		AnswerMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
-		/// Puzzle answers not matched.
-		AnswerMisMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
+		// AnswerMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
+		// /// Puzzle answers not matched.
+		// AnswerMisMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
 		/// Update `AtoModule` module configuration.
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		// IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
@@ -396,30 +396,30 @@ pub mod pallet {
 					update_puzzle_content.reveal_bn = Some(current_block_number);
 					update_puzzle_content.reveal_answer = Some(who.clone());
 					<PuzzleInfo<T>>::insert(&puzzle_hash, update_puzzle_content);
-
-					Self::deposit_event(Event::<T>::AnswerMatch{
-						pid: puzzle_hash.clone(),
-						aid: answer_hash.clone(),
-						submitted_hash: update_answer_sign.clone(),
-						correct_hash: puzzle_content.answer_hash.clone()
-					});
-
+					// Self::deposit_event(Event::<T>::AnswerMatch{
+					// 	pid: puzzle_hash.clone(),
+					// 	aid: answer_hash.clone(),
+					// 	submitted_hash: update_answer_sign.clone(),
+					// 	correct_hash: puzzle_content.answer_hash.clone()
+					// });
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
-					Self::deposit_event(Event::<T>::AnswerMisMatch {
-						pid: puzzle_hash.clone(),
-						aid: answer_hash.clone(),
-						submitted_hash: update_answer_sign.clone(),
-						correct_hash: puzzle_content.answer_hash.clone()
-					});
+					// Self::deposit_event(Event::<T>::AnswerMisMatch {
+					// 	pid: puzzle_hash.clone(),
+					// 	aid: answer_hash.clone(),
+					// 	submitted_hash: update_answer_sign.clone(),
+					// 	correct_hash: puzzle_content.answer_hash.clone()
+					// });
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH
 				}
 			};
 
+			let answer_status = answer_status_check();
+
 			// create new answer tuple.
 			let answer_content = PuzzleAnswerData {
 				account: who.clone(),
-				answer_status: answer_status_check(),
+				answer_status: answer_status.clone(),
 				answer_explain,
 				create_bn: current_block_number.clone(),
 			};
@@ -434,6 +434,7 @@ pub mod pallet {
 			Self::deposit_event(Event::AnswerCreated{
 				who,
 				aid: answer_hash,
+				answer_status: answer_status,
 				pid: puzzle_hash,
 				create_bn: current_block_number,
 			});

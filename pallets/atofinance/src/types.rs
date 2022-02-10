@@ -82,6 +82,12 @@ pub struct SponsorData<AccountId, BalanceOf, BlockNumber> {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub enum ChallengeDepositType {
+	Issue,
+	Crowdloan,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum RewardType {
 	NoneReward,
 	AnswerReward,

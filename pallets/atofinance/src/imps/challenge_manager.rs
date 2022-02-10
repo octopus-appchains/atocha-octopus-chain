@@ -51,8 +51,10 @@ impl<T: Config>
 		)?;
 
 		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit{
+			pid: pid.clone(),
 			who: who.clone(),
-			deposit: real_deposit.clone()
+			deposit: real_deposit.clone(),
+			deposit_type: ChallengeDepositType::Issue,
 		});
 
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -90,7 +92,8 @@ impl<T: Config>
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
 				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange {
-					challenge_status: challenge_data.status.clone()
+					challenge_status: challenge_data.status.clone(),
+					pid: pid.clone(),
 				});
 				T::AtoPropose::challenge_propose(pid.clone());
 			},
@@ -138,8 +141,10 @@ impl<T: Config>
 		)?;
 
 		crate::Pallet::<T>::deposit_event(Event::ChallengeDeposit{
+			pid: pid.clone(),
 			who: who.clone(),
-			deposit: deposit.clone()
+			deposit: deposit.clone(),
+			deposit_type: ChallengeDepositType::Crowdloan,
 		});
 
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -167,7 +172,8 @@ impl<T: Config>
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
 				crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
-					challenge_status: challenge_data.status.clone()
+					challenge_status: challenge_data.status.clone(),
+					pid: pid.clone(),
 				});
 				T::AtoPropose::challenge_propose(pid.clone());
 			},
@@ -228,7 +234,8 @@ impl<T: Config>
 		challenge_data.status = ChallengeStatus::RaiseBackFunds(current_block_number, tax);
 		<PuzzleChallengeInfo<T>>::insert(&pid, challenge_data.clone());
 		crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
-			challenge_status: challenge_data.status.clone()
+			challenge_status: challenge_data.status.clone(),
+			pid: pid.clone(),
 		});
 
 		let mut total_pay: BalanceOf<T> = Zero::zero();
@@ -266,7 +273,8 @@ impl<T: Config>
 		match challenge_info.status {
 			ChallengeStatus::Raise(bn) => {
 				let current_block_number = <frame_system::Pallet<T>>::block_number();
-				if current_block_number > bn.saturating_add(period_len) {
+				// if current_block_number > bn.saturating_add(period_len) {
+				if current_block_number > challenge_info.create_bn.saturating_add(period_len) {
 					return Err(Error::<T>::RaisingPeriodExpired);
 				}
 			},
@@ -346,7 +354,8 @@ impl<T: Config>
 			challenge_info.status = s.clone();
 			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info.clone());
 			crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
-				challenge_status: challenge_info.status
+				challenge_status: challenge_info.status,
+				pid: pid.clone(),
 			});
 			return Ok(());
 		};

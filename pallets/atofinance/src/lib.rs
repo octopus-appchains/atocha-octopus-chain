@@ -344,9 +344,9 @@ pub mod pallet {
 		/// Apply for `Points` to exchange `Ato-Tokens`.
 		ApplyPointReward { who: T::AccountId , apply_era: ExchangeEra},
 		/// Challenger increases deposit fee.
-		ChallengeDeposit { who: T::AccountId, deposit: BalanceOf<T> },
+		ChallengeDeposit { pid: PuzzleSubjectHash, who: T::AccountId, deposit: BalanceOf<T>, deposit_type: ChallengeDepositType},
 		/// Challenger information status changed.
-		ChallengeStatusChange { challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
+		ChallengeStatusChange { pid: PuzzleSubjectHash, challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
 		/// Update `AtoFinance` module configuration.
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		/// Pre-stored resources succeeded.
