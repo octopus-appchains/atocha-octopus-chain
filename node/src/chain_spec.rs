@@ -1,8 +1,5 @@
 use appchain_barnacle_runtime::{
-	opaque::Block, opaque::SessionKeys, AccountId, BabeConfig, Balance, BalancesConfig,
-	GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig,CouncilConfig,ElectionsConfig,
-	SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY,
-};
+	opaque::Block, opaque::SessionKeys, AccountId, AtochaFinaceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, MINUTES, DAYS};
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_octopus_appchain::AuthorityId as OctopusId;
@@ -227,12 +224,12 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			get_account_id_from_seed::<sr25519::Public>("Bob"),
-			get_account_id_from_seed::<sr25519::Public>("Charlie"),
-			get_account_id_from_seed::<sr25519::Public>("Dave"),
-			get_account_id_from_seed::<sr25519::Public>("Eve"),
-			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+			// get_account_id_from_seed::<sr25519::Public>("Alice"),
+			// get_account_id_from_seed::<sr25519::Public>("Bob"),
+			// get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			// get_account_id_from_seed::<sr25519::Public>("Dave"),
+			// get_account_id_from_seed::<sr25519::Public>("Eve"),
+			// get_account_id_from_seed::<sr25519::Public>("Ferdie"),
 		]
 	});
 	// endow all authorities.
@@ -244,7 +241,7 @@ fn testnet_genesis(
 
 	let validators = initial_authorities.iter().map(|x| (x.0.clone(), STASH)).collect::<Vec<_>>();
 
-	let per_members_balance: Balance = 3000;
+	let per_members_balance: Balance = 200000;
 	let total_balance: Balance = 100000000 * DOLLARS;
 	let members_count: Balance = council_members.len() as Balance;
 	let endowed_count: Balance = endowed_accounts.len() as Balance;
@@ -260,11 +257,51 @@ fn testnet_genesis(
 		init_balance_account.push((x, DOLLARS.saturating_mul(per_members_balance)));
 	}
 
-	const STASH: Balance = 1000 * DOLLARS;
+	const STASH: Balance = 150000 * DOLLARS;
 
 	GenesisConfig {
-		atocha_finace: Default::default(),
-		atocha_module: Default::default(),
+		// atocha_finace: AtochaFinaceConfig {
+		// 	exchange_era_length: MINUTES.saturating_mul(6).into(), // ONLINE:: DAY * 3
+		// 	exchange_history_depth: 10,
+		// 	exchange_max_reward_list_size: 3,
+		// 	issuance_per_block: 1902587519025900000,
+		// 	per_era_of_block_number: MINUTES.saturating_mul(1).into(),
+		// 	challenge_threshold: Perbill::from_percent(60),
+		// 	raising_period_length: MINUTES.saturating_mul(10).into(),
+		// 	storage_base_fee: 1000u32.into()
+		// },
+		// atocha_module: AtochaModuleConfig {
+		// 	min_bonus_of_puzzle: 100 * DOLLARS,
+		// 	challenge_period_length: MINUTES.saturating_mul(5).into(),
+		// 	tax_of_tcr: Perbill::from_percent(10),
+		// 	tax_of_tvs: Perbill::from_percent(5),
+		// 	tax_of_tvo: Perbill::from_percent(10),
+		// 	tax_of_ti: Perbill::from_percent(10),
+		// 	penalty_of_cp: Perbill::from_percent(10),
+		// 	max_sponsor_explain_len: 256,
+		// 	max_answer_explain_len: 1024
+		// },
+		atocha_finace: AtochaFinaceConfig {
+			exchange_era_length: DAYS.saturating_mul(7).into(), // Point exchange period.
+			exchange_history_depth: 12, // maintain depth.
+			exchange_max_reward_list_size: 10, // Top list size.
+			issuance_per_block: 1902587519025900000, //
+			per_era_of_block_number: (DAYS * 1).into() , // The base unit for generating statistical points.
+			challenge_threshold: Perbill::from_percent(60),
+			raising_period_length: (DAYS * 3).into(), // Challenge raising period
+			storage_base_fee: 1000u32.into() // Used to calculate Arwave storage fees.
+		},
+		atocha_module: AtochaModuleConfig {
+			min_bonus_of_puzzle: 10 * DOLLARS, //
+			challenge_period_length: (DAYS * 3).into(),
+			tax_of_tcr: Perbill::from_percent(10),
+			tax_of_tvs: Perbill::from_percent(5),
+			tax_of_tvo: Perbill::from_percent(10),
+			tax_of_ti: Perbill::from_percent(10),
+			penalty_of_cp: Perbill::from_percent(10),
+			max_sponsor_explain_len: 256,
+			max_answer_explain_len: 1024
+		},
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),

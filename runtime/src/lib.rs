@@ -335,7 +335,7 @@ parameter_types! {
 	// additional data per vote is 32 bytes (account id).
 	pub const VotingBondFactor: Balance = deposit(0, 32);
 	pub const TermDuration: BlockNumber = 7 * DAYS;
-	pub const DesiredMembers: u32 = 13;
+	pub const DesiredMembers: u32 = 7;
 	pub const DesiredRunnersUp: u32 = 7;
 	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
 }
@@ -378,18 +378,6 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 // --------
-
-// parameter_types! {
-// 	pub MinBonusOfPuzzle: Balance = 100 * DOLLARS;
-// 	pub ChallengePeriodLength: BlockNumber = 2 * MINUTES ; //1 * HOURS;
-// 	pub TaxOfTCR: Perbill = Perbill::from_percent(10);
-// 	pub TaxOfTVS: Perbill = Perbill::from_percent(5); //  When creator reveal puzzle that it tax fee .
-// 	pub TaxOfTVO: Perbill = Perbill::from_percent(10); // When answer reveal puzzle that it tax fee.
-// 	pub TaxOfTI: Perbill = Perbill::from_percent(10);
-// 	pub PenaltyOfCP: Perbill = Perbill::from_percent(10);
-// 	pub const MaxSponsorExplainLen: u32 = 256;
-// 	pub const MaxAnswerExplainLen: u32 = 1024;
-// }
 
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
@@ -459,25 +447,16 @@ impl pallet_treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 }
 
-impl pallet_atofinance::imps::challenge_manager::Config for Runtime {
-	// type ChallengeThreshold = ChallengeThreshold;
-	// type RaisingPeriodLength = RaisingPeriodLength;
-}
+impl pallet_atofinance::imps::challenge_manager::Config for Runtime {}
 
 impl pallet_atofinance::Config for Runtime {
 	type AtoPropose = Council;
 	type CouncilOrigin = EnsureRootOrHalfTechnicalCommittee;
 	type Currency = pallet_balances::Pallet<Self>;
-	// type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
-	// type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
-	// type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
-	// type IssuancePerBlock = IssuancePerBlock;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
 	type SlashHandler = ();
 	type RewardHandler = ();
-	// type PerEraOfBlockNumber = PerEraOfBlockNumber;
-	// type StorageBaseFee = StorageBaseFee;
 }
 // ------------------------- ATOCHA Pallets Config end.
 impl pallet_randomness_collective_flip::Config for Runtime {}

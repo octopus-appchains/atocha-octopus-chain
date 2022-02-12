@@ -74,35 +74,16 @@ pub mod pallet {
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-
-		// #[pallet::constant]
-		// type ExchangeEraLength: Get<Self::BlockNumber>; // 10
-		//
-		// #[pallet::constant]
-		// type ExchangeHistoryDepth: Get<u32>; // 3
-		//
-		// #[pallet::constant]
-		// type ExchangeMaxRewardListSize: Get<u32>; // 3
-		//
-		// #[pallet::constant]
-		// type IssuancePerBlock: Get<BalanceOf<Self>>;
-
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-
-		// #[pallet::constant]
-		// type PerEraOfBlockNumber: Get<Self::BlockNumber>;
 
 		/// Handler for the rewards.
 		type RewardHandler: OnUnbalanced<PositiveImbalanceOf<Self>>;
 
 		/// Handler for the slashed deposits.
 		type SlashHandler: OnUnbalanced<NegativeImbalanceOf<Self>>;
-
-		// #[pallet::constant]
-		// type StorageBaseFee: Get<BalanceOf<Self>>;
 
 	}
 
@@ -175,12 +156,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn ato_point_total)]
 	pub type AtoPointTotal<T> = StorageValue<_, PointToken>;
-
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn ato_point_top_list)]
-	// pub type AtoPointTopList<T> = StorageValue<_, Vec<(<T as frame_system::Config>::AccountId, PointToken)>>;
-
 
 	#[pallet::storage]
 	#[pallet::getter(fn last_update_block_info_of_point_exchage)]
