@@ -26,6 +26,8 @@ pub trait IPuzzleLedger<AccountId, BalanceOf, PuzzleHash, BlockNumber, DResult> 
 		create_bn: BlockNumber,
 		reason: Vec<u8>,
 	) -> DResult;
+
+	fn get_pot_ledger ( pid: PuzzleHash ) -> Option<PotLedgerData<AccountId, BalanceOf, BlockNumber>> ;
 }
 
 pub trait IPuzzleReward<AccountId, BalanceOf, PuzzleHash, BlockNumber, DResult> {

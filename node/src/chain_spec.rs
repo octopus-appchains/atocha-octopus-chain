@@ -261,11 +261,11 @@ fn testnet_genesis(
 
 	GenesisConfig {
 		// atocha_finace: AtochaFinaceConfig {
-		// 	exchange_era_length: MINUTES.saturating_mul(6).into(), // ONLINE:: DAY * 3
+		// 	exchange_era_block_length: MINUTES.saturating_mul(6).into(), // ONLINE:: DAY * 3
 		// 	exchange_history_depth: 10,
 		// 	exchange_max_reward_list_size: 3,
 		// 	issuance_per_block: 1902587519025900000,
-		// 	per_era_of_block_number: MINUTES.saturating_mul(1).into(),
+		// 	point_reward_epoch_block_length: MINUTES.saturating_mul(1).into(),
 		// 	challenge_threshold: Perbill::from_percent(60),
 		// 	raising_period_length: MINUTES.saturating_mul(10).into(),
 		// 	storage_base_fee: 1000u32.into()
@@ -282,11 +282,11 @@ fn testnet_genesis(
 		// 	max_answer_explain_len: 1024
 		// },
 		atocha_finace: AtochaFinaceConfig {
-			exchange_era_length: DAYS.saturating_mul(7).into(), // Point exchange period.
+			exchange_era_block_length: DAYS.saturating_mul(7).into(), // Point exchange period.
 			exchange_history_depth: 12, // maintain depth.
 			exchange_max_reward_list_size: 10, // Top list size.
 			issuance_per_block: 1902587519025900000, //
-			per_era_of_block_number: (DAYS * 1).into() , // The base unit for generating statistical points.
+			point_reward_epoch_block_length: (DAYS * 1).into() , // The base unit for generating statistical points.
 			challenge_threshold: Perbill::from_percent(60),
 			raising_period_length: (DAYS * 3).into(), // Challenge raising period
 			storage_base_fee: 1000u32.into() // Used to calculate Arwave storage fees.

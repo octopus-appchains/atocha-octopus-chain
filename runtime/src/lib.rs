@@ -57,7 +57,7 @@ use static_assertions::const_assert;
 use pallet_atofinance::Config;
 
 /// Import the template pallet.
-pub use pallet_template;
+// pub use pallet_template;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -381,35 +381,18 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
-	// type Call = Call;
 	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
-	// type MinBonusOfPuzzle = MinBonusOfPuzzle;
-	// type ChallengePeriodLength = ChallengePeriodLength;
 	type PuzzleLedger = AtochaFinace; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
 	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
-	// type TaxOfTCR = TaxOfTCR;
-	// type TaxOfTVS = TaxOfTVS;
-	// type TaxOfTVO = TaxOfTVO;
-	// type TaxOfTI = TaxOfTI;
-	// type PenaltyOfCP = PenaltyOfCP;
-	// type MaxSponsorExplainLen = MaxSponsorExplainLen;
-	// type MaxAnswerExplainLen = MaxAnswerExplainLen;
+	type WeightInfo = pallet_atocha::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	// pub const ExchangeEraLength: BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
-	// pub const ExchangeHistoryDepth: u32 = 10;
-	// pub const ExchangeMaxRewardListSize: u32 = 3; // Will 10 to product. // MyBe 10 size
-	// pub const IssuancePerBlock: Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
-	// pub const PerEraOfBlockNumber: BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
-	// pub const ChallengeThreshold: Perbill = Perbill::from_percent(60);
-	// pub const RaisingPeriodLength: BlockNumber = 10 * MINUTES;
-	// pub const StorageBaseFee: Balance = 10000;
 }
 
 
@@ -795,10 +778,10 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type Event = Event;
-}
+// /// Configure the pallet-template in pallets/template.
+// impl pallet_template::Config for Runtime {
+// 	type Event = Event;
+// }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -829,7 +812,7 @@ construct_runtime!(
 		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		// TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>, Config<T>},
 		AtochaFinace: pallet_atofinance::{Pallet, Call, Storage, Event<T>, Config<T>},
 		//
@@ -1101,7 +1084,9 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_template, TemplateModule);
+			list_benchmark!(list, extra, pallet_atocha, AtochaModule);
+			// list_benchmark!(list, extra, pallet_template, TemplateModule);
+			list_benchmark!(list, extra, pallet_ato_collective, Council);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1135,7 +1120,9 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_template, TemplateModule);
+			add_benchmark!(params, batches, pallet_atocha, AtochaModule);
+			// add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
+			add_benchmark!(params, batches, pallet_ato_collective, Council);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

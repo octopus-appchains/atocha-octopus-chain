@@ -44,7 +44,6 @@ std = [
     'log/std',
     'hex/std',
     'pallet-atofinance/std',
-#    'pallet-balances/std',
     "scale-info/std",
     'sp-application-crypto/std',
     'sp-core/std',

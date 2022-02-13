@@ -139,11 +139,11 @@ impl<BlockNumber: Default, PerVal: PerThing> Default for ChallengeStatus<BlockNu
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct ConfigData<Balance, BlockNumber, PerThing> {
-	pub exchange_era_length: BlockNumber, // : BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
+	pub exchange_era_block_length: BlockNumber, // : BlockNumber = 6 * MINUTES; //1 * HOURS; // MyBe 7 * DAYS
 	pub exchange_history_depth: u32, // u32 = 10;
 	pub exchange_max_reward_list_size: u32, // u32 = 3; // Will 10 to product. // MyBe 10 size
 	pub issuance_per_block: Balance, // Balance = 1902587519025900000; // 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
-	pub per_era_of_block_number: BlockNumber, // BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
+	pub point_reward_epoch_block_length: BlockNumber, // BlockNumber = 1 * MINUTES; // MyBe 1 * DAY
 	pub challenge_threshold: PerThing, // Perbill = Perbill::from_percent(60);
 	pub raising_period_length: BlockNumber, // BlockNumber = 10 * MINUTES;
 	pub storage_base_fee: Balance, // Balance = 10000;
@@ -154,11 +154,11 @@ pub struct ConfigData<Balance, BlockNumber, PerThing> {
 // 		let issuance_per_block: Option<BalanceOf<T>> = 1902587519025900000u128.try_into().ok();
 // 		let issuance_per_block = issuance_per_block.unwrap();
 // 		Self {
-// 			exchange_era_length: MINUTES.saturating_mul(6).into(),
+// 			exchange_era_block_length: MINUTES.saturating_mul(6).into(),
 // 			exchange_history_depth: 10,
 // 			exchange_max_reward_list_size: 3,
 // 			issuance_per_block,
-// 			per_era_of_block_number: MINUTES.saturating_mul(1).into(),
+// 			point_reward_epoch_block_length: MINUTES.saturating_mul(1).into(),
 // 			challenge_threshold: Perbill::from_percent(60),
 // 			raising_period_length: MINUTES.saturating_mul(10).into(),
 // 			storage_base_fee: 10000u32.into()

@@ -378,7 +378,7 @@ pub mod pallet {
 		///   - 1 storage write (codec `O(1)`) for deleting the old `prime` and setting the new one
 		/// # </weight>
 		#[pallet::weight((
-			T::WeightInfo::set_members(
+			<T as pallet::Config<I>>::WeightInfo::set_members(
 				*old_count, // M
 				new_members.len() as u32, // N
 				T::MaxProposals::get() // P
@@ -415,7 +415,7 @@ pub mod pallet {
 			<Self as ChangeMembers<T::AccountId>>::set_members_sorted(&new_members, &old);
 			Prime::<T, I>::set(prime);
 
-			Ok(Some(T::WeightInfo::set_members(
+			Ok(Some(<T as pallet::Config<I>>::WeightInfo::set_members(
 				old.len() as u32,         // M
 				new_members.len() as u32, // N
 				T::MaxProposals::get(),   // P
@@ -435,7 +435,7 @@ pub mod pallet {
 		/// - 1 event
 		/// # </weight>
 		#[pallet::weight((
-			T::WeightInfo::execute(
+			<T as pallet::Config<I>>::WeightInfo::execute(
 				*length_bound, // B
 				T::MaxMembers::get(), // M
 			).saturating_add(proposal.get_dispatch_info().weight), // P
@@ -461,7 +461,7 @@ pub mod pallet {
 
 			Ok(get_result_weight(result)
 				.map(|w| {
-					T::WeightInfo::execute(
+					<T as pallet::Config<I>>::WeightInfo::execute(
 						proposal_len as u32,  // B
 						members.len() as u32, // M
 					)
@@ -499,12 +499,12 @@ pub mod pallet {
 		/// # </weight>
 		#[pallet::weight((
 			if *threshold < 2 {
-				T::WeightInfo::propose_execute(
+				<T as pallet::Config<I>>::WeightInfo::propose_execute(
 					*length_bound, // B
 					T::MaxMembers::get(), // M
 				).saturating_add(proposal.get_dispatch_info().weight) // P1
 			} else {
-				T::WeightInfo::propose_proposed(
+				<T as pallet::Config<I>>::WeightInfo::propose_proposed(
 					*length_bound, // B
 					T::MaxMembers::get(), // M
 					T::MaxProposals::get(), // P2
@@ -552,7 +552,7 @@ pub mod pallet {
 
 				Ok(get_result_weight(result)
 					.map(|w| {
-						T::WeightInfo::propose_execute(
+						<T as pallet::Config<I>>::WeightInfo::propose_execute(
 							proposal_len as u32,  // B
 							members.len() as u32, // M
 						)
@@ -583,7 +583,7 @@ pub mod pallet {
 					threshold,
 				});
 
-				Ok(Some(T::WeightInfo::propose_proposed(
+				Ok(Some(<T as pallet::Config<I>>::WeightInfo::propose_proposed(
 					proposal_len as u32,     // B
 					members.len() as u32,    // M
 					active_proposals as u32, // P2
@@ -607,7 +607,7 @@ pub mod pallet {
 		///   - 1 storage mutation `Voting` (codec `O(M)`)
 		/// - 1 event
 		/// # </weight>
-		#[pallet::weight((T::WeightInfo::vote(T::MaxMembers::get()), DispatchClass::Operational))]
+		#[pallet::weight((<T as pallet::Config<I>>::WeightInfo::vote(T::MaxMembers::get()), DispatchClass::Operational))]
 		pub fn vote(
 			origin: OriginFor<T>,
 			proposal: T::Hash,
@@ -660,9 +660,9 @@ pub mod pallet {
 			Voting::<T, I>::insert(&proposal, voting);
 
 			if is_account_voting_first_time {
-				Ok((Some(T::WeightInfo::vote(members.len() as u32)), Pays::No).into())
+				Ok((Some(<T as pallet::Config<I>>::WeightInfo::vote(members.len() as u32)), Pays::No).into())
 			} else {
-				Ok((Some(T::WeightInfo::vote(members.len() as u32)), Pays::Yes).into())
+				Ok((Some(<T as pallet::Config<I>>::WeightInfo::vote(members.len() as u32)), Pays::Yes).into())
 			}
 		}
 
@@ -704,10 +704,10 @@ pub mod pallet {
 				let m = T::MaxMembers::get();
 				let p1 = *proposal_weight_bound;
 				let p2 = T::MaxProposals::get();
-				T::WeightInfo::close_early_approved(b, m, p2)
-					.max(T::WeightInfo::close_early_disapproved(m, p2))
-					.max(T::WeightInfo::close_approved(b, m, p2))
-					.max(T::WeightInfo::close_disapproved(m, p2))
+				<T as pallet::Config<I>>::WeightInfo::close_early_approved(b, m, p2)
+					.max(<T as pallet::Config<I>>::WeightInfo::close_early_disapproved(m, p2))
+					.max(<T as pallet::Config<I>>::WeightInfo::close_approved(b, m, p2))
+					.max(<T as pallet::Config<I>>::WeightInfo::close_disapproved(m, p2))
 					.saturating_add(p1)
 			},
 			DispatchClass::Operational
@@ -739,7 +739,7 @@ pub mod pallet {
 					Self::do_approve_proposal(seats, yes_votes, proposal_hash, proposal);
 				return Ok((
 					Some(
-						T::WeightInfo::close_early_approved(len as u32, seats, proposal_count)
+						<T as pallet::Config<I>>::WeightInfo::close_early_approved(len as u32, seats, proposal_count)
 							.saturating_add(proposal_weight),
 					),
 					Pays::Yes,
@@ -759,7 +759,7 @@ pub mod pallet {
 				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
 				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
 				return Ok((
-					Some(T::WeightInfo::close_early_disapproved(seats, proposal_count)),
+					Some(<T as pallet::Config<I>>::WeightInfo::close_early_disapproved(seats, proposal_count)),
 					Pays::No,
 				).into())
 			}
@@ -793,7 +793,7 @@ pub mod pallet {
 					Self::do_approve_proposal(seats, yes_votes, proposal_hash, proposal);
 				Ok((
 					Some(
-						T::WeightInfo::close_approved(len as u32, seats, proposal_count)
+						<T as pallet::Config<I>>::WeightInfo::close_approved(len as u32, seats, proposal_count)
 							.saturating_add(proposal_weight),
 					),
 					Pays::Yes,
@@ -813,7 +813,7 @@ pub mod pallet {
 				)?;
 				Self::deposit_event(Event::Closed { proposal_hash, yes: yes_votes, no: no_votes });
 				let proposal_count = Self::do_disapprove_proposal(proposal_hash);
-				Ok((Some(T::WeightInfo::close_disapproved(seats, proposal_count)), Pays::No).into())
+				Ok((Some(<T as pallet::Config<I>>::WeightInfo::close_disapproved(seats, proposal_count)), Pays::No).into())
 			}
 		}
 
@@ -831,14 +831,14 @@ pub mod pallet {
 		/// * Reads: Proposals
 		/// * Writes: Voting, Proposals, ProposalOf
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::disapprove_proposal(T::MaxProposals::get()))]
+		#[pallet::weight(<T as pallet::Config<I>>::WeightInfo::disapprove_proposal(T::MaxProposals::get()))]
 		pub fn disapprove_proposal(
 			origin: OriginFor<T>,
 			proposal_hash: T::Hash,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			let proposal_count = Self::do_disapprove_proposal(proposal_hash);
-			Ok(Some(T::WeightInfo::disapprove_proposal(proposal_count)).into())
+			Ok(Some(<T as pallet::Config<I>>::WeightInfo::disapprove_proposal(proposal_count)).into())
 		}
 	}
 }

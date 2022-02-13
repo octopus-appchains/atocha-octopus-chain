@@ -19,7 +19,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, T::Bl
 			cut_bn,
 			pid,
 			// T::PerEraOfBlockNumber::get(),
-			ato_config.per_era_of_block_number
+			ato_config.point_reward_epoch_block_length
 		))
 	}
 

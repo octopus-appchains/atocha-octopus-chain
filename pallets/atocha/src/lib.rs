@@ -25,6 +25,7 @@ use crate::types::PuzzleStatus;
 
 mod traits;
 pub mod types;
+pub mod weights;
 
 #[cfg(test)]
 mod mock;
@@ -32,10 +33,16 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub use weights::WeightInfo;
+
 // mod challenge;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use atocha_constants::*;
 	use frame_support::sp_runtime::{Perbill, RuntimeDebug};
 	use frame_support::parameter_types;
@@ -134,6 +141,8 @@ pub mod pallet {
 			DispatchResult,
 			PerVal = Perbill,
 		>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -353,7 +362,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::answer_puzzle())]
 		pub fn answer_puzzle(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
@@ -442,7 +451,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(100)]
+		// #[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::create_puzzle())]
 		pub fn create_puzzle(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -493,10 +503,6 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 			#[pallet::compact] deposit: BalanceOf<T>,
-			// answer_hash: PuzzleAnswerHash,
-			// answer_explain: Option<PuzzleAnswerExplain>,
-			// answer_nonce: PuzzleAnswerNonce,
-			// puzzle_version: PuzzleVersion,
 		) -> DispatchResult {
 			// check signer
 			let who = ensure_signed(origin)?;
@@ -508,7 +514,6 @@ pub mod pallet {
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			let reveal_bn = puzzle_content.reveal_bn.unwrap();
-			// println!("reveal_bn = {:?} current_block_number = {:?}, periodlength={:?}", reveal_bn, current_block_number, T::ChallengePeriodLength::get());
 			let ato_config = Self::get_ato_config();
 			ensure!(
 				current_block_number - reveal_bn <= ato_config.challenge_period_length,
@@ -516,12 +521,6 @@ pub mod pallet {
 			);
 			//
 			T::AtoChallenge::issue_challenge(who.clone(), &puzzle_hash, deposit)?;
-			// Self::deposit_event(Event::<T>::IssueChallenge(
-			// 	who.clone(),
-			// 	puzzle_hash.clone(),
-			// 	deposit.clone(),
-			// ));
-
 			//
 			Ok(().into())
 		}
@@ -567,19 +566,18 @@ pub mod pallet {
 		) -> DispatchResult {
 			// check signer
 			let who = ensure_signed(origin)?;
-			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			let puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash);
+			ensure!(
+				puzzle_content.is_some(),
+				Error::<T>::PuzzleNotExist
+			);
+			let mut puzzle_content = puzzle_content.unwrap();
 			ensure!(
 				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				Error::<T>::PuzzleStatusErr
 			);
 			//
 			T::AtoChallenge::challenge_crowdloan(who.clone(), &puzzle_hash, deposit)?;
-			// Self::deposit_event(Event::<T>::IssueChallenge(
-			// 	who.clone(),
-			// 	puzzle_hash.clone(),
-			// 	deposit.clone(),
-			// ));
-			//
 			Ok(().into())
 		}
 
