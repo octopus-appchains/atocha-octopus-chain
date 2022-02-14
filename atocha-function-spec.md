@@ -43,6 +43,6 @@ Result: Storage->atochaFinace->pointExchangeInfo<br/>
 
 ### Claim for weekly point ranking reward ###
 Action: Submission->atochaFinace->applyPointReward<br/>
-Event: Event::ApplyPointReward<br/>
+Event: atochaFinace.applyPointReward<br/>
 Result: Storage->atochaFinace->pointExchangeInfo<br/>
 
