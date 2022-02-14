@@ -28,6 +28,11 @@ Action: Submission->atochaModule->challengeCrowdloan<br/>
 Event: atochaFinace.ChallengeStatusChange<br/>
 Result: Storage->atochaFinace->puzzleChallengeInfo<br/>
 
+### Challenge a puzzle - refund challenge deposit ###
+Action: Submission->atochaModule->challengePullOut<br/>
+Event: atochaFinace.ChallengeStatusChange<br/>
+Result: Storage->atochaFinace->puzzleChallengeInfo<br/>
+
 ### Claim for puzzle reward ###
 Action: Submission->atochaModule->takeAnswerReward<br/>
 Event: atochaFinace.TakeTokenReward && atochaFinace.TakePointReward<br/>
