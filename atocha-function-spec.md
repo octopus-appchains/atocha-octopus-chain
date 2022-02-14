@@ -12,40 +12,40 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Sponsor a puzzle
-Action: Submission->atochaModule->additionalSponsorship<br/>
-Event: atochaModule.AdditionalSponsorship<br/>
-Result: Storage->atochaFinace->atoFinanceLedger<br/>
+- Action: Submission->atochaModule->additionalSponsorship
+- Event: atochaModule.AdditionalSponsorship
+- Result: Storage->atochaFinace->atoFinanceLedger
 
 ### Answer a puzzle
-Action: Submission->atochaModule->answerPuzzle<br/>
-Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH or ANSWER_HASH_IS_MATCH)<br/>
-Result: Storage->atochaModule->puzzleInfo<br/>
+- Action: Submission->atochaModule->answerPuzzle
+- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH or ANSWER_HASH_IS_MATCH)
+- Result: Storage->atochaModule->puzzleInfo
 
-### Challenge a puzzle - create a challenge
-Action: Submission->atochaModule->commitChallenge<br/>
-Event: atochaFinace.ChallengeDeposit<br/>
-Result: Storage->atochaFinace->puzzleChallengeInfo<br/>
+### Create a puzzle challenge
+- Action: Submission->atochaModule->commitChallenge
+- Event: atochaFinace.ChallengeDeposit
+- Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Challenge a puzzle - join a challenge
-Action: Submission->atochaModule->challengeCrowdloan<br/>
-Event: atochaFinace.ChallengeStatusChange<br/>
-Result: Storage->atochaFinace->puzzleChallengeInfo<br/>
+### Join a puzzle challenge
+- Action: Submission->atochaModule->challengeCrowdloan
+- Event: atochaFinace.ChallengeStatusChange
+- Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Challenge a puzzle - refund challenge deposit
-Action: Submission->atochaModule->challengePullOut<br/>
-Event: atochaFinace.ChallengeStatusChange<br/>
-Result: Storage->atochaFinace->puzzleChallengeInfo<br/>
+### Refund puzzle challenge deposit
+- Action: Submission->atochaModule->challengePullOut
+- Event: atochaFinace.ChallengeStatusChange
+- Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Claim for puzzle reward
-Action: Submission->atochaModule->takeAnswerReward<br/>
-Event: atochaFinace.TakeTokenReward && atochaFinace.TakePointReward<br/>
-Result: Storage->atochaFinace->puzzleChallengeInfo<br/>
+- Action: Submission->atochaModule->takeAnswerReward
+- Event: atochaFinace.TakeTokenReward && atochaFinace.TakePointReward
+- Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Check point ranking
-Result: Storage->atochaFinace->pointExchangeInfo<br/>
+- Result: Storage->atochaFinace->pointExchangeInfo
 
 ### Claim for weekly point ranking reward
-Action: Submission->atochaFinace->applyPointReward<br/>
-Event: atochaFinace.applyPointReward<br/>
-Result: Storage->atochaFinace->pointExchangeInfo<br/>
+- Action: Submission->atochaFinace->applyPointReward
+- Event: atochaFinace.applyPointReward
+- Result: Storage->atochaFinace->pointExchangeInfo
 
