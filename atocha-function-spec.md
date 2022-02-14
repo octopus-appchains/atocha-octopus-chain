@@ -1,7 +1,7 @@
 ### PreCreate a puzzle ###
-Action: Submission->atochaFinace->preStorage
-Event: atochaFinace.PreStorage
-Result: Storage->atochaFinace->storageLedger
+Action: Submission->atochaFinace->preStorage<br/>
+Event: atochaFinace.PreStorage<br/>
+Result: Storage->atochaFinace->storageLedger<br/>
 
 ### Create a puzzle ###
 Action: Submission->atochaModule->createPuzzle<br/>
