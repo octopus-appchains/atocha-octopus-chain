@@ -31,7 +31,7 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 - Event: atochaFinace.ChallengeStatusChange
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Refund puzzle challenge deposit
+### Claim for puzzle challenge deposit refund
 - Action: Submission->atochaModule->challengePullOut
 - Event: atochaFinace.ChallengeStatusChange
 - Result: Storage->atochaFinace->puzzleChallengeInfo
