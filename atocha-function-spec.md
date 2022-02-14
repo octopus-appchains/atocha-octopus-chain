@@ -13,9 +13,9 @@ Action: Submission->atochaModule->additionalSponsorship<br/>
 Event: atochaModule.AdditionalSponsorship<br/>
 Result: Storage->atochaFinace->atoFinanceLedger<br/>
 
-### Solve a puzzle ###
+### Answer a puzzle ###
 Action: Submission->atochaModule->answerPuzzle<br/>
-Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH || ANSWER_HASH_IS_MATCH)<br/>
+Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH or ANSWER_HASH_IS_MATCH)<br/>
 Result: Storage->atochaModule->puzzleInfo<br/>
 
 ### Challenge a puzzle - create a challenge ###
