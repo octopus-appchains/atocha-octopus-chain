@@ -92,19 +92,20 @@ fn test_point_exchange() {
 		assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_5), Error::<Test>::ExchangeApplyAlreadyExists);
 		assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4), Error::<Test>::ExchangeApplyAlreadyExists);
 
-		//
+		// 1_000_000_000_000_000
 		assert_noop!(<PointExchange<Test>>::execute_exchange(3, 1_000_000_000_000_000), Error::<Test>::EraNotEnded);
 		assert_noop!(<PointExchange<Test>>::execute_exchange(2, 1_000_000_000_000_000), Error::<Test>::ExchangeListIsEmpty);
 
 		//
 		System::set_block_number(35);
+		AtochaPot::on_initialize(35);
 		assert_eq!(<PointExchange<Test>>::get_current_era(), 4);
 		// If old era not be clean, new apply will be deny.
-		assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4), Error::<Test>::LastExchangeRewardClearing);
+		// assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4), Error::<Test>::LastExchangeRewardClearing);
 
 		// on_initialize will call execute_exchange(2
-		// AtochaPot::on_initialize(30);
-		assert_ok!(<PointExchange<Test>>::execute_exchange(3, 1_000_000_000_000_000));
+		// AtochaPot::on_initialize(30); // 10_000_000_000_000_000
+		assert_noop!(<PointExchange<Test>>::execute_exchange(3, 1_000_000_000_000_000), Error::<Test>::ExchangeRewardEnded);
 
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_1), 100);
 		assert_eq!(<PointManager<Test>>::get_total_points(&ACCOUNT_ID_2), 200);
@@ -117,7 +118,7 @@ fn test_point_exchange() {
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 100_000_000_000_000);
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_2), 200_000_000_000_000);
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_3), 300_000_000_000_000);
-		assert_eq!(Balances::free_balance(ACCOUNT_ID_4), 400_000_000_000_000 + 266666667000000); // 0.266
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_4), 400_000_000_000_000 + 266_666_667_000_000); // 0.266 * 1000000000000000 266,000,000,000,000
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_5), 500_000_000_000_000 + 333333333000000); // 0.333
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_6), 600_000_000_000_000 + 400000000000000); // 0.6
 
@@ -127,7 +128,7 @@ fn test_point_exchange() {
 		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_1));
 		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_2));
 		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_3));
-		assert_eq!(<PointExchange<Test>>::get_reward_list(3), vec![
+		assert_eq!(<PointExchange<Test>>::get_reward_list(4), vec![
 			(ACCOUNT_ID_3, 300, None),
 			(ACCOUNT_ID_2, 200, None),
 			(ACCOUNT_ID_1, 100, None),

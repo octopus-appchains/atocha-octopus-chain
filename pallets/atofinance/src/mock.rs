@@ -78,36 +78,18 @@ impl system::Config for Test {
 
 parameter_types! {
 	pub const AresFinancePalletId: PalletId = PalletId(*b"ocw/fund");
-	// pub const ExchangeEraLength: BlockNumber = 10;
-	// pub const ExchangeHistoryDepth: u32 = 3;
-	// pub const ExchangeMaxRewardListSize: u32 = 3;
-	// pub const IssuancePerBlock: BalanceOf<Test> = 1902587519025900000 ;// 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
-	// pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
-	// pub const PerEraOfBlockNumber: BlockNumber = 5;
-	// pub const RaisingPeriodLength: BlockNumber = 5;
-	// pub PenaltyOfCP: Perbill = Perbill::from_float(0.1);
-	// pub const StorageBaseFee: BalanceOf<Test> = 1000;
 }
 
-impl crate::imps::challenge_manager::Config for Test {
-	// type ChallengeThreshold = ChallengeThreshold;
-	// type RaisingPeriodLength = RaisingPeriodLength;
-}
+impl crate::imps::challenge_manager::Config for Test {}
 
 impl crate::Config for Test {
 	type AtoPropose = ();
 	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
 	type Currency = pallet_balances::Pallet<Self>;
-	// type ExchangeEraLength = ExchangeEraLength; // ::get(); // 10
-	// type ExchangeHistoryDepth = ExchangeHistoryDepth;//::get(); // 3
-	// type ExchangeMaxRewardListSize = ExchangeMaxRewardListSize; //::get(); // 3
-	// type IssuancePerBlock = IssuancePerBlock;
 	type Event = Event;
 	type PalletId = AresFinancePalletId;
-	// type PerEraOfBlockNumber = PerEraOfBlockNumber;
 	type RewardHandler = ();
 	type SlashHandler = ();
-	// type StorageBaseFee = StorageBaseFee;
 }
 
 parameter_types! {
@@ -141,17 +123,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 
-	// pub const ExchangeEraLength: BlockNumber = 10;
-	// pub const ExchangeHistoryDepth: u32 = 3;
-	// pub const ExchangeMaxRewardListSize: u32 = 3;
-	// pub const IssuancePerBlock: BalanceOf<Test> = 1902587519025900000 ;// 1902587519025900000;// 100000000 * 0.1 / 365 / 14400 = 1902587519025900000
-	// pub ChallengeThreshold: Perbill = Perbill::from_float(0.6);
-	// pub const PerEraOfBlockNumber: BlockNumber = 5;
-	// pub const RaisingPeriodLength: BlockNumber = 5;
-	// pub PenaltyOfCP: Perbill = Perbill::from_float(0.1);
-	// pub const StorageBaseFee: BalanceOf<Test> = 1000;
-
-	let issuance_per_block: Option<BalanceOf<Test>> = 1902587519025900000u128.try_into().ok();
+	let issuance_per_block: Option<BalanceOf<Test>> = 1_000_000_000_000_00u128.try_into().ok();
 	let issuance_per_block = issuance_per_block.unwrap();
 	crate::GenesisConfig::<Test> {
 		exchange_era_block_length: 10,

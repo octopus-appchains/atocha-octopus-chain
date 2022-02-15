@@ -4,9 +4,6 @@ use atocha_constants::{DOLLARS, MINUTES};
 use frame_support::traits::Currency;
 use frame_system::Origin;
 use frame_support::assert_ok;
-// use crate::mock::toVec;
-// use crate::mock::new_test_ext;
-// use crate::mock::Balance;
 
 use frame_system::RawOrigin;
 use frame_benchmarking::{benchmarks, whitelisted_caller, impl_benchmark_test_suite, account};
@@ -33,11 +30,10 @@ fn handler_answer_puzzle<T: Config>(caller: T::AccountId, puzzle_hash: PuzzleSub
 	assert!(<PuzzleDirectAnswer<T>>::contains_key(&puzzle_hash, &answer_hash));
 	let puzzle_info = <PuzzleInfo<T>>::get(&puzzle_hash);
 	let puzzle_info = puzzle_info.unwrap();
-	log::info!("puzzle_info 2 - puzzle_info.puzzle_status = {:?}", puzzle_info.puzzle_status);
 }
 
-fn handler_commit_challenge<T: Config>(caller: T::AccountId, puzzle_hash: PuzzleSubjectHash) {
-
+fn handler_commit_challenge<T: Config>(caller: T::AccountId, puzzle_hash: PuzzleSubjectHash, deposit: BalanceOf<T>) {
+	AtochaModule::<T>::commit_challenge(RawOrigin::Signed(caller).into(), puzzle_hash, deposit);
 }
 
 fn get_min_bonus_of_puzzle<T: Config>() -> BalanceOf<T> {
@@ -91,19 +87,11 @@ benchmarks! {
 		assert_eq!(pot_ledger.sponsor_list.len(), 2u32 as usize, "Sponsor list size is 2");
 	}
 
-	// #[pallet::weight(100)]
-	// 	pub fn commit_challenge(
-	// 		origin: OriginFor<T>,
-	// 		puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 	commit_challenge {
-		// let caller: T::AccountId = wrap_account_with_balance::<T>(whitelisted_caller());
-		// let puzzle_hash = "PUZZLE_HASH".as_bytes().to_vec();
-		// let answer_hash = "ANSWER_HASH".as_bytes().to_vec();
 		let caller: T::AccountId = wrap_account_with_balance::<T>(whitelisted_caller());
 		let puzzle_hash = "liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw".as_bytes().to_vec();
 		let answer_hash = "aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd".as_bytes().to_vec();
 		let final_answer_raw =  "C".as_bytes().to_vec();
-
 		handler_create_puzzle::<T>(puzzle_hash.clone(), answer_hash.clone());
 		handler_answer_puzzle::<T>(caller.clone(), puzzle_hash.clone(), final_answer_raw.clone(), "PuzzleAnswerExplain".as_bytes().to_vec());
 	}: _(RawOrigin::Signed(caller), puzzle_hash.clone(), get_dollars::<T>(1000))
@@ -112,47 +100,69 @@ benchmarks! {
 		let challenge_status = T::AtoChallenge::get_challenge_status(&puzzle_hash);
 		assert!(challenge_status.is_some());
 		log::info!(" challenge_status === {:?}", challenge_status);
+
 	}
 
-// pub enum ChallengeStatus<BlockNumber, PerVal: PerThing> {
-// 	Raise(BlockNumber),
-// 	RaiseCompleted(BlockNumber),
-// 	RaiseBackFunds(BlockNumber, PerVal),
-// 	JudgePassed(BlockNumber),
-// 	JudgeRejected(BlockNumber),
-// }
-
-	// #[pallet::weight(100)]
-	// 	pub fn challenge_pull_out(
-	// 		origin: OriginFor<T>,
-	// 		puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
     challenge_pull_out {
 		frame_system::Pallet::<T>::set_block_number(100u32.into());
 		let caller: T::AccountId = wrap_account_with_balance::<T>(whitelisted_caller());
-		let puzzle_hash = "PUZZLE_HASH".as_bytes().to_vec();
-		let answer_hash = "ANSWER_HASH".as_bytes().to_vec();
+		let puzzle_hash = "liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw".as_bytes().to_vec();
+		let answer_hash = "aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd".as_bytes().to_vec();
+		let final_answer_raw =  "C".as_bytes().to_vec();
 		handler_create_puzzle::<T>(puzzle_hash.clone(), answer_hash.clone());
-		handler_answer_puzzle::<T>(caller.clone(), puzzle_hash.clone(), answer_hash.clone(), "PuzzleAnswerExplain".as_bytes().to_vec());
-		handler_commit_challenge::<T>(caller.clone(), puzzle_hash.clone());
-		frame_system::Pallet::<T>::set_block_number(500u32.into());
+		handler_answer_puzzle::<T>(caller.clone(), puzzle_hash.clone(), final_answer_raw.clone(), "PuzzleAnswerExplain".as_bytes().to_vec());
+		handler_commit_challenge::<T>(caller.clone(), puzzle_hash.clone(), get_dollars::<T>(10));
+		frame_system::Pallet::<T>::set_block_number(50000u32.into());
+		log::info!("blocknumber = {:?}", <frame_system::Pallet<T>>::block_number());
 	}: _(RawOrigin::Signed(caller), puzzle_hash.clone())
 	verify {
-		assert!(<PuzzleDirectAnswer<T>>::contains_key(&puzzle_hash, &answer_hash));
+		assert!(<PuzzleDirectAnswer<T>>::contains_key(&puzzle_hash, &final_answer_raw));
 		let challenge_status = T::AtoChallenge::get_challenge_status(&puzzle_hash);
+		log::info!("challenge_status AA = {:?}", &challenge_status);
+		assert_eq!(challenge_status, Some(ChallengeStatus::RaiseFundsBack(50000u32.into(),Perbill::from_percent(10))));
 		assert!(challenge_status.is_some());
 	}
 
+	challenge_crowdloan {
+		frame_system::Pallet::<T>::set_block_number(100u32.into());
+		let caller: T::AccountId = wrap_account_with_balance::<T>(whitelisted_caller());
+		let puzzle_hash = "liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw".as_bytes().to_vec();
+		let answer_hash = "aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd".as_bytes().to_vec();
+		let final_answer_raw =  "C".as_bytes().to_vec();
+		handler_create_puzzle::<T>(puzzle_hash.clone(), answer_hash.clone());
+		handler_answer_puzzle::<T>(caller.clone(), puzzle_hash.clone(), final_answer_raw.clone(), "PuzzleAnswerExplain".as_bytes().to_vec());
+		handler_commit_challenge::<T>(caller.clone(), puzzle_hash.clone(), get_dollars::<T>(10));
+		log::info!("blocknumber = {:?}", <frame_system::Pallet<T>>::block_number());
+	}: _(RawOrigin::Signed(caller), puzzle_hash.clone(), get_dollars::<T>(10))
+	verify {
+		assert!(<PuzzleDirectAnswer<T>>::contains_key(&puzzle_hash, &final_answer_raw));
+		let challenge_status = T::AtoChallenge::get_challenge_status(&puzzle_hash);
+		log::info!("challenge_status : {:?}", &challenge_status);
+		assert!(challenge_status.is_some());
+		let challengers = T::AtoChallenge::get_list_of_challengers(&puzzle_hash);
+		log::info!("challengers : {:?}", &challengers);
+		assert_eq!(challengers.len(), 2);
 
-	// #[pallet::weight(100)]
-	// 	pub fn challenge_crowdloan(
-	// 		origin: OriginFor<T>,
-	// 		puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
-	// 		#[pallet::compact] deposit: BalanceOf<T>,
+	}
 
-	// #[pallet::weight(100)]
-	// 	pub fn take_answer_reward(
-	// 		origin: OriginFor<T>,
-	// 		puzzle_hash: PuzzleSubjectHash,
+	take_answer_reward {
+		let caller: T::AccountId = wrap_account_with_balance::<T>(whitelisted_caller());
+		let puzzle_hash = "liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw".as_bytes().to_vec();
+		let answer_hash = "aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd".as_bytes().to_vec();
+		let final_answer_raw =  "C".as_bytes().to_vec();
+		handler_create_puzzle::<T>(puzzle_hash.clone(), answer_hash.clone());
+		handler_answer_puzzle::<T>(caller.clone(), puzzle_hash.clone(), final_answer_raw.clone(), "PuzzleAnswerExplain".as_bytes().to_vec());
+		//
+		frame_system::Pallet::<T>::set_block_number(50000u32.into());
+	}: _(RawOrigin::Signed(caller), puzzle_hash.clone())
+	verify {
+		assert!(<PuzzleDirectAnswer<T>>::contains_key(&puzzle_hash, &final_answer_raw));
+		assert!(<PuzzleInfo<T>>::contains_key(&puzzle_hash));
+		let puzzle_info = <PuzzleInfo<T>>::get(&puzzle_hash);
+		assert!(puzzle_info.is_some());
+		let puzzle_info = puzzle_info.unwrap();
+		assert_eq!(puzzle_info.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_FINAL);
+	}
 
 	// #[pallet::weight(100)]
 	// 	pub fn recognition_challenge(

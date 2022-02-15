@@ -1,12 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::weights::Weight;
 use super::*;
 use sp_runtime::traits::Scale;
 pub struct PointExchange<T>(PhantomData<T>);
 
 // IPointExchange
 // <T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
-impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointToken, BalanceOf<T>, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>> for PointExchange<T> {
+impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointToken, BalanceOf<T>, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>, Weight> for PointExchange<T> {
 	fn apply_exchange(who: T::AccountId) -> DispatchResult {
 		let current_era = Self::get_current_era();
 		ensure!(current_era > Zero::zero(), Error::<T>::LastExchangeRewardClearing);
@@ -116,7 +117,6 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		for x in exchange_list.clone().into_iter() {
 			total_point = total_point.saturating_add(x.1);
 		}
-
 		//
 		let mut sum_proportion: Perbill = Perbill::from_percent(0);
 		let mut all_pay: BalanceOf<T> = Zero::zero();
@@ -182,7 +182,6 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 			era: era,
 			exchange_list: event_list,
 		});
-
 		Ok(())
 	}
 
@@ -193,7 +192,34 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		if let Some(current_ear) = CurrentExchangeRewardEra::<T>::get() {
 			return current_ear;
 		}
+		// Is era start
+		Self::check_and_update_era(<frame_system::Pallet<T>>::block_number());
 		1
+	}
+
+	fn check_and_update_era(current_bn: T::BlockNumber) -> Weight {
+		let mut w_read: Weight= 1;
+		let mut w_write: Weight = 0;
+		let current_era = CurrentExchangeRewardEra::<T>::get();
+		if current_era.is_none() {
+			CurrentExchangeRewardEra::<T>::put(1);
+			ExchangeRewardEraStartBn::<T>::insert(1, current_bn);
+			w_write+=2;
+		}else{
+			let current_era = current_era.unwrap();
+			// Get exchange era start bn.
+			let era_start_bn = ExchangeRewardEraStartBn::<T>::get(current_era);
+			w_read+=1;
+			let era_start_bn = era_start_bn.unwrap();
+			let diff_bn = current_bn.saturating_sub(era_start_bn);
+			if diff_bn >= Self::get_era_length() {
+				let new_era = current_era.saturating_add(1);
+				CurrentExchangeRewardEra::<T>::put(new_era);
+				ExchangeRewardEraStartBn::<T>::insert(new_era, current_bn);
+				w_write+=2;
+			}
+		}
+		w_read + w_write
 	}
 
 	fn get_last_reward_era() -> ExchangeEra {

@@ -126,7 +126,7 @@ pub struct PuzzleChallengeData<Account, BlockNumber, BalanceOf, PerVal: PerThing
 pub enum ChallengeStatus<BlockNumber, PerVal: PerThing> {
 	Raise(BlockNumber),
 	RaiseCompleted(BlockNumber),
-	RaiseBackFunds(BlockNumber, PerVal),
+	RaiseFundsBack(BlockNumber, PerVal),
 	JudgePassed(BlockNumber),
 	JudgeRejected(BlockNumber),
 }

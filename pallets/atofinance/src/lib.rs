@@ -288,7 +288,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
-			let mut result_width: Weight = 0;
+			let mut result_width: Weight =  PointExchange::<T>::check_and_update_era(now);
 			let current_era = PointExchange::<T>::get_current_era();
 			// println!("get_last_reward_era = {:?}, {:?} ", &PointExchange::<T>::get_last_reward_era(), &current_era);
 			if 0 != current_era &&
@@ -308,17 +308,17 @@ pub mod pallet {
 					"AtoFinance - execute_result = {:?}",
 					&execute_result
 				);
-				result_width += 10;
+				result_width += (PointExchange::<T>::get_max_reward_list_size() as Weight);
 			}
 
 			//
-			let storage_exchange_reward_era = CurrentExchangeRewardEra::<T>::get();
-			if storage_exchange_reward_era.is_none() ||
-				storage_exchange_reward_era.unwrap() != current_era
-			{
-				result_width += 1;
-				CurrentExchangeRewardEra::<T>::put(current_era);
-			}
+			// let storage_exchange_reward_era = CurrentExchangeRewardEra::<T>::get();
+			// if storage_exchange_reward_era.is_none() ||
+			// 	storage_exchange_reward_era.unwrap() != current_era
+			// {
+			// 	result_width += 1;
+			// 	CurrentExchangeRewardEra::<T>::put(current_era);
+			// }
 			result_width
 		}
 	}

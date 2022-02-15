@@ -220,7 +220,7 @@ impl<T: Config>
 
 		let mut challenge_data = challenge_data.unwrap();
 		let is_allown = match challenge_data.status {
-			ChallengeStatus::RaiseBackFunds(_, _) => false,
+			ChallengeStatus::RaiseFundsBack(_, _) => false,
 			ChallengeStatus::JudgePassed(_) => false,
 			ChallengeStatus::JudgeRejected(_) => false,
 			_ => true,
@@ -231,7 +231,7 @@ impl<T: Config>
 		ensure!(pot_infos.1 >= challenge_data.raised_total, Error::<T>::InsufficientBalance);
 
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
-		challenge_data.status = ChallengeStatus::RaiseBackFunds(current_block_number, tax);
+		challenge_data.status = ChallengeStatus::RaiseFundsBack(current_block_number, tax);
 		<PuzzleChallengeInfo<T>>::insert(&pid, challenge_data.clone());
 		crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{
 			challenge_status: challenge_data.status.clone(),
@@ -338,14 +338,14 @@ impl<T: Config>
 		let in_status = match status {
 			ChallengeStatus::Raise(_) => {None}
 			ChallengeStatus::RaiseCompleted(_) => {None}
-			ChallengeStatus::RaiseBackFunds(_, _) => {None}
+			ChallengeStatus::RaiseFundsBack(_, _) => {None}
 			ChallengeStatus::JudgePassed(_) => {Some(status)}
 			ChallengeStatus::JudgeRejected(_) => {Some(status)}
 		};
 
 		if let Some(s) = in_status {
 			let bn = match challenge_info.status {
-				ChallengeStatus::RaiseBackFunds(x, _) => {x},
+				ChallengeStatus::RaiseFundsBack(x, _) => {x},
 				_ => {Zero::zero()}
 			};
 			let current_block_number = <frame_system::Pallet<T>>::block_number();

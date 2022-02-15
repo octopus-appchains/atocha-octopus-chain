@@ -90,8 +90,9 @@ pub trait IAtoPropose<PuzzleHash>  {
 	fn challenge_propose(puzzle_hash: PuzzleHash) -> DispatchResult ;
 }
 
-pub trait IPointExchange<AccountId, BlockNumber, Era, PToken, Balance, Info>  {
+pub trait IPointExchange<AccountId, BlockNumber, Era, PToken, Balance, Info, WeightT>  {
 	fn apply_exchange(who :AccountId) -> DispatchResult ;
+	fn check_and_update_era(current_bn: BlockNumber) -> WeightT;
 	fn execute_exchange(era: Era, mint_balance: Balance) -> DispatchResult;
 	fn update_apply_list_point() -> bool;
 	fn get_current_era() -> Era;

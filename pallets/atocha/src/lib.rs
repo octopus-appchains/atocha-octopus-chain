@@ -313,7 +313,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	{
 
-		#[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::additional_sponsorship())]
 		pub fn additional_sponsorship(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -346,8 +346,6 @@ pub mod pallet {
 				Error::<T>::PuzzleHasBeenSolved
 			);
 
-			// pid: PuzzleHash, who: AccountId, amount: BalanceOf, create_bn: BlockNumber,
-			// T::PuzzleLedger::do_bonus(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number)?;
 			T::PuzzleLedger::do_sponsorship(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number, reason_v8.clone())?;
 
 			// send event
@@ -398,27 +396,14 @@ pub mod pallet {
 				Self::make_answer_sign(answer_hash.clone(), puzzle_hash.clone());
 
 			let answer_status_check = || -> PuzzleAnswerStatus {
-				// println!(" update_answer_sign {:?} == puzzle_content.answer_hash {:?} ", &update_answer_sign, &puzzle_content.answer_hash  );
 				if update_answer_sign == puzzle_content.answer_hash {
 					let mut update_puzzle_content = puzzle_content.clone();
 					update_puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
 					update_puzzle_content.reveal_bn = Some(current_block_number);
 					update_puzzle_content.reveal_answer = Some(who.clone());
 					<PuzzleInfo<T>>::insert(&puzzle_hash, update_puzzle_content);
-					// Self::deposit_event(Event::<T>::AnswerMatch{
-					// 	pid: puzzle_hash.clone(),
-					// 	aid: answer_hash.clone(),
-					// 	submitted_hash: update_answer_sign.clone(),
-					// 	correct_hash: puzzle_content.answer_hash.clone()
-					// });
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
-					// Self::deposit_event(Event::<T>::AnswerMisMatch {
-					// 	pid: puzzle_hash.clone(),
-					// 	aid: answer_hash.clone(),
-					// 	submitted_hash: update_answer_sign.clone(),
-					// 	correct_hash: puzzle_content.answer_hash.clone()
-					// });
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH
 				}
 			};
@@ -451,7 +436,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// #[pallet::weight(100)]
 		#[pallet::weight(T::WeightInfo::create_puzzle())]
 		pub fn create_puzzle(
 			origin: OriginFor<T>,
@@ -498,7 +482,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::commit_challenge())]
 		pub fn commit_challenge(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -525,7 +509,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::challenge_pull_out())]
 		pub fn challenge_pull_out(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -542,7 +526,7 @@ pub mod pallet {
 				ChallengeStatus::Raise(raise_bn) => {
 					ensure!(current_bn - raise_bn > T::AtoChallenge::get_raising_period_Length(), Error::<T>::ChallengeCrowdloanPeriodNotEnd )
 				},
-				ChallengeStatus::RaiseBackFunds(_raise_bn, _) => {
+				ChallengeStatus::RaiseFundsBack(_raise_bn, _) => {
 					return DispatchResult::Err(Error::<T>::ChallengeHasBeenDisbanded.into());
 				},
 				_ => {
@@ -553,12 +537,11 @@ pub mod pallet {
 			let ato_config = Self::get_ato_config();
 			//
 			T::AtoChallenge::back_challenge_crowdloan(&puzzle_hash,  ato_config.tax_of_tcr)?;
-
 			//
 			Ok(().into())
 		}
 
-		#[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::challenge_crowdloan())]
 		pub fn challenge_crowdloan(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
@@ -581,7 +564,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(100)]
+		#[pallet::weight(T::WeightInfo::take_answer_reward())]
 		pub fn take_answer_reward(
 			origin: OriginFor<T>,
 			puzzle_hash: PuzzleSubjectHash,
