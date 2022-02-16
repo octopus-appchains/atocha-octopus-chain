@@ -28,7 +28,7 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Join a puzzle challenge
 - Action: Submission->atochaModule->challengeCrowdloan
-- Event: atochaFinace.ChallengeStatusChange || council.Proposed
+- Event: atochaFinace.ChallengeStatusChange && atochaFinace.ChallengeDeposit || council.Proposed
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Claim for puzzle challenge deposit refund
