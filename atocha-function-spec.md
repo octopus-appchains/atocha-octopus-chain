@@ -18,17 +18,17 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Answer a puzzle
 - Action: Submission->atochaModule->answerPuzzle
-- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH or ANSWER_HASH_IS_MATCH)
+- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH || ANSWER_HASH_IS_MATCH)
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Create a puzzle challenge
 - Action: Submission->atochaModule->commitChallenge
-- Event: atochaFinace.ChallengeDeposit
+- Event: atochaFinace.ChallengeDeposit || council.Proposed
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Join a puzzle challenge
 - Action: Submission->atochaModule->challengeCrowdloan
-- Event: atochaFinace.ChallengeStatusChange
+- Event: atochaFinace.ChallengeStatusChange && atochaFinace.ChallengeDeposit || council.Proposed
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Claim for puzzle challenge deposit refund
