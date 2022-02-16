@@ -77,14 +77,14 @@ services:
       atochain_network:
         ipv4_address: 172.30.1.4
   chain_four:
-    container_name: atocha-three
+    container_name: atocha-four
     image: atocha-protocol/atocha-node
     ports:
       - "8847:9944"
       - "8836:9933"
       - "31336:30333"
     volumes:
-      - ./data/atocha/three:/data
+      - ./data/atocha/four:/data
     command: >
       atocha-node --chain /usr/local/bin/atocha-chain-local-test-spec-raw.json --name ato_three --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe

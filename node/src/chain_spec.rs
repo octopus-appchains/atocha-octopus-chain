@@ -242,7 +242,7 @@ fn testnet_genesis(
 
 	let total_balance: Balance = 74000000 * DOLLARS;
 	let per_members_balance: Balance = 20000 * DOLLARS;
-	let per_validator_balance: Balance = 10 * DOLLARS;
+	let per_validator_balance: Balance = 50 * DOLLARS;
 	let members_count: Balance = council_members.len() as Balance;
 	let validator_count: Balance = validators.len() as Balance;
 	let endowed_count: Balance = endowed_accounts.len() as Balance;
@@ -265,6 +265,7 @@ fn testnet_genesis(
 	for (x,_) in validators.clone() {
 		init_balance_account.push((x, per_validator_balance));
 	}
+	init_balance_account.push((root_key.clone(), total_sudo_balance));
 
 	GenesisConfig {
 		atocha_finace: AtochaFinaceConfig {
