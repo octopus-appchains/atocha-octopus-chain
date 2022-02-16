@@ -14,7 +14,7 @@ services:
     volumes:
       - ./data/atocha/one:/data
     command: >
-      atocha-node --chain /usr/local/bin/atocha-chain-spec-raw.json --name ato_one --execution Native --pruning archive
+      atocha-node --chain /usr/local/bin/atocha-chain-local-test-spec-raw.json --name ato_one --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
       --port 30333
@@ -38,7 +38,7 @@ services:
     volumes:
       - ./data/atocha/two:/data
     command: >
-      atocha-node --chain /usr/local/bin/atocha-chain-spec-raw.json --name ato_two --execution Native --pruning archive
+      atocha-node --chain /usr/local/bin/atocha-chain-local-test-spec-raw.json --name ato_two --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
       --port 30333
@@ -62,7 +62,7 @@ services:
     volumes:
       - ./data/atocha/three:/data
     command: >
-      atocha-node --chain /usr/local/bin/atocha-chain-spec-raw.json --name ato_three --execution Native --pruning archive
+      atocha-node --chain /usr/local/bin/atocha-chain-local-test-spec-raw.json --name ato_three --execution Native --pruning archive
       --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
       --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
       --port 30333
@@ -76,6 +76,30 @@ services:
     networks:
       atochain_network:
         ipv4_address: 172.30.1.4
+  chain_four:
+    container_name: atocha-three
+    image: atocha-protocol/atocha-node
+    ports:
+      - "8847:9944"
+      - "8836:9933"
+      - "31336:30333"
+    volumes:
+      - ./data/atocha/three:/data
+    command: >
+      atocha-node --chain /usr/local/bin/atocha-chain-local-test-spec-raw.json --name ato_three --execution Native --pruning archive
+      --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+      --prometheus-external --telemetry-url 'wss://telemetry.polkadot.io/submit/ 0'
+      --port 30333
+      --bootnodes /ip4/172.30.1.2/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+      ---validator
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "10"
+    networks:
+      atochain_network:
+        ipv4_address: 172.30.1.5
 networks:
   atochain_network:
     ipam:

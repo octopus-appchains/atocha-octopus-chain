@@ -174,15 +174,23 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 						  hex!["0216e0c0dffce6af471d580e882d59eecd05a0f0665f743880a58ff5e1fcafd206"].unchecked_into(),
 						  hex!["3c6c1e14692e4df4421b8cd75be90b8ed318d7e93f0c7dfc8abfbe424d89ff05"].unchecked_into(),
 					  ),
+					  (
+						  hex!["c4362617bcba50a389ff636e263323a5f6fcd351db826926e32d74f9e3513a44"].into(),
+						  hex!["aa36a4e0ab7978efa8da37990292216e74e665d829c734f11f56129954413a56"].unchecked_into(),
+						  hex!["59d4f083c7e5372caabfc6d897b02e698e1a42b028963415334ad7e456b2ce49"].unchecked_into(),
+						  hex!["f00c305b3ab3f18421f1383bce1c004d9bb57c5c75e281d6188e644700819562"].unchecked_into(),
+						  hex!["038092d1932ad6126f6ae3ca624d8279b774a12341f05e11532b60f6c3e7691820"].unchecked_into(),
+						  hex!["ac794754311fcb4b5bc5b857c68faa0919fe26fee6aa14bd3c4317b38a892d7d"].unchecked_into(),
+					  ),
 				],
 				// Sudo account
-				hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
+				hex!["28d89354994c2a7f36a66bf189972b29afc3f08a5298621bef4c7f46e6870b54"].into(),
 				// Pre-funded accounts
 				Some(vec![
-					hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
-					hex!["d8301ff8160af5fd870c18a1d8c19ed04c67a705eeb4bb8ee68dee8b6d08b03d"].into(),
-					hex!["6af5c7ab6d40dda6e3bc997fda6c264d579b1456100f2138dbbb52c15ac22433"].into(),
-					hex!["c4362617bcba50a389ff636e263323a5f6fcd351db826926e32d74f9e3513a44"].into(),
+					hex!["86ff2817f1d2b8b66feac3e2e540f10f844d4dcafd7e526a867d1edcffacf13e"].into(),
+					hex!["521d4f39bc922e8cb8ba01401663d3ede81b9710626e6ebb9bd0a9170abd6c27"].into(),
+					hex!["544ee95a9c4d0e0055223a9ce4bf779298ccd6b63eeb415d03bd63ce81674d61"].into(),
+					hex!["3c00b26a310a542b64f15af32a4b9b4676178428d16ce16aac9dcf7c312b7565"].into(),
 					hex!["50d5286923aded90246905b0bf04dd89e4062e48af4bb7218e40dfd0d24d0e0e"].into(),
 					hex!["b83a9ab230e3705cf381d871eef46316164679798d4ae5a46510695bb18e8f48"].into(),
 					hex!["f6ec24fc050d1009ddb2880e93e3279e4982d7920e78e6e79a0ee7589302900c"].into(),
@@ -222,31 +230,29 @@ fn testnet_genesis(
 	council_members: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+
+	const VALIDATOR_STASH: Balance = 50 * DOLLARS;
+	const MEMBER_STASH: Balance = 19000 * DOLLARS;
+
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
-		vec![
-			// get_account_id_from_seed::<sr25519::Public>("Alice"),
-			// get_account_id_from_seed::<sr25519::Public>("Bob"),
-			// get_account_id_from_seed::<sr25519::Public>("Charlie"),
-			// get_account_id_from_seed::<sr25519::Public>("Dave"),
-			// get_account_id_from_seed::<sr25519::Public>("Eve"),
-			// get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-		]
-	});
-	// endow all authorities.
-	initial_authorities.iter().map(|x| &x.0).for_each(|x| {
-		if !endowed_accounts.contains(x) {
-			endowed_accounts.push(x.clone())
-		}
+		vec![]
 	});
 
-	let validators = initial_authorities.iter().map(|x| (x.0.clone(), STASH)).collect::<Vec<_>>();
+	let validators = initial_authorities.iter().map(|x| (x.0.clone(), VALIDATOR_STASH)).collect::<Vec<_>>();
 
-	let per_members_balance: Balance = 200000;
-	let total_balance: Balance = 100000000 * DOLLARS;
+	let total_balance: Balance = 74000000 * DOLLARS;
+	let per_members_balance: Balance = 20000 * DOLLARS;
+	let per_validator_balance: Balance = 10 * DOLLARS;
 	let members_count: Balance = council_members.len() as Balance;
+	let validator_count: Balance = validators.len() as Balance;
 	let endowed_count: Balance = endowed_accounts.len() as Balance;
-	let members_balance: Balance = DOLLARS.saturating_mul(members_count.into()).saturating_mul(per_members_balance);
-	let endowed_balance: Balance = total_balance.saturating_sub(members_balance);
+
+	let total_sudo_balance: Balance = 20 * DOLLARS;
+	let total_members_balance: Balance = per_members_balance.saturating_mul(members_count);
+	let total_validators_balance: Balance = per_validator_balance.saturating_mul(validator_count.into());
+	let endowed_balance: Balance = total_balance.saturating_sub(total_members_balance)
+												.saturating_sub(total_validators_balance)
+												.saturating_sub(total_sudo_balance);
 
 	let per_endowment_balance: Balance = endowed_balance/endowed_count;
 	let mut init_balance_account:Vec<(AccountId, Balance)> = Vec::new();
@@ -254,33 +260,13 @@ fn testnet_genesis(
 		init_balance_account.push((x, per_endowment_balance));
 	}
 	for x in council_members.clone() {
-		init_balance_account.push((x, DOLLARS.saturating_mul(per_members_balance)));
+		init_balance_account.push((x, per_members_balance));
+	}
+	for (x,_) in validators.clone() {
+		init_balance_account.push((x, per_validator_balance));
 	}
 
-	const STASH: Balance = 150000 * DOLLARS;
-
 	GenesisConfig {
-		// atocha_finace: AtochaFinaceConfig {
-		// 	exchange_era_block_length: MINUTES.saturating_mul(6).into(), // ONLINE:: DAY * 3
-		// 	exchange_history_depth: 10,
-		// 	exchange_max_reward_list_size: 3,
-		// 	issuance_per_block: 1902587519025900000,
-		// 	point_reward_epoch_block_length: MINUTES.saturating_mul(1).into(),
-		// 	challenge_threshold: Perbill::from_percent(60),
-		// 	raising_period_length: MINUTES.saturating_mul(10).into(),
-		// 	storage_base_fee: 1000u32.into()
-		// },
-		// atocha_module: AtochaModuleConfig {
-		// 	min_bonus_of_puzzle: 100 * DOLLARS,
-		// 	challenge_period_length: MINUTES.saturating_mul(5).into(),
-		// 	tax_of_tcr: Perbill::from_percent(10),
-		// 	tax_of_tvs: Perbill::from_percent(5),
-		// 	tax_of_tvo: Perbill::from_percent(10),
-		// 	tax_of_ti: Perbill::from_percent(10),
-		// 	penalty_of_cp: Perbill::from_percent(10),
-		// 	max_sponsor_explain_len: 256,
-		// 	max_answer_explain_len: 1024
-		// },
 		atocha_finace: AtochaFinaceConfig {
 			exchange_era_block_length: DAYS.saturating_mul(7).into(), // Point exchange period.
 			exchange_history_depth: 12, // maintain depth.
@@ -335,7 +321,7 @@ fn testnet_genesis(
 			epoch_config: Some(appchain_barnacle_runtime::BABE_GENESIS_EPOCH_CONFIG),
 		},
 		elections: ElectionsConfig {
-			members: council_members.iter().cloned().map(|member| (member, STASH)).collect(),
+			members: council_members.iter().cloned().map(|member| (member, MEMBER_STASH)).collect(),
 		},
 		council: CouncilConfig::default(),
 		im_online: ImOnlineConfig { keys: vec![] },
@@ -348,7 +334,7 @@ fn testnet_genesis(
 			validators,
 			premined_amount: 1024 * DOLLARS,
 		},
-		octopus_lpos: OctopusLposConfig { era_payout: 2 * DOLLARS, ..Default::default() },
+		octopus_lpos: OctopusLposConfig { era_payout: 20 * DOLLARS, ..Default::default() },
 		technical_committee: TechnicalCommitteeConfig {
 			phantom: Default::default(),
 			members: council_members.clone(),
