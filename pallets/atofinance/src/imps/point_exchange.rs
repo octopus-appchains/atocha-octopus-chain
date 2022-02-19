@@ -208,15 +208,18 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		}else{
 			let current_era = current_era.unwrap();
 			// Get exchange era start bn.
-			let era_start_bn = ExchangeRewardEraStartBn::<T>::get(current_era);
 			w_read+=1;
-			let era_start_bn = era_start_bn.unwrap();
-			let diff_bn = current_bn.saturating_sub(era_start_bn);
-			if diff_bn >= Self::get_era_length() {
-				let new_era = current_era.saturating_add(1);
-				CurrentExchangeRewardEra::<T>::put(new_era);
-				ExchangeRewardEraStartBn::<T>::insert(new_era, current_bn);
-				w_write+=2;
+
+			if let Some(era_start_bn) = ExchangeRewardEraStartBn::<T>::get(current_era) {
+				let diff_bn = current_bn.saturating_sub(era_start_bn);
+				if diff_bn >= Self::get_era_length() {
+					let new_era = current_era.saturating_add(1);
+					CurrentExchangeRewardEra::<T>::put(new_era);
+					ExchangeRewardEraStartBn::<T>::insert(new_era, current_bn);
+					w_write+=2;
+				}
+			}else{
+				ExchangeRewardEraStartBn::<T>::insert(current_era, current_bn);
 			}
 		}
 		w_read + w_write

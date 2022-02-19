@@ -328,12 +328,14 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Apply for `Points` to exchange `Ato-Tokens`.
 		ApplyPointReward { who: T::AccountId , apply_era: ExchangeEra},
+		/// Update `AtoFinance` module configuration.
+		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		/// Challenger increases deposit fee.
 		ChallengeDeposit { pid: PuzzleSubjectHash, who: T::AccountId, deposit: BalanceOf<T>, deposit_type: ChallengeDepositType},
 		/// Challenger information status changed.
 		ChallengeStatusChange { pid: PuzzleSubjectHash, challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
-		/// Update `AtoFinance` module configuration.
-		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
+		/// When puzzle create or someone sponsored.
+		PuzzleDeposit { pid: PuzzleSubjectHash, who: T::AccountId, deposit: BalanceOf<T>, tip: Vec<u8>},
 		/// Pre-stored resources succeeded.
 		PreStorage { who: T::AccountId, fee: BalanceOf<T>, storage_hash: StorageHash, storage_length: StorageLength },
 		/// Answer received `ATO-Token` rewards.
@@ -619,6 +621,14 @@ impl<T: Config>
 
 		// Store to ledger data.
 		<AtoFinanceLedger<T>>::insert(&pid, pot_ledger);
+
+		Self::deposit_event(Event::<T>::PuzzleDeposit {
+			pid: pid.clone(),
+			who: who,
+			deposit: amount,
+			tip: "".as_bytes().to_vec(),
+		});
+
 		Ok(())
 	}
 
@@ -629,6 +639,7 @@ impl<T: Config>
 		create_bn: T::BlockNumber,
 		reason: Vec<u8>,
 	) -> DispatchResult {
+
 		// Get puzzle ldeger
 		let storage_ledger = <AtoFinanceLedger<T>>::try_get(&pid).ok();
 
@@ -637,7 +648,7 @@ impl<T: Config>
 		let mut pot_ledger = storage_ledger.unwrap();
 
 		// Create SponsorData
-		let sponsor_data = SponsorData { sponsor: who.clone(), funds: amount, create_bn, reason };
+		let sponsor_data = SponsorData { sponsor: who.clone(), funds: amount, create_bn, reason: reason.clone() };
 
 		// Add rewards and insert it in reverse order according to the amount of funds.
 		match pot_ledger
@@ -658,6 +669,13 @@ impl<T: Config>
 		pot_ledger.total = pot_ledger.total.saturating_add(amount);
 		// Store to ledger data.
 		<AtoFinanceLedger<T>>::insert(&pid, pot_ledger);
+
+		Self::deposit_event(Event::<T>::PuzzleDeposit {
+			pid: pid.clone(),
+			who: who,
+			deposit: amount,
+			tip: reason,
+		});
 
 		Ok(())
 	}
