@@ -1,8 +1,11 @@
-# Octopus Appchain Template
+# Atocha chain-node
 
 # TODO
 ```
-$ cargo build
-$ ./target/debug/appchain-barnacle purge-chain --dev
-$ ./target/debug/appchain-barnacle --dev --enable-offchain-indexing true
+$ cargo build --release
+```
+
+# Build wasm
+```
+WASM_TARGET_DIRECTORY=`pwd` cargo build --release $*
 ```

@@ -88,35 +88,6 @@ pub mod pallet {
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-		// type Call: Dispatchable + Debug;
-
-		// #[pallet::constant]
-		// type MinBonusOfPuzzle: Get<BalanceOf<Self>>;
-
-		// #[pallet::constant]
-		// type ChallengePeriodLength: Get<Self::BlockNumber>;
-
-		// #[pallet::constant]
-		// type TaxOfTCR: Get<Perbill> ;
-		//
-		// #[pallet::constant]
-		// type TaxOfTVS: Get<Perbill> ;
-		//
-		// #[pallet::constant]
-		// type TaxOfTVO: Get<Perbill> ;
-		//
-		// #[pallet::constant]
-		// type TaxOfTI: Get<Perbill> ;
-		//
-		// #[pallet::constant]
-		// type PenaltyOfCP: Get<Perbill>;
-
-		// #[pallet::constant]
-		// type MaxSponsorExplainLen: Get<u32>;
-		//
-		// #[pallet::constant]
-		// type MaxAnswerExplainLen: Get<u32>;
-
 		type PuzzleLedger: IPuzzleLedger<
 			<Self as frame_system::Config>::AccountId,
 			BalanceOf<Self>,
@@ -176,26 +147,21 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// creator id, puzzle_hash, create block number , duration block number,
-		/// Puzzle is created.
-		PuzzleCreated { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T> }, // remove . DurationBn
+
 		/// Add a Sponsorship to Puzzle.
 		AdditionalSponsorship { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>, reason: PuzzleSponsorExplain }, // remove . DurationBn
 		/// A new answers submitted.
 		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, answer_status: PuzzleAnswerStatus, },
-		/// Puzzle answers are matched.
-		// AnswerMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
-		// /// Puzzle answers not matched.
-		// AnswerMisMatch { pid: PuzzleSubjectHash, aid: PuzzleAnswerHash, submitted_hash: PuzzleAnswerHash, correct_hash: PuzzleAnswerHash },
 		/// Update `AtoModule` module configuration.
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
-		// IssueChallenge(T::AccountId, PuzzleSubjectHash, BalanceOf<T>,),
-		// CrowdloanChallenge { who: T::AccountId, pid: PuzzleSubjectHash, deposit: BalanceOf<T>, },
 		/// Puzzle's `Points` are slashed by penalty.
 		CreatorPointSlash { pid: PuzzleSubjectHash, point_slash_data: PointSlashData<T::AccountId, Perbill, PointToken> },
 		/// Challenger proposal passed.
 		ChallengePassed { pid: PuzzleSubjectHash, reward_data: ChallengeRewardData<T::AccountId, Perbill> },
-
+		/// Puzzle is created.
+		PuzzleCreated { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T> },
+		/// Puzzle status change when the Puzzle has been solved or the reward has been claimed or the Puzzle is closed by the challenger.
+		PuzzleStatusChange { pid: PuzzleSubjectHash, puzzle_status: PuzzleStatus, },
 	}
 
 	#[pallet::error]
@@ -402,6 +368,12 @@ pub mod pallet {
 					update_puzzle_content.reveal_bn = Some(current_block_number);
 					update_puzzle_content.reveal_answer = Some(who.clone());
 					<PuzzleInfo<T>>::insert(&puzzle_hash, update_puzzle_content);
+					// send event
+					Self::deposit_event(Event::PuzzleStatusChange{
+						pid: puzzle_hash.clone(),
+						puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVED
+					});
+
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH
@@ -613,6 +585,11 @@ pub mod pallet {
 			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
 			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
 
+			Self::deposit_event(Event::PuzzleStatusChange{
+				pid: puzzle_hash.clone(),
+				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_FINAL
+			});
+
 			let creator_acc = puzzle_content.account.clone();
 
 			// Take points.
@@ -655,6 +632,11 @@ pub mod pallet {
 			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgePassed(current_block_number));
 			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
 			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
+
+			Self::deposit_event(Event::PuzzleStatusChange{
+				pid: puzzle_hash.clone(),
+				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_FINAL
+			});
 
 			let create_total_point = T::AtoPointsManage::get_total_points(&puzzle_content.account);
 			if create_total_point > 0 {

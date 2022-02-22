@@ -13,11 +13,6 @@ pub type PuzzleSponsorExplain = Vec<u8>;
 pub type AnswerStatus = u8;
 pub type PuzzleAnswerHash = Vec<u8>;
 
-// pub type PuzzleAnswerOption = Option<PuzzleAnswerHash>;
-// pub type PuzzleTicket = u64;
-
-// pub type PuzzleAnswerSigned = Vec<u8>;
-// pub type PuzzleAnswerNonce = Vec<u8>;
 pub type CreateBn<B> = B;
 pub type DurationBn<B> = B;
 pub type RevealBn<B> = B;
@@ -35,11 +30,6 @@ pub const MAXIMUM_WAITING_BLOCK_NUM: u64 = 100800;
 pub struct PuzzleInfoData<Account, BlockNumber> {
 	pub account: Account,
 	pub answer_hash: PuzzleAnswerHash,
-	// pub answer_option: Option<PuzzleAnswerHash>,
-	// pub answer_explain: Option<PuzzleAnswerExplain>,
-	// pub answer_signed: PuzzleAnswerSigned,
-	// pub answer_nonce: PuzzleAnswerNonce,
-	// pub puzzle_ticket: PuzzleTicket,
 	pub puzzle_status: PuzzleStatus,
 	pub create_bn: CreateBn<BlockNumber>,
 	pub reveal_answer: Option<Account>,

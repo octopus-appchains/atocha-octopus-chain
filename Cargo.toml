@@ -5,11 +5,9 @@ panic = 'unwind'
 members = [
     'node',
     'constants',
-#    'pallets/template',
     'pallets/atocha',
     'pallets/atofinance',
     'pallets/atocollective',
-#    'pallets/elections-phragmen',
     'runtime',
 ]
 

@@ -231,7 +231,7 @@ fn testnet_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 
-	const VALIDATOR_STASH: Balance = 50 * DOLLARS;
+	const VALIDATOR_STASH: Balance = 10000 * DOLLARS;
 	const MEMBER_STASH: Balance = 19000 * DOLLARS;
 
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
@@ -242,12 +242,12 @@ fn testnet_genesis(
 
 	let total_balance: Balance = 74000000 * DOLLARS;
 	let per_members_balance: Balance = 20000 * DOLLARS;
-	let per_validator_balance: Balance = 50 * DOLLARS;
+	let per_validator_balance: Balance = 10 * DOLLARS;
 	let members_count: Balance = council_members.len() as Balance;
 	let validator_count: Balance = validators.len() as Balance;
 	let endowed_count: Balance = endowed_accounts.len() as Balance;
 
-	let total_sudo_balance: Balance = 20 * DOLLARS;
+	let total_sudo_balance: Balance = 1000 * DOLLARS;
 	let total_members_balance: Balance = per_members_balance.saturating_mul(members_count);
 	let total_validators_balance: Balance = per_validator_balance.saturating_mul(validator_count.into());
 	let endowed_balance: Balance = total_balance.saturating_sub(total_members_balance)
