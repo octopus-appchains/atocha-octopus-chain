@@ -38,7 +38,7 @@ pub struct Extensions {
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 pub fn octopus_testnet_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../../resources/testnet.json")[..])
+	ChainSpec::from_json_bytes(&include_bytes!("../../resources/atocha-protocol-raw.json")[..])
 }
 
 fn session_keys(
@@ -90,9 +90,9 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	properties.insert("SS58Prefix".into(), 50.into());
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Atocha Testnet",
+		"Atocha Protocol",
 		// ID
-		"dev",
+		"atocha-protocol",
 		ChainType::Development,
 		move || {
 			testnet_genesis(
@@ -335,7 +335,7 @@ fn testnet_genesis(
 			validators,
 			premined_amount: 1024 * DOLLARS,
 		},
-		octopus_lpos: OctopusLposConfig { era_payout: 20 * DOLLARS, ..Default::default() },
+		octopus_lpos: OctopusLposConfig { era_payout: 27397 * DOLLARS, ..Default::default() },
 		technical_committee: TechnicalCommitteeConfig {
 			phantom: Default::default(),
 			members: council_members.clone(),
