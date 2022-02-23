@@ -111,7 +111,11 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		ensure!(!exchange_list.iter().any(|(_, _, info_data)|{info_data.is_some()}), Error::<T>::ExchangeRewardEnded);
 
 		// split array
-		let mut lost_list = exchange_list.split_off(Self::get_max_reward_list_size() as usize);
+		// TODO:: Has a bug need a test for it!
+		let mut lost_list = Vec::new();
+		if exchange_list.len() > Self::get_max_reward_list_size() as usize {
+			lost_list = exchange_list.split_off(Self::get_max_reward_list_size() as usize);
+		}
 
 		let mut total_point: PointToken = Zero::zero();
 		for x in exchange_list.clone().into_iter() {

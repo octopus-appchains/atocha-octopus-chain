@@ -137,3 +137,76 @@ fn test_point_exchange() {
 	});
 }
 
+#[test]
+fn debug_220223_point_exchange() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(5);
+		AtochaPot::on_initialize(5);
+		assert_eq!(<PointExchange<Test>>::get_max_reward_list_size(), 3);
+		assert_eq!(<PointExchange<Test>>::get_history_depth(), 3);
+		assert_eq!(<PointExchange<Test>>::get_era_length(), 10);
+		assert_eq!(<PointExchange<Test>>::get_current_era(), 1); // 1-5, 2-15, 3-25
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(1));
+		assert_eq!(<ExchangeRewardEraStartBn<Test>>::get(1), Some(5));
+		System::set_block_number(10);
+		AtochaPot::on_initialize(10);
+		assert_eq!(<PointExchange<Test>>::get_current_era(), 1);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(1));
+		assert_eq!(<ExchangeRewardEraStartBn<Test>>::get(1), Some(5));
+		System::set_block_number(15);
+		AtochaPot::on_initialize(15);
+		assert_eq!(<PointExchange<Test>>::get_current_era(), 2);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(2));
+		assert_eq!(<ExchangeRewardEraStartBn<Test>>::get(2), Some(15));
+		System::set_block_number(20);
+		AtochaPot::on_initialize(20);
+		assert_eq!(<PointExchange<Test>>::get_current_era(), 2);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(2));
+		assert_eq!(<ExchangeRewardEraStartBn<Test>>::get(2), Some(15));
+		System::set_block_number(25);
+		AtochaPot::on_initialize(25);
+		assert_eq!(<PointExchange<Test>>::get_current_era(), 3);
+		assert_eq!(<CurrentExchangeRewardEra<Test>>::get(), Some(3));
+		assert_eq!(<ExchangeRewardEraStartBn<Test>>::get(3), Some(25));
+		assert_eq!(<PointExchange<Test>>::get_reward_list(3), vec![]);
+
+		// apply
+		const ACCOUNT_ID_1: u64 = 1;
+		<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_1,100);
+		const ACCOUNT_ID_2: u64 = 2;
+		<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_2,200);
+		const ACCOUNT_ID_3: u64 = 3;
+		<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_3,300);
+		const ACCOUNT_ID_4: u64 = 4;
+		<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_4,400);
+		const ACCOUNT_ID_5: u64 = 5;
+		<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_5,500);
+		const ACCOUNT_ID_6: u64 = 6;
+		<PointManager<Test>>::increase_points_to(&ACCOUNT_ID_6,600);
+		assert_eq!(<PointManager<Test>>::get_issuance_points(), 2100);
+
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 100_000_000_000_000);
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_2), 200_000_000_000_000);
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_3), 300_000_000_000_000);
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_4), 400_000_000_000_000);
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_5), 500_000_000_000_000);
+		assert_eq!(Balances::free_balance(ACCOUNT_ID_6), 600_000_000_000_000);
+
+		assert_ok!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4));
+		// Vec<(T::AccountId, PointToken, Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>)>
+		assert_eq!(<PointExchange<Test>>::get_reward_list(3), vec![
+			(ACCOUNT_ID_4, 400, None),
+		]);
+
+		assert_noop!(<PointExchange<Test>>::apply_exchange(ACCOUNT_ID_4), Error::<Test>::ExchangeApplyAlreadyExists);
+
+		//
+		System::set_block_number(35);
+		AtochaPot::on_initialize(35);
+		assert_eq!(<PointExchange<Test>>::get_current_era(), 4);
+
+		// AtochaPot::on_initialize(30); // 10_000_000_000_000_000
+		assert_noop!(<PointExchange<Test>>::execute_exchange(3, 1_000_000_000_000_000), Error::<Test>::ExchangeRewardEnded);
+
+	});
+}
