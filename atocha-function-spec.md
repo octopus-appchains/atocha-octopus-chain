@@ -13,7 +13,7 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Sponsor a puzzle
 - Action: Submission->atochaModule->additionalSponsorship
-- Event: atochaModule.AdditionalSponsorship
+- Event: atochaModule.AdditionalSponsorship && atochaFinace->PuzzleDeposit
 - Result: Storage->atochaFinace->atoFinanceLedger
 
 ### Answer a puzzle
