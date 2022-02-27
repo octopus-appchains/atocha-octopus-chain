@@ -8,17 +8,17 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Create a puzzle
 - Action: Submission->atochaModule->createPuzzle
-- Event: atochaModule.PuzzleCreated
+- Event: atochaModule.PuzzleCreated && atochaFinace->PuzzleDeposit
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Sponsor a puzzle
 - Action: Submission->atochaModule->additionalSponsorship
-- Event: atochaModule.AdditionalSponsorship
+- Event: atochaModule.AdditionalSponsorship && atochaFinace->PuzzleDeposit
 - Result: Storage->atochaFinace->atoFinanceLedger
 
 ### Answer a puzzle
 - Action: Submission->atochaModule->answerPuzzle
-- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH || ANSWER_HASH_IS_MATCH)
+- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH || ANSWER_HASH_IS_MATCH) && atochaModule.PuzzleStatusChange
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Create a puzzle challenge
