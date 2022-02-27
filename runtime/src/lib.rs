@@ -668,10 +668,13 @@ parameter_types! {
 	pub const MetadataDepositPerByte: Balance = 1 * DOLLARS;
 }
 
-impl pallet_assets::Config for Runtime {
+pub type AssetBalance = u128;
+pub type AssetId = u32;
+
+impl pallet_assets::Config<pallet_assets::Instance1> for Runtime {
 	type Event = Event;
-	type Balance = u128;
-	type AssetId = u32;
+	type Balance = AssetBalance;
+	type AssetId = AssetId;
 	type Currency = Balances;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
@@ -686,6 +689,30 @@ impl pallet_assets::Config for Runtime {
 
 impl pallet_beefy::Config for Runtime {
 	type BeefyId = BeefyId;
+}
+
+parameter_types! {
+	pub const ClassDeposit: Balance = 100 * DOLLARS;
+	pub const InstanceDeposit: Balance = 1 * DOLLARS;
+	pub const KeyLimit: u32 = 32;
+	pub const ValueLimit: u32 = 256;
+}
+
+impl pallet_uniques::Config for Runtime {
+	type Event = Event;
+	type ClassId = u32;
+	type InstanceId = u32;
+	type Currency = Balances;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type ClassDeposit = ClassDeposit;
+	type InstanceDeposit = InstanceDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type AttributeDepositBase = MetadataDepositBase;
+	type DepositPerByte = MetadataDepositPerByte;
+	type StringLimit = StringLimit;
+	type KeyLimit = KeyLimit;
+	type ValueLimit = ValueLimit;
+	type WeightInfo = pallet_uniques::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -737,7 +764,10 @@ impl pallet_octopus_appchain::Config for Runtime {
 	type LposInterface = OctopusLpos;
 	type UpwardMessagesInterface = OctopusUpwardMessages;
 	type Currency = Balances;
-	type Assets = Assets;
+	type Assets = OctopusAssets;
+	type AssetBalance = AssetBalance;
+	type AssetId = AssetId;
+	type AssetIdByName = OctopusAppchain;
 	type GracePeriod = GracePeriod;
 	type UnsignedPriority = UnsignedPriority;
 	type RequestEventLimit = RequestEventLimit;
@@ -790,27 +820,28 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
-		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned},
-		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		Timestamp: pallet_timestamp,
+		Authorship: pallet_authorship,
+		Babe: pallet_babe,
+		Grandpa: pallet_grandpa,
+		Balances: pallet_balances,
+		TransactionPayment: pallet_transaction_payment,
 		TechnicalCommittee: pallet_ato_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-		OctopusAppchain: pallet_octopus_appchain::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned}, // must before session
-		OctopusLpos: pallet_octopus_lpos::{Pallet, Call, Config, Storage, Event<T>},
-		OctopusUpwardMessages: pallet_octopus_upward_messages::{Pallet, Call, Storage, Event<T>},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		ImOnline: pallet_im_online::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
+		OctopusAppchain: pallet_octopus_appchain, // must before session
+		OctopusLpos: pallet_octopus_lpos,
+		OctopusUpwardMessages: pallet_octopus_upward_messages,
+		OctopusAssets: pallet_assets::<Instance1>,
+		Session: pallet_session,
+		ImOnline: pallet_im_online,
 		Historical: pallet_session_historical::{Pallet},
-		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Mmr: pallet_mmr::{Pallet, Storage},
-		Beefy: pallet_beefy::{Pallet, Config<T>, Storage},
-		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Mmr: pallet_mmr,
+		Beefy: pallet_beefy,
+		MmrLeaf: pallet_beefy_mmr,
+		Uniques: pallet_uniques,
+		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		// TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>, Config<T>},

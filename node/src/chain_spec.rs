@@ -292,7 +292,6 @@ fn testnet_genesis(
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// balances: endowed_accounts.iter().cloned().map(|x| (x, ENDOWMENT)).collect(),
@@ -327,7 +326,7 @@ fn testnet_genesis(
 		council: CouncilConfig::default(),
 		im_online: ImOnlineConfig { keys: vec![] },
 		grandpa: GrandpaConfig { authorities: vec![] },
-		assets: Default::default(),
+		octopus_assets: Default::default(),
 		beefy: Default::default(),
 		octopus_appchain: OctopusAppchainConfig {
 			anchor_contract: "".to_string(),
@@ -340,6 +339,7 @@ fn testnet_genesis(
 			phantom: Default::default(),
 			members: council_members.clone(),
 		},
+		transaction_payment: Default::default(),
 		treasury: Default::default(),
 	}
 }
