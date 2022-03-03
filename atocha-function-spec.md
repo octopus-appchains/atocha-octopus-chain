@@ -49,3 +49,6 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 - Event: atochaFinace.applyPointReward
 - Result: Storage->atochaFinace->pointExchangeInfo
 
+### Configuration parameters
+- Storage->atochaModule->atoConfig()
+- Storage->atochaFinace->atoConfig()
