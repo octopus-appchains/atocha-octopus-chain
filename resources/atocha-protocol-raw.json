@@ -2,7 +2,12 @@
   "name": "Atocha Local",
   "id": "local_atocha_chain",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/bootnode-v1-0.atocha.testnet.octopus.network/tcp/30333/ws/p2p/12D3KooWPMXXKKQYLvy2r4UtZCK8n43w6hHhQtAgn6gc1VeW2ZYq",
+    "/dns/bootnode-v1-1.atocha.testnet.octopus.network/tcp/30333/ws/p2p/12D3KooWAWgQb898Lo2p6SYLbyCCD5mktnt8u6iaECg9b2H1mQ7a",
+    "/dns/bootnode-v1-2.atocha.testnet.octopus.network/tcp/30333/ws/p2p/12D3KooWHvCz7qta9iecVddMexyCpqrENEgVRVuF8Q6shVisg1T2",
+    "/dns/bootnode-v1-3.atocha.testnet.octopus.network/tcp/30333/ws/p2p/12D3KooWKtxpYfnYPPM7XwErNKkozriLz3VVHcWGFtA7VGdamuCj"
+  ],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": {
