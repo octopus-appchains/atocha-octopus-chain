@@ -16,9 +16,12 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 - Event: atochaModule.AdditionalSponsorship && atochaFinace->PuzzleDeposit
 - Result: Storage->atochaFinace->atoFinanceLedger
 
-### Answer a puzzle
+### Solve a puzzle
 - Action: Submission->atochaModule->answerPuzzle
-- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH || ANSWER_HASH_IS_MATCH) && atochaModule.PuzzleStatusChange
+- Event: 
+-- atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) 
+-- atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED)
+-- atochaModule.AnnouncePuzzleChallengeDeadline
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Create a puzzle challenge
