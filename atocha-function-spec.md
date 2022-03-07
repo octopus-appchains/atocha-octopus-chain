@@ -28,7 +28,9 @@ atochaModule.AnnouncePuzzleChallengeDeadline<br/>
 
 ### Create a puzzle challenge
 - Action: Submission->atochaModule->commitChallenge
-- Event: atochaFinace.ChallengeDeposit || council.Proposed
+- Event:<br/>
+atochaFinace.ChallengeDeposit || council.Proposed<br/>
+atochaFinace.ChallengeRaisePeriodDeadline
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Join a puzzle challenge
