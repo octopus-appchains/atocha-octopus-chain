@@ -2,16 +2,16 @@
 For all players including puzzle creators, puzzle solvers, puzzle sponsors and puzzle challengers. 
 
 ### PreCreate a puzzle
-##### Action: Submission->atochaFinace->preStorage
-##### Event: atochaFinace.PreStorage
-##### Result: Storage->atochaFinace->storageLedger
+#### Action: Submission->atochaFinace->preStorage
+#### Event: atochaFinace.PreStorage
+#### Result: Storage->atochaFinace->storageLedger
 
 ### Create a puzzle
-##### Action: Submission->atochaModule->createPuzzle
-##### Event: 
+#### Action: Submission->atochaModule->createPuzzle
+#### Event: 
 - atochaModule.PuzzleCreated
 - atochaFinace.PuzzleDeposit
-##### Result: Storage->atochaModule->puzzleInfo
+#### Result: Storage->atochaModule->puzzleInfo
 
 ### Sponsor a puzzle
 - Action: Submission->atochaModule->additionalSponsorship
