@@ -8,7 +8,9 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Create a puzzle
 - Action: Submission->atochaModule->createPuzzle
-- Event: atochaModule.PuzzleCreated && atochaFinace->PuzzleDeposit
+- Event: 
+1. atochaModule.PuzzleCreated
+2. atochaFinace->PuzzleDeposit
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Sponsor a puzzle
