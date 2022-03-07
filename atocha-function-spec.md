@@ -1,12 +1,12 @@
 # Atocha Appchain Function Spec
 For all players including puzzle creators, puzzle solvers, puzzle sponsors and puzzle challengers. 
 
-## PreCreate a puzzle
-#### Action
+### PreCreate a puzzle
+##### Action
 - Submission->atochaFinace->preStorage
-#### Event
+##### Event
 - atochaFinace.PreStorage
-#### Result
+##### Result
 - Storage->atochaFinace->storageLedger
 
 ## Create a puzzle
