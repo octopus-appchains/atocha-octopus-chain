@@ -15,15 +15,15 @@ atochaFinace.PuzzleDeposit<br/>
 
 ### Sponsor a puzzle
 - Action: Submission->atochaModule->additionalSponsorship
-- Event: atochaModule.AdditionalSponsorship && atochaFinace->PuzzleDeposit
+- Event: atochaFinace.PuzzleDeposit
 - Result: Storage->atochaFinace->atoFinanceLedger
 
 ### Solve a puzzle
 - Action: Submission->atochaModule->answerPuzzle
-- Event: 
-* atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) 
-* atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED)
-* atochaModule.AnnouncePuzzleChallengeDeadline
+- Event:<br/>
+atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH)<br/>
+atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED)<br/>
+atochaModule.AnnouncePuzzleChallengeDeadline<br/>
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Create a puzzle challenge
