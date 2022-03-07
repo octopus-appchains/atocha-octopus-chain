@@ -19,9 +19,9 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 ### Solve a puzzle
 - Action: Submission->atochaModule->answerPuzzle
 - Event: 
--- atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) 
--- atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED)
--- atochaModule.AnnouncePuzzleChallengeDeadline
+* atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) 
+* atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED)
+* atochaModule.AnnouncePuzzleChallengeDeadline
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Create a puzzle challenge
