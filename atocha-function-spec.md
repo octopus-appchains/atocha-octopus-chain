@@ -8,9 +8,7 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Create a puzzle
 - Action: Submission->atochaModule->createPuzzle
-- Event:<br/>
-atochaModule.PuzzleCreated<br/>
-atochaFinace.PuzzleDeposit<br/>
+- Event: atochaModule.PuzzleCreated && atochaFinace.PuzzleDeposit
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Sponsor a puzzle
@@ -20,22 +18,23 @@ atochaFinace.PuzzleDeposit<br/>
 
 ### Solve a puzzle
 - Action: Submission->atochaModule->answerPuzzle
-- Event:<br/>
-atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH)<br/>
-atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED)<br/>
-atochaModule.AnnouncePuzzleChallengeDeadline<br/>
+- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) && atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED) && atochaModule.AnnouncePuzzleChallengeDeadline
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Create a puzzle challenge
 - Action: Submission->atochaModule->commitChallenge
 - Event:<br/>
-atochaFinace.ChallengeDeposit || council.Proposed<br/>
-atochaFinace.ChallengeRaisePeriodDeadline
+atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline<br/>
+or<br/>
+atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Join a puzzle challenge
 - Action: Submission->atochaModule->challengeCrowdloan
-- Event: atochaFinace.ChallengeStatusChange && atochaFinace.ChallengeDeposit || council.Proposed
+- Event:<br/>
+atochaFinace.ChallengeDeposit<br/>
+or<br/>
+atochaFinace.ChallengeDeposit && atochaFinace.ChallengeStatusChange && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
 ### Claim for puzzle challenge deposit refund
