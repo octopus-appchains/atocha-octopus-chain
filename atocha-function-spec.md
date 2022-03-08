@@ -21,7 +21,7 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 - Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) && atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED) && atochaModule.AnnouncePuzzleChallengeDeadline
 - Result: Storage->atochaModule->puzzleInfo
 
-### Initial deposit of a challenge
+### Make an initial deposit of a challenge
 - Action: Submission->atochaModule->commitChallenge
 - Event:<br/>
 atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline<br/>
@@ -29,7 +29,7 @@ or<br/>
 atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Further deposit of a challenge
+### Make further deposit of a challenge
 - Action: Submission->atochaModule->challengeCrowdloan
 - Event:<br/>
 atochaFinace.ChallengeDeposit<br/>
