@@ -29,7 +29,7 @@ or<br/>
 atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Join a puzzle challenge
+### Append a puzzle challenge
 - Action: Submission->atochaModule->challengeCrowdloan
 - Event:<br/>
 atochaFinace.ChallengeDeposit<br/>
@@ -37,7 +37,7 @@ or<br/>
 atochaFinace.ChallengeDeposit && atochaFinace.ChallengeStatusChange && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Claim for puzzle challenge deposit refund
+### Claim for puzzle challenge deposit refund when challenge failed
 - Action: Submission->atochaModule->challengePullOut
 - Event: atochaFinace.ChallengeStatusChange
 - Result: Storage->atochaFinace->puzzleChallengeInfo
