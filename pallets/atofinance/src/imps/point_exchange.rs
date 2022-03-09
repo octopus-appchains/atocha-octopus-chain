@@ -189,7 +189,6 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		Ok(())
 	}
 
-	// TODO:: use safe era value by storage.
 	fn get_current_era() -> ExchangeEra {
 		// let current_bn = <frame_system::Pallet<T>>::block_number();
 		// (current_bn / Self::get_era_length()).unique_saturated_into()

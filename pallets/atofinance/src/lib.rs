@@ -43,7 +43,7 @@ pub use imps::TokenReward;
 pub mod pallet {
 	use crate::traits::*;
 	use crate::types::*;
-	use frame_support::sp_runtime::traits::Zero;
+	use frame_support::sp_runtime::traits::{StaticLookup, Zero};
 	use frame_support::sp_runtime::{Perbill, Permill};
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*, PalletId};
 	use frame_support::{
@@ -60,6 +60,7 @@ pub mod pallet {
 	use sp_core::sp_std::vec::Vec;
 	use atocha_constants::MINUTES;
 	use crate::imps::point_exchange::PointExchange;
+	use crate::imps::PointManager;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -299,7 +300,6 @@ pub mod pallet {
 					&PointExchange::<T>::get_last_reward_era(),
 					&current_era
 				);
-				// TODO:: Collect error information for debug.
 				let execute_result = PointExchange::<T>::execute_exchange(
 					current_era.saturating_sub(1),
 					Self::get_point_issuance(PointExchange::<T>::get_era_length())
@@ -332,6 +332,8 @@ pub mod pallet {
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		/// Challenger increases deposit fee.
 		ChallengeDeposit { pid: PuzzleSubjectHash, who: T::AccountId, deposit: BalanceOf<T>, deposit_type: ChallengeDepositType},
+		/// Challengers must raise funds before this block.
+		ChallengeRaisePeriodDeadline { pid: PuzzleSubjectHash, deadline: T::BlockNumber },
 		/// Challenger information status changed.
 		ChallengeStatusChange { pid: PuzzleSubjectHash, challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
 		/// When puzzle create or someone sponsored.
@@ -343,7 +345,9 @@ pub mod pallet {
 		/// Answer received `Point` rewards.
 		TakePointReward { pid: PuzzleSubjectHash, payout: PointToken, fee: PointToken },
 		/// `Point` exchange `Ato-Token` is executed by the system.
-		PointsExchange { era: ExchangeEra, exchange_list: Vec<(T::AccountId, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>)> }
+		PointsExchange { era: ExchangeEra, exchange_list: Vec<(T::AccountId, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>)> },
+		/// Mint some `PointToken` with root privileges for testing.
+		MintPoints { dest: T::AccountId, points: PointToken, }
 	}
 
 	// Errors inform users that something went wrong.
@@ -471,6 +475,17 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(100)]
+		pub fn refresh_point_reward_rank_list(
+			origin: OriginFor<T>,
+		) -> DispatchResult {
+			// check signer
+			let _who = ensure_signed(origin)?;
+			PointExchange::<T>::update_apply_list_point();
+			Ok(().into())
+		}
+
+
+		#[pallet::weight(100)]
 		pub fn update_config(
 			origin: OriginFor<T>,
 			challenge_threshold: Perbill, // = Perbill::from_percent(60);
@@ -497,6 +512,22 @@ pub mod pallet {
 			AtoConfig::<T>::put(config_data.clone());
 			Self::deposit_event(Event::<T>::AtoConfigUpdate {
 				config_data,
+			});
+			Ok(().into())
+		}
+
+		#[pallet::weight(100)]
+		pub fn mint_points(
+			origin: OriginFor<T>,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] points: PointToken,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let dest = T::Lookup::lookup(dest)?;
+			PointManager::<T>::increase_points_to(&dest, points)?;
+			Self::deposit_event(Event::<T>::MintPoints {
+				dest,
+				points
 			});
 			Ok(().into())
 		}

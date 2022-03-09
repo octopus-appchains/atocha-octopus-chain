@@ -84,10 +84,15 @@ impl<T: Config>
 			creator: who,
 			start_bn: start_bn,
 			end_bn: None,
+			raising_deadline: current_block_number.saturating_add(Self::get_raising_period_Length()),
 			raised_group: raise_group,
 		};
-
 		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data.clone());
+
+		crate::Pallet::<T>::deposit_event(Event::ChallengeRaisePeriodDeadline{
+			pid: pid.clone(),
+			deadline: challenge_data.raising_deadline,
+		});
 
 		match challenge_data.status {
 			ChallengeStatus::RaiseCompleted(_x) => {
@@ -184,21 +189,18 @@ impl<T: Config>
 	}
 
 	fn has_the_raising_period_expired(pid: &PuzzleSubjectHash) -> bool {
-		// if !<PuzzleChallengeInfo<T>>::contains_key(&pid) {
-		// 	return true;
-		// }
 		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
 		if challenge_info.is_none() {
 			return true;
 		}
 		let challenge_info = challenge_info.unwrap();
 
-		let ato_config = Pallet::<T>::get_ato_config();
-
-		let period_len = ato_config.raising_period_length;
+		// let ato_config = Pallet::<T>::get_ato_config();
+		// let period_len = ato_config.raising_period_length;
+		let period_len = Self::get_raising_period_Length();
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
-
-		current_block_number > challenge_info.create_bn.saturating_add(period_len)
+		current_block_number > challenge_info.raising_deadline
+		// current_block_number > challenge_info.create_bn.saturating_add(period_len)
 	}
 
 	fn get_challenge_status(pid: &PuzzleSubjectHash) -> Option<ChallengeStatus<T::BlockNumber, Perbill>> {
@@ -348,9 +350,9 @@ impl<T: Config>
 				ChallengeStatus::RaiseFundsBack(x, _) => {x},
 				_ => {Zero::zero()}
 			};
+			ensure!(bn != Zero::zero(), Error::<T>::NeedARefundFirst);
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			challenge_info.end_bn = Some(current_block_number);
-			ensure!(bn != Zero::zero(), Error::<T>::NeedARefundFirst);
 			challenge_info.status = s.clone();
 			<PuzzleChallengeInfo<T>>::insert(&pid, challenge_info.clone());
 			crate::Pallet::<T>::deposit_event(Event::ChallengeStatusChange{

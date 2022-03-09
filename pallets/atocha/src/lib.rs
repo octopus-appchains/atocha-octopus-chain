@@ -55,6 +55,7 @@ pub mod pallet {
 	use sp_core::sp_std::convert::TryInto;
 	use sp_runtime::PerThing;
 	use sp_runtime::sp_std::fmt::Debug;
+	use sp_runtime::traits::{CheckedAdd, Saturating};
 	use sp_std::vec::Vec;
 	use pallet_atofinance::traits::{*};
 	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
@@ -148,10 +149,12 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 
-		/// Add a Sponsorship to Puzzle.
-		AdditionalSponsorship { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>, reason: PuzzleSponsorExplain }, // remove . DurationBn
+		// Add a Sponsorship to Puzzle.
+		// AdditionalSponsorship { who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>, reason: PuzzleSponsorExplain }, // remove . DurationBn
 		/// A new answers submitted.
 		AnswerCreated { who: T::AccountId, aid: PuzzleAnswerHash, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, answer_status: PuzzleAnswerStatus, },
+		/// When the correct answer is produced, announce a puzzle deadline.
+		AnnouncePuzzleChallengeDeadline { pid: PuzzleSubjectHash, deadline: T::BlockNumber },
 		/// Update `AtoModule` module configuration.
 		AtoConfigUpdate { config_data: ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>},
 		/// Puzzle's `Points` are slashed by penalty.
@@ -315,13 +318,13 @@ pub mod pallet {
 			T::PuzzleLedger::do_sponsorship(puzzle_hash.clone(), who.clone(), amount.clone(), current_block_number, reason_v8.clone())?;
 
 			// send event
-			Self::deposit_event(Event::AdditionalSponsorship{
-				who,
-				pid: puzzle_hash,
-				create_bn: current_block_number.into(),
-				deposit: amount,
-				reason: reason_v8.clone(),
-			});
+			// Self::deposit_event(Event::AdditionalSponsorship{
+			// 	who,
+			// 	pid: puzzle_hash,
+			// 	create_bn: current_block_number.into(),
+			// 	deposit: amount,
+			// 	reason: reason_v8.clone(),
+			// });
 			//
 			Ok(().into())
 		}
@@ -364,7 +367,9 @@ pub mod pallet {
 			let answer_status_check = || -> PuzzleAnswerStatus {
 				if update_answer_sign == puzzle_content.answer_hash {
 					let mut update_puzzle_content = puzzle_content.clone();
+					let deadline = Self::get_ato_config().challenge_period_length.checked_add(&current_block_number);
 					update_puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_SOLVED;
+					update_puzzle_content.challenge_deadline = deadline;
 					update_puzzle_content.reveal_bn = Some(current_block_number);
 					update_puzzle_content.reveal_answer = Some(who.clone());
 					<PuzzleInfo<T>>::insert(&puzzle_hash, update_puzzle_content);
@@ -373,7 +378,12 @@ pub mod pallet {
 						pid: puzzle_hash.clone(),
 						puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVED
 					});
-
+					if let Some(deadline) = deadline {
+						Self::deposit_event(Event::AnnouncePuzzleChallengeDeadline{
+							pid: puzzle_hash.clone(),
+							deadline: deadline
+						});
+					}
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH
 				} else {
 					PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH
@@ -439,6 +449,7 @@ pub mod pallet {
 				create_bn: current_block_number,
 				reveal_answer: None,
 				reveal_bn: None,
+				challenge_deadline: None,
 				puzzle_version,
 			};
 			<PuzzleInfo<T>>::insert(puzzle_hash.clone(), puzzle_content);
@@ -467,12 +478,22 @@ pub mod pallet {
 				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				Error::<T>::PuzzleStatusErr
 			);
+			ensure!(
+				puzzle_content.challenge_deadline.is_some(),
+				Error::<T>::PuzzleStatusErr
+			);
+
 			//
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
-			let reveal_bn = puzzle_content.reveal_bn.unwrap();
-			let ato_config = Self::get_ato_config();
+			// let reveal_bn = puzzle_content.reveal_bn.unwrap();
+			// let ato_config = Self::get_ato_config();
+			let challenge_deadline = puzzle_content.challenge_deadline.unwrap();
+			// ensure!(
+			// 	current_block_number - reveal_bn <= ato_config.challenge_period_length,
+			// 	Error::<T>::ChallengePeriodIsEnd
+			// );
 			ensure!(
-				current_block_number - reveal_bn <= ato_config.challenge_period_length,
+				current_block_number <= challenge_deadline,
 				Error::<T>::ChallengePeriodIsEnd
 			);
 			//
@@ -626,9 +647,11 @@ pub mod pallet {
 			let ato_config = Self::get_ato_config();
 
 			T::PuzzleRewardOfToken::challenge_get_reward(&puzzle_hash, beneficiaries.clone(), reveal_bn, ato_config.tax_of_ti)?;
+			// Will change challenge status to `RaiseFundsBack`
 			T::AtoChallenge::recognition_challenge(&puzzle_hash)?;
 
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			// Final chage challenge status to `JudgeRejected`
 			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgePassed(current_block_number));
 			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
 			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());

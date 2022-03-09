@@ -54,6 +54,7 @@ fn test_create_puzzle() {
 				// answer_nonce: toVec("NONCE"),
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
+				challenge_deadline: None,
 				reveal_answer: None,
 				reveal_bn: None,
 				puzzle_version: 1,
@@ -148,6 +149,7 @@ fn test_answer_puzzle() {
 				create_bn: 5,
 				reveal_answer: None,
 				reveal_bn: None,
+				challenge_deadline: None,
 				puzzle_version: 1,
 			}
 		);
@@ -190,6 +192,7 @@ fn test_answer_puzzle() {
 				create_bn: 5,
 				reveal_answer: Some(toAid(CONST_ORIGIN_IS_ANSWER_1)),
 				reveal_bn: Some(15),
+				challenge_deadline: Some(15 + AtochaModule::get_ato_config().challenge_period_length),
 				puzzle_version: 1,
 			}
 		);

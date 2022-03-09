@@ -34,6 +34,7 @@ pub struct PuzzleInfoData<Account, BlockNumber> {
 	pub create_bn: CreateBn<BlockNumber>,
 	pub reveal_answer: Option<Account>,
 	pub reveal_bn: Option<RevealBn<BlockNumber>>,
+	pub challenge_deadline: Option<BlockNumber>,
 	pub puzzle_version: PuzzleVersion,
 }
 

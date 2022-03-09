@@ -119,6 +119,7 @@ pub struct PuzzleChallengeData<Account, BlockNumber, BalanceOf, PerVal: PerThing
 	pub creator: Account,
 	pub start_bn: Option<BlockNumber>,
 	pub end_bn: Option<BlockNumber>,
+	pub raising_deadline: BlockNumber,
 	pub raised_group: Vec<(Account, BalanceOf)>,
 }
 
