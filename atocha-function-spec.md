@@ -47,17 +47,17 @@ atochaFinace.ChallengeDeposit && atochaFinace.ChallengeStatusChange && council.P
 - Event: atochaFinace.TakeTokenReward && atochaFinace.TakePointReward
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Check for a player's current points
-- Result: Storage->atochaFinace->atoPointLedger
-- 
-### Check for current point ranking for all players
-- Result: Storage->atochaFinace->pointExchangeInfo
-
 ### Claim for weekly point ranking reward
 - Action: Submission->atochaFinace->applyPointReward
 - Event: atochaFinace.applyPointReward
 - Result: Storage->atochaFinace->pointExchangeInfo
 
-### Configuration parameters
+### Check for a player's current points
+- Result: Storage->atochaFinace->atoPointLedger
+ 
+### Check for current point ranking for all players
+- Result: Storage->atochaFinace->pointExchangeInfo
+
+### Check for configuration parameters
 - Storage->atochaModule->atoConfig()
 - Storage->atochaFinace->atoConfig()
