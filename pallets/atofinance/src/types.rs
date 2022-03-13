@@ -88,6 +88,12 @@ pub enum ChallengeDepositType {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub enum PuzzleDepositType {
+	Initial,
+	Sponsored,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum RewardType {
 	NoneReward,
 	AnswerReward,

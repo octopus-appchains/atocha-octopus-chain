@@ -337,7 +337,7 @@ pub mod pallet {
 		/// Challenger information status changed.
 		ChallengeStatusChange { pid: PuzzleSubjectHash, challenge_status: ChallengeStatus<T::BlockNumber, Perbill> },
 		/// When puzzle create or someone sponsored.
-		PuzzleDeposit { pid: PuzzleSubjectHash, who: T::AccountId, deposit: BalanceOf<T>, tip: Vec<u8>},
+		PuzzleDeposit { pid: PuzzleSubjectHash, who: T::AccountId, deposit: BalanceOf<T>, tip: Vec<u8>, kind: PuzzleDepositType},
 		/// Pre-stored resources succeeded.
 		PreStorage { who: T::AccountId, fee: BalanceOf<T>, storage_hash: StorageHash, storage_length: StorageLength },
 		/// Answer received `ATO-Token` rewards.
@@ -658,6 +658,7 @@ impl<T: Config>
 			who: who,
 			deposit: amount,
 			tip: "".as_bytes().to_vec(),
+			kind: PuzzleDepositType::Initial,
 		});
 
 		Ok(())
@@ -706,6 +707,7 @@ impl<T: Config>
 			who: who,
 			deposit: amount,
 			tip: reason,
+			kind: PuzzleDepositType::Sponsored
 		});
 
 		Ok(())
