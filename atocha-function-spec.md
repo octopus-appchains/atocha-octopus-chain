@@ -8,30 +8,36 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 
 ### Create a puzzle
 - Action: Submission->atochaModule->createPuzzle
-- Event: atochaModule.PuzzleCreated && atochaFinace->PuzzleDeposit
+- Event: atochaModule.PuzzleCreated && atochaFinace.PuzzleDeposit
 - Result: Storage->atochaModule->puzzleInfo
 
 ### Sponsor a puzzle
 - Action: Submission->atochaModule->additionalSponsorship
-- Event: atochaModule.AdditionalSponsorship && atochaFinace->PuzzleDeposit
+- Event: atochaFinace.PuzzleDeposit
 - Result: Storage->atochaFinace->atoFinanceLedger
 
-### Answer a puzzle
+### Solve a puzzle
 - Action: Submission->atochaModule->answerPuzzle
-- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MISMATCH || ANSWER_HASH_IS_MATCH) && atochaModule.PuzzleStatusChange
+- Event: atochaModule.AnswerCreated (ANSWER_HASH_IS_MATCH) && atochaModule.PuzzleStatusChange (PUZZLE_STATUS_IS_SOLVED) && atochaModule.AnnouncePuzzleChallengeDeadline
 - Result: Storage->atochaModule->puzzleInfo
 
-### Create a puzzle challenge
+### Make an initial deposit of a challenge
 - Action: Submission->atochaModule->commitChallenge
-- Event: atochaFinace.ChallengeDeposit || council.Proposed
+- Event:<br/>
+atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline<br/>
+or<br/>
+atochaFinace.ChallengeDeposit && atochaFinace.ChallengeRaisePeriodDeadline && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Join a puzzle challenge
+### Make further deposit of a challenge
 - Action: Submission->atochaModule->challengeCrowdloan
-- Event: atochaFinace.ChallengeStatusChange && atochaFinace.ChallengeDeposit || council.Proposed
+- Event:<br/>
+atochaFinace.ChallengeDeposit<br/>
+or<br/>
+atochaFinace.ChallengeDeposit && atochaFinace.ChallengeStatusChange && council.Proposed<br/>
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Claim for puzzle challenge deposit refund
+### Claim for puzzle challenge deposit refund when challenge failed
 - Action: Submission->atochaModule->challengePullOut
 - Event: atochaFinace.ChallengeStatusChange
 - Result: Storage->atochaFinace->puzzleChallengeInfo
@@ -41,11 +47,17 @@ For all players including puzzle creators, puzzle solvers, puzzle sponsors and p
 - Event: atochaFinace.TakeTokenReward && atochaFinace.TakePointReward
 - Result: Storage->atochaFinace->puzzleChallengeInfo
 
-### Check point ranking
-- Result: Storage->atochaFinace->pointExchangeInfo
-
 ### Claim for weekly point ranking reward
 - Action: Submission->atochaFinace->applyPointReward
 - Event: atochaFinace.applyPointReward
 - Result: Storage->atochaFinace->pointExchangeInfo
 
+### Check for a player's current points
+- Result: Storage->atochaFinace->atoPointLedger
+ 
+### Check for current point ranking for all players
+- Result: Storage->atochaFinace->pointExchangeInfo
+
+### Check for configuration parameters
+- Storage->atochaModule->atoConfig()
+- Storage->atochaFinace->atoConfig()
