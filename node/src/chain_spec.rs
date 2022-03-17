@@ -38,7 +38,11 @@ pub struct Extensions {
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 pub fn octopus_testnet_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../../resources/atocha-protocol-raw.json")[..])
+	ChainSpec::from_json_bytes(&include_bytes!("../../resources/atocha-protocol-raw-testnet.json")[..])
+}
+
+pub fn octopus_mainnet_config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../../resources/atocha-protocol-raw-mainnet.json")[..])
 }
 
 fn session_keys(
