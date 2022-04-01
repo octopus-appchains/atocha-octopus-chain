@@ -6,7 +6,7 @@
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": {
-    "SS58Prefix": 50,
+    "SS58Prefix": 42,
     "tokenDecimals": 18,
     "tokenSymbol": "ATO"
   },
