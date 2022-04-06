@@ -234,7 +234,7 @@
         "maxSponsorExplainLen": 256,
         "maxAnswerExplainLen": 1024
       },
-      "atochaFinace": {
+      "atochaFinance": {
         "exchangeEraBlockLength": 100800,
         "exchangeHistoryDepth": 12,
         "exchangeMaxRewardListSize": 10,

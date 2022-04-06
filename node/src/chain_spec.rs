@@ -1,5 +1,5 @@
 use appchain_barnacle_runtime::{
-	opaque::Block, opaque::SessionKeys, AccountId, AtochaFinaceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, MINUTES, DAYS};
+	opaque::Block, opaque::SessionKeys, AccountId, atochaFinanceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, MINUTES, DAYS};
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_octopus_appchain::AuthorityId as OctopusId;
@@ -272,7 +272,7 @@ fn testnet_genesis(
 	init_balance_account.push((root_key.clone(), total_sudo_balance));
 
 	GenesisConfig {
-		atocha_finace: AtochaFinaceConfig {
+		atocha_finance: atochaFinanceConfig {
 			exchange_era_block_length: DAYS.saturating_mul(7).into(), // Point exchange period.
 			exchange_history_depth: 12, // maintain depth.
 			exchange_max_reward_list_size: 10, // Top list size.

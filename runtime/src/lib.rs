@@ -120,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 118,
+	spec_version: 119,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -383,7 +383,7 @@ impl pallet_atocha::Config for Runtime {
 	type Event = Event;
 	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
-	type PuzzleLedger = AtochaFinace; // pallet_atofinance::Pallet<Test>;
+	type PuzzleLedger = atochaFinance; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
@@ -845,7 +845,7 @@ construct_runtime!(
 		// Include the custom logic from the pallet-template in the runtime.
 		// TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>, Config<T>},
-		AtochaFinace: pallet_atofinance::{Pallet, Call, Storage, Event<T>, Config<T>},
+		atochaFinance: pallet_atofinance::{Pallet, Call, Storage, Event<T>, Config<T>},
 		//
 		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Council: pallet_ato_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
