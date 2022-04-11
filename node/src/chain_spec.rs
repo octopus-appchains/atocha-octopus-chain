@@ -244,7 +244,7 @@ fn testnet_genesis(
 
 	let validators = initial_authorities.iter().map(|x| (x.0.clone(), VALIDATOR_STASH)).collect::<Vec<_>>();
 
-	let total_balance: Balance = 80000000 * DOLLARS;
+	let total_balance: Balance = 80000000 * DOLLARS - 30000000 * DOLLARS;
 	let per_members_balance: Balance = 20000 * DOLLARS;
 	let per_validator_balance: Balance = 10 * DOLLARS;
 	let members_count: Balance = council_members.len() as Balance;
