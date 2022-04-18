@@ -9,7 +9,7 @@
     "/dns/bootnode-v1-3.atocha.mainnet.octopus.network/tcp/30333/ws/p2p/12D3KooWMe6AQR5c9rEUT3zadjF5DZKViEbgLrwu2VUtKr9XqpNA"
   ],
   "telemetryEndpoints": null,
-  "protocolId": null,
+  "protocolId": "ato",
   "properties": {
     "SS58Prefix": 42,
     "tokenDecimals": 18,
