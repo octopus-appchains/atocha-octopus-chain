@@ -188,7 +188,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					  ),
 				],
 				// Sudo account
-				hex!["28d89354994c2a7f36a66bf189972b29afc3f08a5298621bef4c7f46e6870b54"].into(),
+				hex!["ecfd7bd8e5dba988db86d1eb6581f58b07f6603af6bd7f7978e2fe6973ce2b3b"].into(),
 				// Pre-funded accounts
 				Some(vec![
 					hex!["86ff2817f1d2b8b66feac3e2e540f10f844d4dcafd7e526a867d1edcffacf13e"].into(),
@@ -213,7 +213,12 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 			)
 		},
 		// Bootnodes
-		vec![],
+		vec![
+			"/dns/bootnode-v1-0.atocha.mainnet.octopus.network/tcp/30333/ws/p2p/12D3KooWA91Kf3pmhgQV8mAvGw51JzpumS8ZXGeEjDCdGHNpxiFj".parse().unwrap(),
+			"/dns/bootnode-v1-1.atocha.mainnet.octopus.network/tcp/30333/ws/p2p/12D3KooWMxm8GztwEPWJtSx1AFEh1ftTTf7Com3qLdBNkEPAMDaP".parse().unwrap(),
+			"/dns/bootnode-v1-2.atocha.mainnet.octopus.network/tcp/30333/ws/p2p/12D3KooW9v2XjNVpCwcYVBmELwqLzFHGmWZzxE19LdTJsWozFTQF".parse().unwrap(),
+			"/dns/bootnode-v1-3.atocha.mainnet.octopus.network/tcp/30333/ws/p2p/12D3KooWMe6AQR5c9rEUT3zadjF5DZKViEbgLrwu2VUtKr9XqpNA".parse().unwrap(),
+		],
 		// Telemetry
 		None,
 		// Protocol ID
@@ -251,7 +256,7 @@ fn testnet_genesis(
 	let validator_count: Balance = validators.len() as Balance;
 	let endowed_count: Balance = endowed_accounts.len() as Balance;
 
-	let total_sudo_balance: Balance = 1000 * DOLLARS;
+	let total_sudo_balance: Balance = 500 * DOLLARS;
 	let total_members_balance: Balance = per_members_balance.saturating_mul(members_count);
 	let total_validators_balance: Balance = per_validator_balance.saturating_mul(validator_count.into());
 	let endowed_balance: Balance = total_balance.saturating_sub(total_members_balance)
@@ -269,7 +274,23 @@ fn testnet_genesis(
 	for (x,_) in validators.clone() {
 		init_balance_account.push((x, per_validator_balance));
 	}
-	init_balance_account.push((root_key.clone(), total_sudo_balance));
+
+	if init_balance_account.iter().any(|x|{
+		if &x.0 == &root_key {
+			return true;
+		}
+		false
+	}) {
+		init_balance_account.iter_mut().for_each(|(acc, balance)|{
+			if acc == &root_key {
+				let a = balance.clone();
+				*balance = a.saturating_add(total_sudo_balance);
+			}
+		});
+	} else {
+		init_balance_account.push((root_key.clone(), total_sudo_balance));
+	}
+
 
 	GenesisConfig {
 		atocha_finance: atochaFinanceConfig {

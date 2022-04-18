@@ -277,7 +277,7 @@ impl frame_system::Config for Runtime {
 // ------------------------- ATOCHA Pallets Config Started.
 
 parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+	pub const CouncilMotionDuration: BlockNumber = 28 * DAYS;
 	pub const CouncilMaxProposals: u32 = 3000;
 	pub const CouncilMaxMembers: u32 = 100;
 }
@@ -381,7 +381,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
-	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
+	type CouncilOrigin = EnsureRootOrHalfTechnicalCommittee; // EnsureRootOrHalfCouncilCollective;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
 	type PuzzleLedger = atochaFinance; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
@@ -397,9 +397,9 @@ parameter_types! {
 
 
 parameter_types! {
-	pub const Burn: Permill = Permill::from_percent(5);
+	pub const Burn: Permill = Permill::from_percent(1);
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	pub const ProposalBondMinimum: Balance = 100 * DOLLARS;
 	pub const SpendPeriod: BlockNumber = 1 * DAYS;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub const MaxApprovals: u32 = 100;
