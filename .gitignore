@@ -7,6 +7,7 @@
 .DS_Store
 
 .data
+.private
 
 # The cache for docker container dependency
 .cargo

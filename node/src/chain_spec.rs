@@ -354,7 +354,7 @@ fn testnet_genesis(
 		octopus_assets: Default::default(),
 		beefy: Default::default(),
 		octopus_appchain: OctopusAppchainConfig {
-			anchor_contract: "".to_string(),
+			anchor_contract: "atocha.octopus-registry.near".to_string(),
 			asset_id_by_name: vec![("usdc.testnet".to_string(), 0)],
 			validators,
 			premined_amount: 1024 * DOLLARS,
