@@ -103,7 +103,7 @@ pub mod pallet {
 			<Self as frame_system::Config>::BlockNumber,
 			DispatchResult,
 			PerVal = Perbill,
-			OnBurn = (),
+			// OnBurn = (),
 		>;
 		type PuzzleRewardOfPoint: IPuzzleReward<
 			<Self as frame_system::Config>::AccountId,
