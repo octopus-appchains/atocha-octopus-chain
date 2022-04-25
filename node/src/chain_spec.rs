@@ -301,7 +301,8 @@ fn testnet_genesis(
 			point_reward_epoch_block_length: (DAYS * 1).into() , // The base unit for generating statistical points.
 			challenge_threshold: Perbill::from_percent(60),
 			raising_period_length: (DAYS * 3).into(), // Challenge raising period
-			storage_base_fee: 1000u32.into() // Used to calculate Arwave storage fees.
+			storage_base_fee: 1000u32.into(), // Used to calculate Arwave storage fees.
+			mint_tax: Perbill::from_percent(5),
 		},
 		atocha_module: AtochaModuleConfig {
 			min_bonus_of_puzzle: 10 * DOLLARS, //
