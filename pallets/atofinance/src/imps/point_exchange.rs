@@ -97,10 +97,17 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 
 	fn execute_exchange(era: ExchangeEra, mint_balance: BalanceOf<T>) -> DispatchResult {
 		ensure!(era < Self::get_current_era(), Error::<T>::EraNotEnded );
-		ensure!(PointExchangeInfo::<T>::contains_key(era), Error::<T>::ExchangeListIsEmpty);
+
+		// ensure!(PointExchangeInfo::<T>::contains_key(era), Error::<T>::ExchangeListIsEmpty);
+		if !PointExchangeInfo::<T>::contains_key(era) {
+			LastExchangeRewardEra::<T>::put(era);
+			return DispatchResult::Err(Error::<T>::ExchangeListIsEmpty.into());
+		}
+
 		if let Some(last_exec_era) = LastExchangeRewardEra::<T>::get() {
 			ensure!(last_exec_era < era, Error::<T>::ExchangeRewardEnded);
 		}
+
 		Self::update_apply_list_point();
 		// count total point.
 		let mut exchange_list = PointExchangeInfo::<T>::get(era);
