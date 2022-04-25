@@ -193,6 +193,8 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		PointExchangeInfo::<T>::insert(era, new_exchange_list.clone());
 		LastExchangeRewardEra::<T>::put(era);
 
+		T::SlashHandler::on_unbalanced(T::Currency::issue(mint_tax));
+
 		crate::Pallet::<T>::deposit_event(Event::PointsExchange{
 			era: era,
 			exchange_list: event_list,
