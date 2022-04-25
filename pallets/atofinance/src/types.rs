@@ -154,6 +154,7 @@ pub struct ConfigData<Balance, BlockNumber, PerThing> {
 	pub challenge_threshold: PerThing, // Perbill = Perbill::from_percent(60);
 	pub raising_period_length: BlockNumber, // BlockNumber = 10 * MINUTES;
 	pub storage_base_fee: Balance, // Balance = 10000;
+	pub mint_tax: PerThing,
 }
 
 // impl <T: Config> Default for ConfigData<T> {

@@ -7,7 +7,7 @@ pub struct PointExchange<T>(PhantomData<T>);
 
 // IPointExchange
 // <T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
-impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointToken, BalanceOf<T>, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>, Weight> for PointExchange<T> {
+impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointToken, BalanceOf<T>, ExchangeInfo<PointToken, BalanceOf<T>, Perbill>, Weight, Perbill> for PointExchange<T> {
 	fn apply_exchange(who: T::AccountId) -> DispatchResult {
 		let current_era = Self::get_current_era();
 		ensure!(current_era > Zero::zero(), Error::<T>::LastExchangeRewardClearing);
@@ -95,7 +95,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		false
 	}
 
-	fn execute_exchange(era: ExchangeEra, mint_balance: BalanceOf<T>) -> DispatchResult {
+	fn execute_exchange(era: ExchangeEra, mint_balance: BalanceOf<T>, min_tax: Perbill) -> DispatchResult {
 		ensure!(era < Self::get_current_era(), Error::<T>::EraNotEnded );
 
 		// ensure!(PointExchangeInfo::<T>::contains_key(era), Error::<T>::ExchangeListIsEmpty);
@@ -132,6 +132,10 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		let mut sum_proportion: Perbill = Perbill::from_percent(0);
 		let mut all_pay: BalanceOf<T> = Zero::zero();
 		let mut new_exchange_list = Vec::new();
+
+		//
+		let mint_tax = min_tax * mint_balance;
+		let mint_balance = mint_balance.saturating_sub(mint_tax);
 
 		for (idx, (who, apply_point, mut info_data)) in exchange_list.clone().into_iter().enumerate() {
 			let mut current_proportion = Perbill::from_percent(0);;
@@ -179,7 +183,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		for (who, apply_point, info_data) in new_exchange_list.clone() {
 			let info_data = info_data.unwrap();
 			PointManager::<T>::reduce_points_to(&who, info_data.pay_point);
-			T::Currency::deposit_creating(&who, info_data.take_token);
+			T::RewardHandler::on_unbalanced(T::Currency::deposit_creating(&who, info_data.take_token));
 			event_list.push((who.clone(), info_data.clone()));
 		}
 

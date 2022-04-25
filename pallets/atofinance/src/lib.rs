@@ -234,6 +234,7 @@ pub mod pallet {
 		pub challenge_threshold: Perbill, // Perbill = Perbill::from_percent(60);
 		pub raising_period_length: T::BlockNumber, // BlockNumber = 10 * MINUTES;
 		pub storage_base_fee: BalanceOf<T>, // Balance = 10000;
+		pub mint_tax: Perbill,
 	}
 
 	#[cfg(feature = "std")]
@@ -249,7 +250,8 @@ pub mod pallet {
 				point_reward_epoch_block_length: MINUTES.saturating_mul(1).into(),
 				challenge_threshold: Perbill::from_percent(60),
 				raising_period_length: MINUTES.saturating_mul(10).into(),
-				storage_base_fee: 10000u32.into()
+				storage_base_fee: 10000u32.into(),
+				mint_tax: Perbill::from_percent(5),
 			};
 
 			Self {
@@ -260,7 +262,8 @@ pub mod pallet {
 				point_reward_epoch_block_length: ato_config.point_reward_epoch_block_length,
 				challenge_threshold: ato_config.challenge_threshold,
 				raising_period_length: ato_config.raising_period_length,
-				storage_base_fee: ato_config.storage_base_fee
+				storage_base_fee: ato_config.storage_base_fee,
+				mint_tax: ato_config.mint_tax,
 			}
 		}
 	}
@@ -281,7 +284,8 @@ pub mod pallet {
 				point_reward_epoch_block_length: self.point_reward_epoch_block_length,
 				challenge_threshold: self.challenge_threshold,
 				raising_period_length: self.raising_period_length,
-				storage_base_fee: self.storage_base_fee
+				storage_base_fee: self.storage_base_fee,
+				mint_tax: self.mint_tax,
 			});
 		}
 	}
@@ -300,9 +304,11 @@ pub mod pallet {
 					&PointExchange::<T>::get_last_reward_era(),
 					&current_era
 				);
+				let config = Self::get_ato_config();
 				let execute_result = PointExchange::<T>::execute_exchange(
 					current_era.saturating_sub(1),
-					Self::get_point_issuance(PointExchange::<T>::get_era_length())
+					Self::get_point_issuance(PointExchange::<T>::get_era_length()),
+					config.mint_tax,
 				);
 				log::info!(
 					"AtoFinance - execute_result = {:?}",
@@ -496,6 +502,7 @@ pub mod pallet {
 			point_reward_epoch_block_length: T::BlockNumber, // = 1 * MINUTES; // MyBe 1 * DAY
 			raising_period_length: T::BlockNumber, // = 10 * MINUTES;
 			storage_base_fee: BalanceOf<T>, //= 10000;
+			mint_tax: Perbill,
 		) -> DispatchResultWithPostInfo {
 			// check signer
 			T::CouncilOrigin::ensure_origin(origin)?;
@@ -507,7 +514,8 @@ pub mod pallet {
 				point_reward_epoch_block_length,
 				challenge_threshold,
 				raising_period_length,
-				storage_base_fee
+				storage_base_fee,
+				mint_tax
 			};
 			AtoConfig::<T>::put(config_data.clone());
 			Self::deposit_event(Event::<T>::AtoConfigUpdate {
@@ -555,9 +563,9 @@ impl<T: Config> Pallet<T> {
 			point_reward_epoch_block_length: MINUTES.saturating_mul(1).into(),
 			challenge_threshold: Perbill::from_percent(60),
 			raising_period_length: MINUTES.saturating_mul(10).into(),
-			storage_base_fee: 10000u32.into()
+			storage_base_fee: 10000u32.into(),
+			mint_tax: Perbill::from_percent(5),
 		}
-		// ConfigData::<T>::default()
 	}
 
 	pub fn pot() -> (T::AccountId, BalanceOf<T>) {
