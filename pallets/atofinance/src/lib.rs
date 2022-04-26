@@ -20,6 +20,8 @@ use atocha_constants::MINUTES;
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
 pub use pallet::*;
 
+pub mod migrations;
+
 #[cfg(test)]
 mod mock;
 
@@ -92,10 +94,13 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	// #[pallet::storage]
+	// #[pallet::getter(fn ato_config)]
+	// pub type AtoConfig<T: Config> = StorageValue<_, ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, OptionQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn ato_config)]
-	pub type AtoConfig<T: Config> = StorageValue<_, ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, OptionQuery>;
-
+	pub type AtoConfig2<T: Config> = StorageValue<_, ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, OptionQuery>;
 
 	//
 	#[pallet::storage]
@@ -276,7 +281,7 @@ pub mod pallet {
 				T::Currency::deposit_creating(&finance_account, T::Currency::minimum_balance());
 			}
 
-			AtoConfig::<T>::put(ConfigData{
+			AtoConfig2::<T>::put(ConfigData{
 				exchange_era_block_length: self.exchange_era_block_length,
 				exchange_history_depth: self.exchange_history_depth,
 				exchange_max_reward_list_size: self.exchange_max_reward_list_size,
@@ -327,6 +332,30 @@ pub mod pallet {
 			// }
 			result_width
 		}
+
+		// fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		// 	log::info!("ato-finance upgrade in.");
+		// 	let _ = <AtoConfig<T>>::translate::<OldConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, _>(|maybe_old_data| {
+		// 		maybe_old_data.map(|old_data| {
+		// 			log::info!(
+		// 				target: "runtime::ato-finance",
+		// 				"migrated AtoConfig add mint_tax field.",
+		// 			);
+		// 			ConfigData {
+		// 				exchange_era_block_length: old_data.exchange_era_block_length,
+		// 				exchange_history_depth: old_data.exchange_history_depth,
+		// 				exchange_max_reward_list_size: old_data.exchange_max_reward_list_size,
+		// 				issuance_per_block: old_data.issuance_per_block,
+		// 				point_reward_epoch_block_length: old_data.point_reward_epoch_block_length,
+		// 				challenge_threshold: old_data.challenge_threshold,
+		// 				raising_period_length: old_data.raising_period_length,
+		// 				storage_base_fee: old_data.storage_base_fee,
+		// 				mint_tax: Perbill::from_percent(5),
+		// 			}
+		// 		})
+		// 	});
+		// 	T::DbWeight::get().writes(1)
+		// }
 	}
 
 	#[pallet::event]
@@ -517,7 +546,7 @@ pub mod pallet {
 				storage_base_fee,
 				mint_tax
 			};
-			AtoConfig::<T>::put(config_data.clone());
+			AtoConfig2::<T>::put(config_data.clone());
 			Self::deposit_event(Event::<T>::AtoConfigUpdate {
 				config_data,
 			});
@@ -549,7 +578,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_ato_config() -> ConfigData<BalanceOf<T>, T::BlockNumber, Perbill> {
-		let config = AtoConfig::<T>::get();
+		let config = AtoConfig2::<T>::get();
 		if config.is_some() {
 			return config.unwrap();
 		}
