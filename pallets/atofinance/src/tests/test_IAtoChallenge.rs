@@ -37,6 +37,15 @@ fn test_issue_challenge() {
 		));
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 100_000_000_000_000 - 10_000_000_000_000);
 
+		assert_noop!(
+			ChallengeManager::<Test>::issue_challenge(
+				ACCOUNT_ID_2,
+				&puzzle_hash,
+				299999999999,
+			),
+			Error::<Test>::ChallengeDepositTooLow
+		);
+
 		assert_ok!(ChallengeManager::<Test>::issue_challenge(
 			ACCOUNT_ID_2,
 			&puzzle_hash,

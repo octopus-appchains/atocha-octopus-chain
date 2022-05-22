@@ -398,6 +398,8 @@ pub mod pallet {
 		//
 		ChallengeStatusError,
 		//
+		ChallengeDepositTooLow,
+		//
 		DepositAlreadyExists,
 		//
 		DepositNotFound,

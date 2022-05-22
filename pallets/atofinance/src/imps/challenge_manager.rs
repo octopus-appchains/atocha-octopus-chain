@@ -40,6 +40,9 @@ impl<T: Config>
 
 		// Get threshold.
 		let threshold_balance = Self::get_balance_threshold(pid);
+		ensure!(deposit >= Perbill::from_percent(5) * threshold_balance, Error::<T>::ChallengeDepositTooLow);
+		// println!("threshold_balance = {:?} # {:?}", &threshold_balance, Perbill::from_percent(5) * threshold_balance);
+
 		let real_deposit = deposit.min(threshold_balance);
 
 		// Create challenge data.
@@ -107,6 +110,8 @@ impl<T: Config>
 
 		Ok(())
 	}
+
+	// fn get_total_deposit
 
 	fn get_balance_threshold(pid: &PuzzleSubjectHash) -> BalanceOf<T> {
 		let storage_ledger = <AtoFinanceLedger<T>>::try_get(pid).ok();
