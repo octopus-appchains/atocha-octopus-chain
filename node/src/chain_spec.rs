@@ -115,10 +115,11 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					// get_account_id_from_seed::<sr25519::Public>("Ferdie"),
 				]),
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					hex!["b40a552330da17bf1e03f3969b4ef133e4ea2ab770d60cec377d8165af9ec753"].into(),
+					hex!["5807c92ba5c98bf95582111fc7bf464b88878d4009c2d0414a53712c17f2de52"].into(),
+					hex!["3498c9d183df1f3f698ec833892da13a6906cd5e29c3c0b9b6a2c1a309992d7b"].into(),
+					hex!["76ea85cfd7e2fbcb4bcdafa56ccefe2b749b492e46f8fbeb2874098418886f54"].into(),
+					hex!["600cd23bfd87f6cb0ae22e29509da7c0986a6f14d08eddbcfd2494bf8df59132"].into(),
 				],
 				true,
 			)

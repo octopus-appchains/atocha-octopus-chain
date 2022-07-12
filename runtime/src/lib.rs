@@ -120,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 124,
+	spec_version: 125,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -381,7 +381,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 impl pallet_atocha::Config for Runtime {
 	type Event = Event;
-	type CouncilOrigin = EnsureRootOrHalfTechnicalCommittee; // EnsureRootOrHalfCouncilCollective;
+	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
 	type PuzzleLedger = atochaFinance; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
