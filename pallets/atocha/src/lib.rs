@@ -85,6 +85,8 @@ pub mod pallet {
 
 		type CouncilOrigin: EnsureOrigin<Self::Origin>;
 
+		type TechOrigin: EnsureOrigin<Self::Origin>;
+
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
@@ -701,7 +703,7 @@ pub mod pallet {
 			max_answer_explain_len: u32, // const MaxAnswerExplainLen: u32 = 1024;
 		) -> DispatchResultWithPostInfo {
 			// check signer
-			T::CouncilOrigin::ensure_origin(origin)?;
+			T::TechOrigin::ensure_origin(origin)?;
 			let config_data = ConfigData{
 				min_bonus_of_puzzle,
 				challenge_period_length,

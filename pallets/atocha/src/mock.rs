@@ -102,6 +102,7 @@ impl crate::Config for Test {
 	// type MaxSponsorExplainLen = MaxSponsorExplainLen;
 	// type MaxAnswerExplainLen = MaxAnswerExplainLen;
 	type CouncilOrigin = frame_system::EnsureRoot<AccountId>;
+	type TechOrigin = frame_system::EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 
@@ -194,7 +195,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		point_reward_epoch_block_length: 5,
 		challenge_threshold: Perbill::from_float(0.6),
 		raising_period_length: 5,
-		storage_base_fee: 1000u32.into()
+		storage_base_fee: 1000u32.into(),
+		mint_tax: Perbill::from_percent(5),
 	}
 		.assimilate_storage(&mut t)
 		.unwrap();

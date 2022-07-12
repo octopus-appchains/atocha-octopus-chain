@@ -389,6 +389,7 @@ impl pallet_atocha::Config for Runtime {
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
 	type AtoPointsManage = pallet_atofinance::imps::PointManager<Self>;
 	type WeightInfo = pallet_atocha::weights::SubstrateWeight<Runtime>;
+	type TechOrigin = EnsureRootOrHalfTechnicalCommittee;
 }
 
 parameter_types! {
