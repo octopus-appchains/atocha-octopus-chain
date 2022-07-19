@@ -463,6 +463,8 @@ pub mod pallet {
 		RewardHasBeenClaimed,
 		//
 		WrongPaymentRatio,
+		//
+		BeneficiaryNotFound,
 	}
 
 	#[pallet::call]
