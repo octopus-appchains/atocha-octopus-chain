@@ -79,7 +79,7 @@ beefy-gadget = { git = "https://github.com/paritytech/substrate.git", branch = "
 beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
 beefy-primitives = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
 
-pallet-octopus-appchain = { git = "https://github.com/octopus-network/octopus-pallets.git", branch = "release-v0.9.13" }
+pallet-octopus-appchain = { git = "https://github.com/octopus-network/octopus-pallets.git", branch = "release-v0.9.13-1" }
 pallet-octopus-lpos = { git = "https://github.com/octopus-network/octopus-pallets.git", branch = "release-v0.9.13" }
 
 [features]

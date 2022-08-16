@@ -134,7 +134,7 @@ dependencies = [
  "pallet-mmr",
  "pallet-mmr-primitives",
  "pallet-octopus-appchain",
- "pallet-octopus-lpos",
+ "pallet-octopus-lpos 4.0.0-pre.0 (git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1)",
  "pallet-octopus-upward-messages",
  "pallet-randomness-collective-flip",
  "pallet-session",
@@ -405,7 +405,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-mmr-rpc",
  "pallet-octopus-appchain",
- "pallet-octopus-lpos",
+ "pallet-octopus-lpos 4.0.0-pre.0 (git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13)",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
@@ -4248,7 +4248,7 @@ dependencies = [
 [[package]]
 name = "pallet-octopus-appchain"
 version = "4.0.0-pre.0"
-source = "git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13#831d3dc328aee1a4aea42597b6d018e1d5e2ad0c"
+source = "git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1#ebf80f04942aa3a702259455d56db2391dcec62b"
 dependencies = [
  "base64",
  "borsh",
@@ -4257,7 +4257,7 @@ dependencies = [
  "frame-system",
  "hex",
  "log",
- "pallet-octopus-support",
+ "pallet-octopus-support 4.0.0-pre.0 (git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1)",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -4281,7 +4281,29 @@ dependencies = [
  "hex",
  "log",
  "pallet-authorship",
- "pallet-octopus-support",
+ "pallet-octopus-support 4.0.0-pre.0 (git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13)",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "pallet-octopus-lpos"
+version = "4.0.0-pre.0"
+source = "git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1#ebf80f04942aa3a702259455d56db2391dcec62b"
+dependencies = [
+ "borsh",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "pallet-authorship",
+ "pallet-octopus-support 4.0.0-pre.0 (git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1)",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
@@ -4305,15 +4327,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-octopus-support"
+version = "4.0.0-pre.0"
+source = "git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1#ebf80f04942aa3a702259455d56db2391dcec62b"
+dependencies = [
+ "borsh",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
 name = "pallet-octopus-upward-messages"
 version = "4.0.0-pre.0"
-source = "git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13#831d3dc328aee1a4aea42597b6d018e1d5e2ad0c"
+source = "git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1#ebf80f04942aa3a702259455d56db2391dcec62b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
- "pallet-octopus-support",
+ "pallet-octopus-support 4.0.0-pre.0 (git+https://github.com/octopus-network/octopus-pallets.git?branch=release-v0.9.13-1)",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
