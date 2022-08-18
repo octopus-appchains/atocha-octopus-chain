@@ -139,7 +139,7 @@ fn test_calculate_points_of_puzzle() {
 			"Some-Things-2".as_bytes().to_vec()
 		));
 
-		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 		assert_eq!(pot_ledger.funds, 10_000_000_000_000);
 		assert_eq!(pot_ledger.total, 70_000_000_000_000);
 		assert_eq!(pot_ledger.sponsor_list.len(), 4);

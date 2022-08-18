@@ -25,29 +25,33 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{
+		ConstU128, ConstU16, ConstU32, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight,
+		DispatchClass, IdentityFee, Weight,
 	},
 	StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
+
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 use beefy_primitives::{crypto::AuthorityId as BeefyId, mmr::MmrLeafVersion};
 use codec::Encode;
-use frame_support::{weights::DispatchClass, PalletId};
+use frame_support::{PalletId, traits::{EnsureOneOf}};
 use frame_support::traits::CurrencyToVote;
-use frame_system::{limits::{BlockLength, BlockWeights}, EnsureRoot, EnsureOneOf};
+use frame_system::{limits::{BlockLength, BlockWeights}, EnsureRoot};
+
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_mmr_primitives as mmr;
 use pallet_session::historical as pallet_session_historical;
-use sp_core::u32_trait::{_1, _2, _3, _5};
+// use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_runtime::{
 	generic::Era,
 	traits::{self, ConvertInto, Keccak256, OpaqueKeys, SaturatedConversion, StaticLookup},
@@ -55,6 +59,7 @@ use sp_runtime::{
 };
 use static_assertions::const_assert;
 use pallet_atofinance::Config;
+use pallet_octopus_appchain::sr25519::AuthorityId as OctopusId;
 
 /// Import the template pallet.
 // pub use pallet_template;
@@ -120,10 +125,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 127,
+	spec_version: 128,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+	state_version: 1,
 };
 
 pub const MILLICENTS: Balance = 10_000_000_000_000;
@@ -216,7 +222,6 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u16 = 42;
 }
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
@@ -269,9 +274,11 @@ impl frame_system::Config for Runtime {
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
-	type SS58Prefix = SS58Prefix;
+	type SS58Prefix = ConstU16<42>;
 	/// The set code logic, just the default since we're not a parachain.
 	type OnSetCode = ();
+	///
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 // ------------------------- ATOCHA Pallets Config Started.
@@ -295,9 +302,8 @@ impl pallet_ato_collective::Config<CouncilCollective> for Runtime {
 }
 
 pub type EnsureRootOrHalfCouncilCollective = EnsureOneOf<
-	AccountId,
 	EnsureRoot<AccountId>,
-	pallet_ato_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
+	pallet_ato_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>,
 >;
 
 parameter_types! {
@@ -319,9 +325,8 @@ impl pallet_ato_collective::Config<TechnicalCollective> for Runtime {
 }
 
 pub type EnsureRootOrHalfTechnicalCommittee = EnsureOneOf<
-	AccountId,
 	EnsureRoot<AccountId>,
-	pallet_ato_collective::EnsureProportionAtLeast<_1, _2, AccountId, TechnicalCollective>,
+	pallet_ato_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 2>,
 >;
 
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
@@ -383,7 +388,7 @@ impl pallet_atocha::Config for Runtime {
 	type Event = Event;
 	type CouncilOrigin = EnsureRootOrHalfCouncilCollective;
 	type Currency = <Self as pallet_atofinance::Config>::Currency;
-	type PuzzleLedger = atochaFinance; // pallet_atofinance::Pallet<Test>;
+	type PuzzleLedger = AtochaFinance; // pallet_atofinance::Pallet<Test>;
 	type PuzzleRewardOfToken = pallet_atofinance::imps::TokenReward<Self>;
 	type PuzzleRewardOfPoint = pallet_atofinance::imps::PointReward<Self>;
 	type AtoChallenge = pallet_atofinance::imps::challenge_manager::ChallengeManager<Self>;
@@ -410,18 +415,17 @@ impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
 	type ApproveOrigin = EnsureOneOf<
-		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_ato_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
+		pallet_ato_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
 	>;
 	type RejectOrigin = EnsureOneOf<
-		AccountId,
 		EnsureRoot<AccountId>,
-		pallet_ato_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+		pallet_ato_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 	>;
 	type Event = Event;
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
+	type ProposalBondMaximum = ();
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
@@ -530,7 +534,7 @@ impl pallet_balances::Config for Runtime {
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
+	type AccountStore = frame_system::Pallet<Runtime>;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
@@ -586,8 +590,8 @@ parameter_types! {
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
-where
-	Call: From<LocalCall>,
+	where
+		Call: From<LocalCall>,
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
 		call: Call,
@@ -606,6 +610,7 @@ where
 			.saturating_sub(1);
 		let era = Era::mortal(period, current_block);
 		let extra = (
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
 			frame_system::CheckSpecVersion::<Runtime>::new(),
 			frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
@@ -632,8 +637,8 @@ impl frame_system::offchain::SigningTypes for Runtime {
 }
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
-where
-	Call: From<C>,
+	where
+		Call: From<C>,
 {
 	type Extrinsic = UncheckedExtrinsic;
 	type OverarchingCall = Call;
@@ -644,7 +649,7 @@ impl pallet_im_online::Config for Runtime {
 	type Event = Event;
 	type NextSessionRotation = Babe;
 	type ValidatorSet = Historical;
-	type ReportUnresponsiveness = ();
+	type ReportUnresponsiveness = pallet_octopus_lpos::FilterHistoricalOffences<OctopusLpos, Offences>;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
 	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
 	type MaxKeys = MaxKeys;
@@ -656,9 +661,15 @@ impl pallet_mmr::Config for Runtime {
 	const INDEXING_PREFIX: &'static [u8] = b"mmr";
 	type Hashing = Keccak256;
 	type Hash = <Keccak256 as traits::Hash>::Output;
-	type LeafData = pallet_beefy_mmr::Pallet<Runtime>;
 	type OnNewRoot = pallet_beefy_mmr::DepositBeefyDigest<Runtime>;
 	type WeightInfo = ();
+	type LeafData = pallet_beefy_mmr::Pallet<Runtime>;
+}
+
+impl pallet_offences::Config for Runtime {
+	type Event = Event;
+	type IdentificationTuple = pallet_session::historical::IdentificationTuple<Self>;
+	type OnOffenceHandler = ();
 }
 
 parameter_types! {
@@ -679,6 +690,7 @@ impl pallet_assets::Config<pallet_assets::Instance1> for Runtime {
 	type Currency = Balances;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
+	type AssetAccountDeposit = ConstU128<DOLLARS>;
 	type MetadataDepositBase = MetadataDepositBase;
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type ApprovalDeposit = ApprovalDeposit;
@@ -699,10 +711,13 @@ parameter_types! {
 	pub const ValueLimit: u32 = 256;
 }
 
-impl pallet_uniques::Config for Runtime {
+type ClassId = u128;
+type InstanceId = u128;
+
+impl pallet_uniques::Config<pallet_uniques::Instance1> for Runtime {
 	type Event = Event;
-	type ClassId = u32;
-	type InstanceId = u32;
+	type ClassId = ClassId;
+	type InstanceId = InstanceId;
 	type Currency = Balances;
 	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
 	type ClassDeposit = ClassDeposit;
@@ -744,7 +759,7 @@ pub struct OctopusAppCrypto;
 impl frame_system::offchain::AppCrypto<<Signature as Verify>::Signer, Signature>
 	for OctopusAppCrypto
 {
-	type RuntimeAppPublic = pallet_octopus_appchain::AuthorityId;
+	type RuntimeAppPublic = OctopusId;
 	type GenericSignature = sp_core::sr25519::Signature;
 	type GenericPublic = sp_core::sr25519::Public;
 }
@@ -758,17 +773,22 @@ parameter_types! {
 }
 
 impl pallet_octopus_appchain::Config for Runtime {
-	type AuthorityId = OctopusAppCrypto;
+	type AuthorityId = OctopusId;
+	type AppCrypto = OctopusAppCrypto;
 	type Event = Event;
 	type Call = Call;
 	type PalletId = OctopusAppchainPalletId;
 	type LposInterface = OctopusLpos;
 	type UpwardMessagesInterface = OctopusUpwardMessages;
+	type ClassId = ClassId;
+	type InstanceId = InstanceId;
+	type Uniques = OctopusUniques;
+	type Convertor = ();
 	type Currency = Balances;
 	type Assets = OctopusAssets;
 	type AssetBalance = AssetBalance;
 	type AssetId = AssetId;
-	type AssetIdByName = OctopusAppchain;
+	type AssetIdByTokenId = OctopusAppchain;
 	type GracePeriod = GracePeriod;
 	type UnsignedPriority = UnsignedPriority;
 	type RequestEventLimit = RequestEventLimit;
@@ -822,34 +842,41 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		Timestamp: pallet_timestamp,
-		Authorship: pallet_authorship,
 		Babe: pallet_babe,
-		Grandpa: pallet_grandpa,
+		// Authorship must be before session in order to note author in the correct session and era
+		// for im-online and staking.
+		Authorship: pallet_authorship,
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
-		TechnicalCommittee: pallet_ato_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
 		OctopusAppchain: pallet_octopus_appchain, // must before session
 		OctopusLpos: pallet_octopus_lpos,
 		OctopusUpwardMessages: pallet_octopus_upward_messages,
 		OctopusAssets: pallet_assets::<Instance1>,
+		OctopusUniques: pallet_uniques::<Instance1>,
 		Session: pallet_session,
+		Grandpa: pallet_grandpa,
 		ImOnline: pallet_im_online,
+		Offences: pallet_offences,
 		Historical: pallet_session_historical::{Pallet},
 		Mmr: pallet_mmr,
 		Beefy: pallet_beefy,
 		MmrLeaf: pallet_beefy_mmr,
-		Uniques: pallet_uniques,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
-		// TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
-		AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>, Config<T>},
-		atochaFinance: pallet_atofinance::{Pallet, Call, Storage, Event<T>, Config<T>},
+		// TemplateModule: pallet_template,
+		// AtochaModule: pallet_atocha::{Pallet, Call, Storage, Event<T>, Config<T>},
+		// AtochaFinance: pallet_atofinance::{Pallet, Call, Storage, Event<T>, Config<T>},
+		AtochaModule: pallet_atocha,
+		AtochaFinance: pallet_atofinance,
 		//
-		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Council: pallet_ato_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		// Council: pallet_ato_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		// Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Council: pallet_ato_collective::<Instance1>,
+		TechnicalCommittee: pallet_ato_collective::<Instance2>,
+		Elections: pallet_elections_phragmen,
+		Treasury:pallet_treasury,
 	}
 );
 
@@ -861,6 +888,7 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -879,9 +907,24 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
-	pallet_atofinance::migrations::UpdateFinanceConfig<Runtime>,
+	AllPalletsWithSystem
 >;
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		[frame_benchmarking, BaselineBench::<Runtime>]
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_balances, Balances]
+		[pallet_timestamp, Timestamp]
+		[pallet_template, TemplateModule]
+	);
+}
+
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -1096,8 +1139,9 @@ impl_runtime_apis! {
 		}
 	}
 
+
 	impl beefy_primitives::BeefyApi<Block> for Runtime {
-		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+		fn validator_set() -> Option<beefy_primitives::ValidatorSet<BeefyId>> {
 			Beefy::validator_set()
 		}
 	}
@@ -1108,18 +1152,19 @@ impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_atocha, AtochaModule);
+			// list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			// list_benchmark!(list, extra, pallet_balances, Balances);
+			// list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			// list_benchmark!(list, extra, pallet_atocha, AtochaModule);
 			// list_benchmark!(list, extra, pallet_template, TemplateModule);
-			list_benchmark!(list, extra, pallet_ato_collective, Council);
+			// list_benchmark!(list, extra, pallet_ato_collective, Council);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1129,7 +1174,7 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
 			use frame_system_benchmarking::Pallet as SystemBench;
 			impl frame_system_benchmarking::Config for Runtime {}
@@ -1150,15 +1195,31 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_atocha, AtochaModule);
-			// add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
-			add_benchmark!(params, batches, pallet_ato_collective, Council);
+			// add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			// add_benchmark!(params, batches, pallet_balances, Balances);
+			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			// add_benchmark!(params, batches, pallet_atocha, AtochaModule);
+			// // add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
+			// add_benchmark!(params, batches, pallet_ato_collective, Council);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}
+	}
+
+	#[cfg(feature = "try-runtime")]
+	impl frame_try_runtime::TryRuntime<Block> for Runtime {
+			fn on_runtime_upgrade() -> (Weight, Weight) {
+				// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+				// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
+				// right here and right now.
+				let weight = Executive::try_runtime_upgrade().unwrap();
+				(weight, BlockWeights::get().max_block)
+			}
+
+			fn execute_block_no_check(block: Block) -> Weight {
+				Executive::execute_block_no_check(block)
+			}
 	}
 }

@@ -57,12 +57,15 @@ pub mod pallet {
 		weights::Weight,
 	};
 	use frame_support::sp_std::convert::TryInto;
-	use frame_support::traits::ExistenceRequirement;
+	use frame_support::traits::{ExistenceRequirement, StorageVersion};
 	use frame_system::pallet_prelude::*;
 	use sp_core::sp_std::vec::Vec;
 	use atocha_constants::MINUTES;
 	use crate::imps::point_exchange::PointExchange;
 	use crate::imps::PointManager;
+
+	/// The current storage version.
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(18);
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -92,6 +95,8 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	// #[pallet::storage]
@@ -102,7 +107,7 @@ pub mod pallet {
 	#[pallet::getter(fn ato_config)]
 	pub type AtoConfig2<T: Config> = StorageValue<_, ConfigData<BalanceOf<T>, T::BlockNumber, Perbill>, OptionQuery>;
 
-	//
+	// TODO:: Kami need test upgrade with test net.
 	#[pallet::storage]
 	#[pallet::getter(fn ato_finanace_ledger)]
 	pub type AtoFinanceLedger<T> = StorageMap<
@@ -114,10 +119,10 @@ pub mod pallet {
 			BalanceOf<T>,
 			<T as frame_system::Config>::BlockNumber,
 		>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
-	//
+	//TODO:: Kami need test upgrade with test net.
 	#[pallet::storage]
 	#[pallet::getter(fn ato_finance_reward)]
 	pub type AtoFinanceReward<T> = StorageMap<
@@ -130,10 +135,10 @@ pub mod pallet {
 			BalanceOf<T>,
 			Perbill,
 		>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
-	//
+	// TODO:: Kami set OptionQuery with this storage so you be mast test with testnet.
 	#[pallet::storage]
 	#[pallet::getter(fn ato_point_reward)]
 	pub type AtoPointReward<T> = StorageMap<
@@ -146,7 +151,7 @@ pub mod pallet {
 			PointToken,
 			Perbill,
 		>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	#[pallet::storage]

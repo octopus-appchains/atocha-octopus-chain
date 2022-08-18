@@ -53,7 +53,7 @@ fn test_answer_get_reward_with_creator() {
 		// pub total: BalanceOf,
 		// pub payout: BalanceOf,
 		// pub beneficiaries: Vec<(Account, PerVal)>,
-		let pot_reward_record = AtoFinanceReward::<Test>::get(&puzzle_hash);
+		let pot_reward_record = AtoFinanceReward::<Test>::get(&puzzle_hash).unwrap();
 		let total_reward_balance = <TokenReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
@@ -142,7 +142,7 @@ fn test_answer_get_reward_with_other() {
 		// pub total: BalanceOf,
 		// pub payout: BalanceOf,
 		// pub beneficiaries: Vec<(Account, PerVal)>,
-		let pot_reward_record = AtoFinanceReward::<Test>::get(&puzzle_hash);
+		let pot_reward_record = AtoFinanceReward::<Test>::get(&puzzle_hash).unwrap();
 		let total_reward_balance = <TokenReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
@@ -267,7 +267,7 @@ fn test_challenge_get_reward() {
 			170_000_000_000_000 + 37_800_000_000_000u128
 		);
 
-		let pot_reward_record = AtoFinanceReward::<Test>::get(&puzzle_hash);
+		let pot_reward_record = AtoFinanceReward::<Test>::get(&puzzle_hash).unwrap();
 		let total_reward_token = <TokenReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,

@@ -23,6 +23,7 @@ use sp_runtime::{
 };
 use std::collections::HashMap;
 use std::sync::Mutex;
+use frame_support::traits::ConstU32;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -74,6 +75,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -176,7 +178,7 @@ pub(crate) fn init_puzzle_ledger(puzzle_hash: Vec<u8>) {
 		30u32.into(), // block number
 		"Some-Things-2".as_bytes().to_vec()
 	));
-	let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+	let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 	assert_eq!(pot_ledger.funds, 10_000_000_000_000);
 	assert_eq!(pot_ledger.total, 60_000_000_000_000);
 	assert_eq!(pot_ledger.sponsor_list.len(), 3);

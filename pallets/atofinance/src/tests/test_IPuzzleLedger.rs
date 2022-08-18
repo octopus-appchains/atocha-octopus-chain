@@ -39,7 +39,7 @@ fn test_do_bonus() {
 			5u32.into()
 		));
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 50_000_000_000_000);
-		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 		assert_eq!(pot_ledger.funds, 50_000_000_000_000);
 		assert_eq!(pot_ledger.total, 50_000_000_000_000);
 
@@ -57,7 +57,7 @@ fn test_do_bonus() {
 			5u32.into()
 		));
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 40_000_000_000_000);
-		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 		assert_eq!(pot_ledger.funds, 60_000_000_000_000);
 		assert_eq!(pot_ledger.total, 60_000_000_000_000);
 	});
@@ -93,7 +93,7 @@ fn test_do_sponsorship() {
 			5u32.into()
 		));
 		assert_eq!(Balances::free_balance(ACCOUNT_ID_1), 90_000_000_000_000);
-		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 		assert_eq!(pot_ledger.funds, 10_000_000_000_000);
 		assert_eq!(pot_ledger.total, 10_000_000_000_000);
 
@@ -104,7 +104,7 @@ fn test_do_sponsorship() {
 			5u32.into(), // block number
 			"Some-Things-1".as_bytes().to_vec()
 		));
-		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 		assert_eq!(pot_ledger.funds, 10_000_000_000_000);
 		assert_eq!(pot_ledger.total, 30_000_000_000_000);
 		assert_eq!(pot_ledger.sponsor_list.len(), 2);
@@ -134,7 +134,7 @@ fn test_do_sponsorship() {
 			6u32.into(), // block number
 			"Some-Things-2".as_bytes().to_vec()
 		));
-		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash);
+		let pot_ledger = AtoFinanceLedger::<Test>::get(&puzzle_hash).unwrap();
 		assert_eq!(pot_ledger.funds, 10_000_000_000_000);
 		assert_eq!(pot_ledger.total, 60_000_000_000_000);
 		assert_eq!(pot_ledger.sponsor_list.len(), 3);

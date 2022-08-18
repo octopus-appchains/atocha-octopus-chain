@@ -50,7 +50,7 @@ fn test_answer_get_reward_with_creator() {
 		// pub total: BalanceOf,
 		// pub payout: BalanceOf,
 		// pub beneficiaries: Vec<(Account, PerVal)>,
-		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash);
+		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash).unwrap();
 		let total_reward_token = <PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
@@ -141,7 +141,7 @@ fn test_answer_get_reward_with_other() {
 		// pub total: BalanceOf,
 		// pub payout: BalanceOf,
 		// pub beneficiaries: Vec<(Account, PerVal)>,
-		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash);
+		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash).unwrap();
 		let total_reward_point = <PointReward<Test>>::get_total_bonus(&puzzle_hash,current_bn).unwrap();
 		assert_eq!(
 			pot_reward_record,
@@ -263,7 +263,7 @@ fn FORCE_PASS_test_challenge_get_reward() {
 		let pot_reward_record = AtoPointReward::<Test>::get(&puzzle_hash);
 		let total_reward_point = <PointReward<Test>>::get_total_bonus(&puzzle_hash, current_bn).unwrap();
 		assert_eq!(
-			pot_reward_record,
+			pot_reward_record.unwrap(),
 			PotRewardData {
 				create_bn: 60,
 				tax: Perbill::from_percent(10),

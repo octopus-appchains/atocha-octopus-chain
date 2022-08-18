@@ -437,7 +437,10 @@ fn test_take_answer_reward_with_other() {
 		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
 
 		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_ANSWER_2)),
-				   original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points);
+			(original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2 );
+
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR)),
+			(original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2 );
 	});
 }
 
@@ -930,7 +933,11 @@ fn test_take_answer_reward_with_challenge_faild() {
 		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
 
 		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_ANSWER_2)),
-				   original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points);
+			(original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2);
+
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR)),
+				   (original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2);
+
 	});
 }
 

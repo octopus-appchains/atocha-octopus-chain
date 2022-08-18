@@ -43,9 +43,9 @@
 #![recursion_limit = "128"]
 
 use scale_info::TypeInfo;
-use sp_core::u32_trait::Value as U32;
+// use sp_core::u32_trait::Value as U32;
 use sp_io::storage;
-use sp_runtime::{traits::Hash, RuntimeDebug};
+use sp_runtime::{traits::Hash, RuntimeDebug, AccountId32};
 use sp_std::{marker::PhantomData, prelude::*, result};
 use pallet_atofinance::traits::IAtoPropose;
 
@@ -177,6 +177,7 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 
 	#[pallet::config]
@@ -987,7 +988,9 @@ use frame_system::{Call as SystemCall};
 // use frame_system::{Call as SystemCall, Pallet as System, RawOrigin as SystemOrigin};
 // use pallet_atocha::{Call as AtochaCall};
 
-impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I> {
+impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I>
+	where <T as frame_system::Config>::AccountId: From<AccountId32>
+{
 	fn challenge_propose(puzzle_hash: PuzzleSubjectHash) -> DispatchResult
 	{
 		// proposal: Box<<T as Config<I>>::Proposal>
@@ -1020,8 +1023,9 @@ impl<T: Config<I>, I: 'static> IAtoPropose<PuzzleSubjectHash> for Pallet<T, I> {
 		};
 		<Voting<T, I>>::insert(proposal_hash, votes);
 
+		let defaultAcc: T::AccountId = AccountId32::new([0u8; 32]).into();
 		Self::deposit_event(Event::Proposed {
-			account: Default::default(),
+			account: defaultAcc,
 			proposal_index: index,
 			proposal_hash,
 			threshold,
@@ -1140,43 +1144,44 @@ impl<
 	}
 }
 
-pub struct EnsureMembers<N: U32, AccountId, I: 'static>(PhantomData<(N, AccountId, I)>);
+pub struct EnsureMembers<AccountId, I: 'static, const N: u32>(PhantomData<(AccountId, I)>);
 impl<
 		O: Into<Result<RawOrigin<AccountId, I>, O>> + From<RawOrigin<AccountId, I>>,
-		N: U32,
+		// N: U32,
 		AccountId,
 		I,
-	> EnsureOrigin<O> for EnsureMembers<N, AccountId, I>
+		const N: u32,
+	> EnsureOrigin<O> for EnsureMembers<AccountId, I, N>
 {
 	type Success = (MemberCount, MemberCount);
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
-			RawOrigin::Members(n, m) if n >= N::VALUE => Ok((n, m)),
+			RawOrigin::Members(n, m) if n >= N => Ok((n, m)),
 			r => Err(O::from(r)),
 		})
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn successful_origin() -> O {
-		O::from(RawOrigin::Members(N::VALUE, N::VALUE))
+		O::from(RawOrigin::Members(N, N))
 	}
 }
 
-pub struct EnsureProportionMoreThan<N: U32, D: U32, AccountId, I: 'static>(
-	PhantomData<(N, D, AccountId, I)>,
+pub struct EnsureProportionMoreThan<AccountId, I: 'static, const N: u32, const D: u32>(
+	PhantomData<(AccountId, I)>,
 );
 impl<
 		O: Into<Result<RawOrigin<AccountId, I>, O>> + From<RawOrigin<AccountId, I>>,
-		N: U32,
-		D: U32,
 		AccountId,
 		I,
-	> EnsureOrigin<O> for EnsureProportionMoreThan<N, D, AccountId, I>
+		const N: u32,
+		const D: u32,
+	> EnsureOrigin<O> for EnsureProportionMoreThan<AccountId, I, N, D,>
 {
 	type Success = ();
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
-			RawOrigin::Members(n, m) if n * D::VALUE > N::VALUE * m => Ok(()),
+			RawOrigin::Members(n, m) if n * D > N * m => Ok(()),
 			r => Err(O::from(r)),
 		})
 	}
@@ -1187,21 +1192,21 @@ impl<
 	}
 }
 
-pub struct EnsureProportionAtLeast<N: U32, D: U32, AccountId, I: 'static>(
-	PhantomData<(N, D, AccountId, I)>,
+pub struct EnsureProportionAtLeast<AccountId, I: 'static, const N: u32, const D: u32>(
+	PhantomData<(AccountId, I)>,
 );
 impl<
 		O: Into<Result<RawOrigin<AccountId, I>, O>> + From<RawOrigin<AccountId, I>>,
-		N: U32,
-		D: U32,
 		AccountId,
 		I,
-	> EnsureOrigin<O> for EnsureProportionAtLeast<N, D, AccountId, I>
+		const N: u32,
+		const D: u32
+	> EnsureOrigin<O> for EnsureProportionAtLeast<AccountId, I, N, D>
 {
 	type Success = ();
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
-			RawOrigin::Members(n, m) if n * D::VALUE >= N::VALUE * m => Ok(()),
+			RawOrigin::Members(n, m) if n * D >= N * m => Ok(()),
 			r => Err(O::from(r)),
 		})
 	}

@@ -1,8 +1,8 @@
 use appchain_barnacle_runtime::{
-	opaque::Block, opaque::SessionKeys, AccountId, atochaFinanceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, MINUTES, DAYS};
+	opaque::Block, opaque::SessionKeys, AccountId, AtochaFinanceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, MINUTES, DAYS};
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use pallet_octopus_appchain::AuthorityId as OctopusId;
+use pallet_octopus_appchain::sr25519::AuthorityId as OctopusId;
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -88,10 +88,10 @@ pub fn authority_keys_from_seed(
 
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-	let mut properties = serde_json::map::Map::new();
-	properties.insert("tokenDecimals".into(), 18.into());
-	properties.insert("tokenSymbol".into(), "ATO".into());
-	properties.insert("SS58Prefix".into(), 42.into());
+	// let mut properties = serde_json::map::Map::new();
+	// properties.insert("tokenDecimals".into(), 18.into());
+	// properties.insert("tokenSymbol".into(), "ATO".into());
+	// properties.insert("SS58Prefix".into(), 42.into());
 	Ok(ChainSpec::from_genesis(
 		// Name
 		"Atocha Protocol",
@@ -131,7 +131,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		Some(properties),
+		None, //Some(properties),
+		None,
 		// Extensions
 		Default::default(),
 	))
@@ -139,10 +140,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-	let mut properties = serde_json::map::Map::new();
-	properties.insert("tokenDecimals".into(), 18.into());
-	properties.insert("tokenSymbol".into(), "ATO".into());
-	properties.insert("SS58Prefix".into(), 42.into());
+	// let mut properties = serde_json::map::Map::new();
+	// properties.insert("tokenDecimals".into(), 18.into());
+	// properties.insert("tokenSymbol".into(), "ATO".into());
+	// properties.insert("SS58Prefix".into(), 42.into());
 
 	Ok(ChainSpec::from_genesis(
 		// Name
@@ -225,7 +226,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		Some(properties),
+		None, //Some(properties),
+		None,
 		// Extensions
 		Default::default(),
 	))
@@ -294,7 +296,7 @@ fn testnet_genesis(
 
 
 	GenesisConfig {
-		atocha_finance: atochaFinanceConfig {
+		atocha_finance: AtochaFinanceConfig {
 			exchange_era_block_length: DAYS.saturating_mul(7).into(), // Point exchange period.
 			exchange_history_depth: 12, // maintain depth.
 			exchange_max_reward_list_size: 10, // Top list size.
@@ -342,7 +344,7 @@ fn testnet_genesis(
 				})
 				.collect::<Vec<_>>(),
 		},
-		sudo: SudoConfig { key: root_key },
+		sudo: SudoConfig { key: Some(root_key) },
 		babe: BabeConfig {
 			authorities: vec![],
 			epoch_config: Some(appchain_barnacle_runtime::BABE_GENESIS_EPOCH_CONFIG),
@@ -357,7 +359,7 @@ fn testnet_genesis(
 		beefy: Default::default(),
 		octopus_appchain: OctopusAppchainConfig {
 			anchor_contract: "atocha.octopus-registry.near".to_string(),
-			asset_id_by_name: vec![("usdc.testnet".to_string(), 0)],
+			asset_id_by_token_id: vec![("usdc.testnet".to_string(), 0)],
 			validators,
 			premined_amount: 1024 * DOLLARS,
 		},

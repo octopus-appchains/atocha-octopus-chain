@@ -15,7 +15,7 @@ use sp_runtime::{
 use crate::types::{BalanceOf, PuzzleVersion};
 use frame_support::assert_ok;
 use frame_support::sp_std::convert::TryInto;
-use frame_support::traits::{Contains, GenesisBuild};
+use frame_support::traits::{ConstU32, Contains, GenesisBuild};
 
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -70,6 +70,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {

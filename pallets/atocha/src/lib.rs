@@ -49,7 +49,7 @@ pub mod pallet {
 	use crate::types::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
 	use frame_support::dispatch::Dispatchable;
-	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency};
+	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency, StorageVersion};
 	use frame_system::pallet_prelude::*;
 	use hex;
 	use sp_core::sp_std::convert::TryInto;
@@ -60,6 +60,8 @@ pub mod pallet {
 	use pallet_atofinance::traits::{*};
 	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
 
+	/// The current storage version.
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(18);
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -120,7 +122,9 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub (super) trait Store)]
+	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
