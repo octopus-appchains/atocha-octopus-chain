@@ -1,13 +1,11 @@
 FROM docker.io/paritytech/ci-linux:production as atochabuilder
 WORKDIR /substrate
 COPY . /substrate
-RUN rustup update
-RUN rustup update nightly
 RUN cargo build --locked --release
 
 FROM docker.io/library/ubuntu:20.04
 COPY --from=atochabuilder /substrate/target/release/atocha-node /usr/local/bin
-COPY --from=atochabuilder /substrate/resources/atocha-chain-local-test-spec-raw.json /usr/local/bin/atocha-chain-local-test-spec-raw.json
+COPY --from=atochabuilder /substrate/resources/atocha-protocol-raw-devnet.json /usr/local/bin/atocha-chain-local-test-spec-raw.json
 
 RUN apt-get update && \
 apt-get install ca-certificates -y && \
