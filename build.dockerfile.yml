@@ -1,6 +1,8 @@
 FROM docker.io/paritytech/ci-linux:production as atochabuilder
 WORKDIR /substrate
 COPY . /substrate
+RUN rustup update
+RUN rustup update nightly
 RUN cargo build --locked --release
 
 FROM docker.io/library/ubuntu:20.04
