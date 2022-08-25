@@ -1,8 +1,5 @@
 use frame_support::pallet_prelude::Get;
-use frame_support::sp_runtime::Perbill;
 use frame_support::traits::OnRuntimeUpgrade;
-// use crate::AtoConfig;
-use crate::types::{BalanceOf, ConfigData, OldConfigData};
 
 /// A struct that does not migration, but only checks that the counter prefix exists and is correct.
 pub struct UpdateFinanceConfig<T: crate::Config>(sp_std::marker::PhantomData<T>);

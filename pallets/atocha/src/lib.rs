@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::Encode;
+// use codec::Encode;
 pub use pallet::*;
 
 use frame_support::sp_runtime::app_crypto::TryFrom;
@@ -10,9 +10,9 @@ use frame_support::sp_runtime::MultiSigner;
 use frame_support::ensure;
 use frame_support::sp_std::convert::TryInto;
 
-use hex::ToHex;
+// use hex::ToHex;
 use sha2::Digest;
-use sp_application_crypto::sr25519;
+// use sp_application_crypto::sr25519;
 use sp_application_crypto::sr25519::Public;
 use sp_application_crypto::sr25519::Signature;
 use sp_runtime::{Perbill, SaturatedConversion};
@@ -43,19 +43,18 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use atocha_constants::*;
-	use frame_support::sp_runtime::{Perbill, RuntimeDebug};
+	// use atocha_constants::*;
+	use frame_support::sp_runtime::{Perbill};
 	use frame_support::parameter_types;
 	use crate::types::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, dispatch::DispatchResult, pallet_prelude::*};
-	use frame_support::dispatch::Dispatchable;
+	// use frame_support::dispatch::Dispatchable;
 	use frame_support::traits::{Currency, LockableCurrency, ReservableCurrency, StorageVersion};
 	use frame_system::pallet_prelude::*;
-	use hex;
+	// use hex;
 	use sp_core::sp_std::convert::TryInto;
-	use sp_runtime::PerThing;
-	use sp_runtime::sp_std::fmt::Debug;
-	use sp_runtime::traits::{CheckedAdd, Saturating};
+	// use sp_runtime::PerThing;
+	use sp_runtime::traits::{CheckedAdd};
 	use sp_std::vec::Vec;
 	use pallet_atofinance::traits::{*};
 	use pallet_atofinance::types::{ChallengeStatus, PointToken, PuzzleChallengeData};
@@ -479,7 +478,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			// check signer
 			let who = ensure_signed(origin)?;
-			let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+			let puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
 			ensure!(
 				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				Error::<T>::PuzzleStatusErr
@@ -523,7 +522,7 @@ pub mod pallet {
 			let challenge_status = challenge_status.unwrap();
 			match  challenge_status {
 				ChallengeStatus::Raise(raise_bn) => {
-					ensure!(current_bn - raise_bn > T::AtoChallenge::get_raising_period_Length(), Error::<T>::ChallengeCrowdloanPeriodNotEnd )
+					ensure!(current_bn - raise_bn > T::AtoChallenge::get_raising_period_length(), Error::<T>::ChallengeCrowdloanPeriodNotEnd )
 				},
 				ChallengeStatus::RaiseFundsBack(_raise_bn, _) => {
 					return DispatchResult::Err(Error::<T>::ChallengeHasBeenDisbanded.into());
@@ -553,7 +552,7 @@ pub mod pallet {
 				puzzle_content.is_some(),
 				Error::<T>::PuzzleNotExist
 			);
-			let mut puzzle_content = puzzle_content.unwrap();
+			let puzzle_content = puzzle_content.unwrap();
 			ensure!(
 				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				Error::<T>::PuzzleStatusErr
@@ -658,7 +657,7 @@ pub mod pallet {
 
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			// Final chage challenge status to `JudgeRejected`
-			T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgePassed(current_block_number));
+			let _res = T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgePassed(current_block_number));
 			puzzle_content.puzzle_status = PuzzleStatus::PUZZLE_STATUS_IS_FINAL;
 			<PuzzleInfo<T>>::insert(&puzzle_hash, puzzle_content.clone());
 
@@ -756,7 +755,7 @@ impl<T: Config> Pallet<T>
 		puzzle_hash: PuzzleSubjectHash, // Arweave tx - id
 	) -> DispatchResult {
 
-		let mut puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<T>>::get(&puzzle_hash).unwrap();
 		ensure!(
 				puzzle_content.puzzle_status == PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				Error::<T>::PuzzleStatusErr
@@ -772,8 +771,8 @@ impl<T: Config> Pallet<T>
 		//
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 
-		T::AtoChallenge::challenge_failed(&puzzle_hash);
-		T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
+		let _res = T::AtoChallenge::challenge_failed(&puzzle_hash);
+		let _res = T::AtoChallenge::final_challenge(&puzzle_hash, ChallengeStatus::JudgeRejected(current_block_number));
 
 		Ok(().into())
 	}
@@ -796,12 +795,12 @@ impl<T: Config> Pallet<T>
 		let mut sha_answer_hash_x = sha2::Sha256::new();
 		sha_answer_hash_x.update(txt.as_slice());
 		// Make answer sha256.
-		let mut sha1_ansser_vec = sha_answer_hash_x.finalize().as_slice().to_vec();
+		let sha1_answer_vec = sha_answer_hash_x.finalize().as_slice().to_vec();
 		// Create answer hex str vec
 		let mut result_answer_u8 = [0u8; 32 * 2];
 		// Answer sha256 to encode slice
 		let encode_result =
-			hex::encode_to_slice(&sha1_ansser_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
+			hex::encode_to_slice(&sha1_answer_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
 		assert!(encode_result.is_ok(), "make_answer_sign to Hex failed.");
 		result_answer_u8.to_vec()
 	}
@@ -810,13 +809,13 @@ impl<T: Config> Pallet<T>
 		let mut sha_answer_hash_x = sha2::Sha256::new();
 		sha_answer_hash_x.update(answer_hash.as_slice());
 		// Make answer sha256.
-		let mut sha1_ansser_vec = sha_answer_hash_x.finalize().as_slice().to_vec();
+		let sha1_answer_vec = sha_answer_hash_x.finalize().as_slice().to_vec();
 
 		// Create answer hex str vec
 		let mut result_answer_u8 = [0u8; 32 * 2];
 		// Answer sha256 to encode slice
 		let encode_result =
-			hex::encode_to_slice(&sha1_ansser_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
+			hex::encode_to_slice(&sha1_answer_vec.as_slice(), &mut result_answer_u8 as &mut [u8]);
 		assert!(encode_result.is_ok(), "make_answer_sign to Hex failed.");
 
 		// Convert to Vec<u8>
@@ -827,11 +826,11 @@ impl<T: Config> Pallet<T>
 		// Make final sha256 = sha256(sha256(Answer)+nonce)
 		let mut sha256_answer_final = sha2::Sha256::new();
 		sha256_answer_final.update(result_answer_v8.as_slice());
-		let mut sha1_ansser_vec = sha256_answer_final.finalize().as_slice().to_vec();
+		let sha1_answer_vec = sha256_answer_final.finalize().as_slice().to_vec();
 
 		let mut final_result_u8 = [0u8; 32 * 2];
 		let final_encode_result =
-			hex::encode_to_slice(&sha1_ansser_vec.as_slice(), &mut final_result_u8 as &mut [u8]);
+			hex::encode_to_slice(&sha1_answer_vec.as_slice(), &mut final_result_u8 as &mut [u8]);
 		assert!(final_encode_result.is_ok(), "make_answer_sign to Hex failed.");
 		final_result_u8.to_vec()
 	}

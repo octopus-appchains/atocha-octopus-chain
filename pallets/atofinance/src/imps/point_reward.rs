@@ -3,6 +3,7 @@
 use super::point_manager::PointManager;
 use super::*;
 use frame_support::traits::TryDrop;
+use sp_std::marker::PhantomData;
 
 pub struct PointReward<T>(PhantomData<T>);
 impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, T::BlockNumber, DispatchResult>
@@ -94,10 +95,10 @@ impl<T: Config> IPuzzleReward<T::AccountId, PointToken, PuzzleSubjectHash, T::Bl
 	}
 
 	fn challenge_get_reward(
-		pid: &PuzzleSubjectHash,
-		beneficiaries: Vec<(T::AccountId, Self::PerVal)>,
-		cut_bn: T::BlockNumber,
-		tax: Self::PerVal,
+		_pid: &PuzzleSubjectHash,
+		_beneficiaries: Vec<(T::AccountId, Self::PerVal)>,
+		_cut_bn: T::BlockNumber,
+		_tax: Self::PerVal,
 	) -> DispatchResult {
 		// let pot_reward = <AtoPointReward<T>>::try_get(pid).ok();
 		// ensure!(pot_reward.is_none(), Error::<T>::RewardHasBeenClaimed);

@@ -5,14 +5,11 @@ use sp_std::vec::Vec;
 // use frame_benchmarking::frame_support::traits::WithdrawReasons;
 use frame_support::ensure;
 use frame_support::sp_runtime::traits::{
-	AccountIdConversion, Bounded, Saturating, UniqueSaturatedInto, Zero,
+	AccountIdConversion, Saturating, UniqueSaturatedInto, Zero,
 };
-use frame_support::sp_runtime::{Perbill, Permill, SaturatedConversion};
-use frame_support::sp_std::convert::{TryFrom, TryInto};
-use frame_support::storage::types::{OptionQuery, StorageMap};
+use frame_support::sp_runtime::{Perbill, Permill};
+use frame_support::sp_std::convert::{TryInto};
 use frame_support::traits::{Currency, ExistenceRequirement, Get, OnUnbalanced, StorageInstance};
-use sp_runtime::generic::Era;
-use sp_std::marker::PhantomData;
 use atocha_constants::MINUTES;
 
 /// Edit this file to define custom logic or remove it if it is not needed.
@@ -31,7 +28,6 @@ mod tests;
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
-mod storage;
 pub mod traits;
 pub mod types;
 
@@ -46,13 +42,13 @@ pub mod pallet {
 	use crate::traits::*;
 	use crate::types::*;
 	use frame_support::sp_runtime::traits::{StaticLookup, Zero};
-	use frame_support::sp_runtime::{Perbill, Permill};
+	use frame_support::sp_runtime::{Perbill};
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*, PalletId};
 	use frame_support::{
-		pallet_prelude::*,
+		// pallet_prelude::*,
 		traits::{
-			Currency, CurrencyToVote, EnsureOrigin, EstimateNextNewSession, Get, LockIdentifier,
-			LockableCurrency, OnUnbalanced, ReservableCurrency, UnixTime,
+			Currency, EnsureOrigin, Get,
+			LockableCurrency, OnUnbalanced, ReservableCurrency,
 		},
 		weights::Weight,
 	};
@@ -324,7 +320,7 @@ pub mod pallet {
 					"AtoFinance - execute_result = {:?}",
 					&execute_result
 				);
-				result_width += (PointExchange::<T>::get_max_reward_list_size() as Weight);
+				result_width += PointExchange::<T>::get_max_reward_list_size() as Weight ;
 			}
 
 			//

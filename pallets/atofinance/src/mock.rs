@@ -1,9 +1,9 @@
 use crate as pallet_atofinance;
 use crate::traits::*;
-use crate::types::{EnumPuzzleStatus, PuzzleSubjectHash};
+// use crate::types::{EnumPuzzleStatus, PuzzleSubjectHash};
 use crate::*;
-use frame_support::sp_runtime::app_crypto::sp_core::sr25519::Signature;
-use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
+// use frame_support::sp_runtime::app_crypto::sp_core::sr25519::Signature;
+// use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
 	traits::{Contains, GenesisBuild, OnInitialize, SortedMembers},

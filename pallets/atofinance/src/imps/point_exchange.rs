@@ -2,7 +2,9 @@
 
 use frame_support::weights::Weight;
 use super::*;
-use sp_runtime::traits::Scale;
+// use sp_runtime::traits::Scale;
+use sp_std::marker::PhantomData;
+
 pub struct PointExchange<T>(PhantomData<T>);
 
 // IPointExchange
@@ -34,10 +36,10 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 
 		ensure!( !apply_list.iter().any(|x|&x.0 == &who), Error::<T>::ExchangeApplyAlreadyExists );
 		let origin_list_length = apply_list.len();
-		if (origin_list_length < Self::get_max_reward_list_size() as usize) {
+		if origin_list_length < Self::get_max_reward_list_size() as usize {
 			apply_list.push((who, apply_point, None));
 		}else{
-			if let Some((original_who, original_point, origin_info)) = apply_list.get(Self::get_max_reward_list_size() as usize - 1) {
+			if let Some((_original_who, original_point, _origin_info)) = apply_list.get(Self::get_max_reward_list_size() as usize - 1) {
 				ensure!(&apply_point > original_point, Error::<T>::TooFewPoints);
 				apply_list.push((who, apply_point, None));
 			}
@@ -66,7 +68,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 	}
 
 	fn update_apply_list_point() -> bool  {
-		let mut apply_list = PointExchangeInfo::<T>::get(&Self::get_current_era());
+		let apply_list = PointExchangeInfo::<T>::get(&Self::get_current_era());
 		let have_final_info = apply_list.iter().any(|(_, _, info_data)|{
 			if info_data.is_some() {
 				return true;
@@ -138,7 +140,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		let mint_balance = mint_balance.saturating_sub(mint_tax);
 
 		for (idx, (who, apply_point, mut info_data)) in exchange_list.clone().into_iter().enumerate() {
-			let mut current_proportion = Perbill::from_percent(0);;
+			let mut current_proportion = Perbill::from_percent(0);
 			if idx == exchange_list.len().saturating_sub(1) {
 				current_proportion = Perbill::from_percent(100) - sum_proportion ;
 				let take_token = mint_balance - all_pay;
@@ -180,9 +182,9 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		}
 		// ensure!(sum_proportion == Perbill::from_percent(100), Error::<T>::KickAwaySickExchange);
 		let mut event_list = Vec::new();
-		for (who, apply_point, info_data) in new_exchange_list.clone() {
+		for (who, _apply_point, info_data) in new_exchange_list.clone() {
 			let info_data = info_data.unwrap();
-			PointManager::<T>::reduce_points_to(&who, info_data.pay_point);
+			let _res = PointManager::<T>::reduce_points_to(&who, info_data.pay_point);
 			T::RewardHandler::on_unbalanced(T::Currency::deposit_creating(&who, info_data.take_token));
 			event_list.push((who.clone(), info_data.clone()));
 		}
@@ -262,7 +264,7 @@ impl<T: Config> IPointExchange<T::AccountId, T::BlockNumber, ExchangeEra, PointT
 		ato_config.exchange_era_block_length
 	}
 
-	fn get_reward_list(era: ExchangeEra) -> Vec<(T::AccountId, PointToken, Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>)> {
+	fn get_reward_list(_era: ExchangeEra) -> Vec<(T::AccountId, PointToken, Option<ExchangeInfo<PointToken, BalanceOf<T>, Perbill>>)> {
 		PointExchangeInfo::<T>::get(&Self::get_current_era())
 		// get max_reward_count .
 		// let mut apply_list = PointExchangeInfo::<T>::get(&Self::get_current_era());

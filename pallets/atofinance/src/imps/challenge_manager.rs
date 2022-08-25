@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::sp_runtime::traits::StaticLookup;
+// use frame_support::sp_runtime::traits::StaticLookup;
+use sp_runtime::sp_std::marker::PhantomData;
 use super::*;
 
 pub struct ChallengeManager<T>(PhantomData<T>);
@@ -87,7 +88,7 @@ impl<T: Config>
 			creator: who,
 			start_bn: start_bn,
 			end_bn: None,
-			raising_deadline: current_block_number.saturating_add(Self::get_raising_period_Length()),
+			raising_deadline: current_block_number.saturating_add(Self::get_raising_period_length()),
 			raised_group: raise_group,
 		};
 		<PuzzleChallengeInfo<T>>::insert(pid, challenge_data.clone());
@@ -103,7 +104,7 @@ impl<T: Config>
 					challenge_status: challenge_data.status.clone(),
 					pid: pid.clone(),
 				});
-				T::AtoPropose::challenge_propose(pid.clone());
+				let _res = T::AtoPropose::challenge_propose(pid.clone());
 			},
 			_ => {}
 		}
@@ -185,7 +186,7 @@ impl<T: Config>
 					challenge_status: challenge_data.status.clone(),
 					pid: pid.clone(),
 				});
-				T::AtoPropose::challenge_propose(pid.clone());
+				let _res = T::AtoPropose::challenge_propose(pid.clone());
 			},
 			_ => {}
 		}
@@ -202,7 +203,7 @@ impl<T: Config>
 
 		// let ato_config = Pallet::<T>::get_ato_config();
 		// let period_len = ato_config.raising_period_length;
-		let period_len = Self::get_raising_period_Length();
+		let _period_len = Self::get_raising_period_length();
 		let current_block_number = <frame_system::Pallet<T>>::block_number();
 		current_block_number > challenge_info.raising_deadline
 		// current_block_number > challenge_info.create_bn.saturating_add(period_len)
@@ -248,7 +249,7 @@ impl<T: Config>
 		let mut total_pay: BalanceOf<T> = Zero::zero();
 		for (acc, deposit) in challenge_data.raised_group {
 			let deposit = deposit - tax * deposit;
-			let res = T::Currency::transfer(
+			let _res = T::Currency::transfer(
 				&crate::Pallet::<T>::account_id(),
 				&acc,
 				deposit,
@@ -275,17 +276,17 @@ impl<T: Config>
 
 		let challenge_info = challenge_info.unwrap();
 
-		let period_len = Self::get_raising_period_Length(); // T::RaisingPeriodLength::get();
+		let period_len = Self::get_raising_period_length(); // T::RaisingPeriodLength::get();
 
 		match challenge_info.status {
-			ChallengeStatus::Raise(bn) => {
+			ChallengeStatus::Raise(_bn) => {
 				let current_block_number = <frame_system::Pallet<T>>::block_number();
 				// if current_block_number > bn.saturating_add(period_len) {
 				if current_block_number > challenge_info.create_bn.saturating_add(period_len) {
 					return Err(Error::<T>::RaisingPeriodExpired);
 				}
 			},
-			ChallengeStatus::RaiseCompleted(bn) => {},
+			ChallengeStatus::RaiseCompleted(_bn) => {},
 			_ => {
 				return Err(Error::<T>::EndOfRaising);
 			}
@@ -294,7 +295,7 @@ impl<T: Config>
 		Ok(challenge_info)
 	}
 
-	fn get_raising_period_Length() -> T::BlockNumber {
+	fn get_raising_period_length() -> T::BlockNumber {
 		let ato_config = Pallet::<T>::get_ato_config();
 		// T::RaisingPeriodLength::get()
 		ato_config.raising_period_length
@@ -338,7 +339,7 @@ impl<T: Config>
 
 	fn final_challenge(pid: &PuzzleSubjectHash, status: ChallengeStatus<T::BlockNumber, Perbill>) -> DispatchResult {
 		// ensure!(<PuzzleChallengeInfo<T>>::contains_key(&pid), Error::<T>::ChallengeNotExists);
-		let mut challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
+		let challenge_info = <PuzzleChallengeInfo<T>>::get(&pid);
 		ensure!(challenge_info.is_some(), Error::<T>::ChallengeNotExists);
 		let mut challenge_info = challenge_info.unwrap();
 
@@ -376,7 +377,7 @@ impl<T: Config>
 		// let raised_total = challenge_data.raised_total;
 		// let im_balance = T::Currency::slash(&crate::Pallet::<T>::account_id(), raised_total);
 		// T::SlashHandler::on_unbalanced(im_balance.0);
-		Self::back_challenge_crowdloan(pid, Perbill::from_percent(100));
+		let _res = Self::back_challenge_crowdloan(pid, Perbill::from_percent(100));
 		Ok(())
 	}
 }

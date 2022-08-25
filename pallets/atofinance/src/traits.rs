@@ -1,10 +1,7 @@
 use super::*;
-use frame_support::sp_runtime::traits::{MaybeDisplay, MaybeSerializeDeserialize, Member};
 use frame_support::sp_runtime::PerThing;
-use frame_support::sp_std::fmt::Debug;
 use frame_support::traits::OnUnbalanced;
 use frame_support::traits::TryDrop;
-use frame_support::Parameter;
 use sp_runtime::Perbill;
 use types::*;
 
@@ -80,7 +77,7 @@ pub trait IAtoChallenge<AccountId, PuzzleHash, BalanceOf, DataInfo, Status, Erro
 	fn recognition_challenge(pid: &PuzzleHash) -> DispatchResult;
 	fn back_challenge_crowdloan(pid: &PuzzleHash, tax: Perbill) -> DispatchResult;
 	fn check_get_active_challenge_info(pid: &PuzzleHash) -> Result<DataInfo, Error>;
-	fn get_raising_period_Length() -> BlockNumber;
+	fn get_raising_period_length() -> BlockNumber;
 	fn get_list_of_challengers(pid: &PuzzleHash) ->  Vec<(AccountId, Perbill)>;
 	fn final_challenge(pid: &PuzzleHash, status: Status) -> DispatchResult;
 	fn challenge_failed(pid: &PuzzleHash) -> Result<(), Error>;
@@ -104,7 +101,7 @@ pub trait IPointExchange<AccountId, BlockNumber, Era, PToken, Balance, Info, Wei
 }
 
 impl IAtoPropose<Vec<u8>> for () {
-	fn challenge_propose(puzzle_hash: Vec<u8>) -> DispatchResult {
+	fn challenge_propose(_puzzle_hash: Vec<u8>) -> DispatchResult {
 		Ok(())
 	}
 }

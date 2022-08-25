@@ -3,19 +3,19 @@ use frame_support::parameter_types;
 use frame_support::sp_runtime::app_crypto::sp_core::sr25519::Signature;
 use frame_support::sp_runtime::traits::{IdentifyAccount, Verify};
 use frame_support::PalletId;
-use frame_system as system;
+// use frame_system as system;
 use sp_core::hashing::sha2_256;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Permill,Perbill,
+	Perbill,
 };
 
 use crate::types::{BalanceOf, PuzzleVersion};
 use frame_support::assert_ok;
 use frame_support::sp_std::convert::TryInto;
-use frame_support::traits::{ConstU32, Contains, GenesisBuild};
+use frame_support::traits::{ConstU32, GenesisBuild};
 
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -161,12 +161,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
-			(toAid(1), 1_000_000_000_000_000),
-			(toAid(2), 2_000_000_000_000_000),
-			(toAid(3), 3_000_000_000_000_000),
-			(toAid(4), 4_000_000_000_000_000),
-			(toAid(5), 5_000_000_000_000_000),
-			(toAid(6), 6_000_000_000_000_000),
+			(to_aid(1), 1_000_000_000_000_000),
+			(to_aid(2), 2_000_000_000_000_000),
+			(to_aid(3), 3_000_000_000_000_000),
+			(to_aid(4), 4_000_000_000_000_000),
+			(to_aid(5), 5_000_000_000_000_000),
+			(to_aid(6), 6_000_000_000_000_000),
 		],
 	}
 		.assimilate_storage(&mut t)
@@ -208,8 +208,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub fn make_answer_sha256(answer_hash: Vec<u8>, puzzle_hash_txid: Vec<u8>) -> Vec<u8> {
-	// let mut answer_hash = toVec("ANSWER_HASH");
-	let mut sha_answer_hash = sha2_256(answer_hash.as_slice()).to_vec();
+	// let mut answer_hash = to_vec("ANSWER_HASH");
+	let sha_answer_hash = sha2_256(answer_hash.as_slice()).to_vec();
 	// println!("On test sha_answer_hash B1 = {:?}", sha_answer_hash);
 	let sha1_answer_hex = &hex::encode(&sha_answer_hash);
 	let mut sha1_ansser_vec = sha1_answer_hex.as_bytes().to_vec();
@@ -219,10 +219,10 @@ pub fn make_answer_sha256(answer_hash: Vec<u8>, puzzle_hash_txid: Vec<u8>) -> Ve
 	// println!("On test sha_answer_hash B2 = {:?}", sha1_ansser_vec);
 	// let raw_str = sp_std::str::from_utf8(sha1_ansser_vec.as_slice());
 	let sha256_answer = sha2_256(sha1_ansser_vec.as_slice());
-	shaToVec(sha256_answer.to_vec())
+	shato_vec(sha256_answer.to_vec())
 }
 
-pub fn shaToVec (sha_vec: Vec<u8>) ->Vec<u8> {
+pub fn shato_vec (sha_vec: Vec<u8>) ->Vec<u8> {
 	let mut result_answer_u8 = [0u8; 32 * 2];
 	// Answer sha256 to encode slice
 	let encode_result =
@@ -256,10 +256,10 @@ pub(crate) fn handle_create_puzzle(
 	));
 }
 
-pub(crate) fn toAid(start: u8) -> AccountId {
+pub(crate) fn to_aid(start: u8) -> AccountId {
 	AccountId::from_raw([start; 32])
 }
 
-pub(crate) fn toVec(to_str: &str) -> Vec<u8> {
+pub(crate) fn to_vec(to_str: &str) -> Vec<u8> {
 	to_str.as_bytes().to_vec()
 }

@@ -1,22 +1,20 @@
-#![no_std]
-
 use codec::Encode;
 use super::Event as AtochaEvent;
-use crate::mock::toVec;
+use crate::mock::to_vec;
 use crate::mock::AccountId;
 use crate::pallet::*;
 use crate::{mock::*, Error};
-use frame_support::sp_runtime::app_crypto::sr25519::Signature;
-use frame_support::sp_runtime::traits::{IdentifyAccount, Saturating, Verify, Zero};
+// use frame_support::sp_runtime::app_crypto::sr25519::Signature;
+use frame_support::sp_runtime::traits::{Saturating, Zero};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::hashing::sha2_256;
 use pallet_atofinance::traits::*;
 use sp_runtime::Perbill;
 
 use crate::types::*;
-use sp_core::hexdisplay::HexDisplay;
-use sp_core::sr25519::Public;
-use sp_runtime::AccountId32;
+// use sp_core::hexdisplay::HexDisplay;
+// use sp_core::sr25519::Public;
+// use sp_runtime::AccountId32;
 use pallet_atofinance::imps::challenge_manager::ChallengeManager;
 use pallet_atofinance::types::ChallengeStatus;
 
@@ -31,14 +29,14 @@ fn test_create_puzzle() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 
 		// println!("sha256_answer= {:?}", hex::encode(answer_hash.clone()));
 
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
@@ -49,9 +47,9 @@ fn test_create_puzzle() {
 		assert_eq!(
 			relation_info,
 			PuzzleInfoData {
-				account: toAid(CONST_ORIGIN_IS_CREATOR),
+				account: to_aid(CONST_ORIGIN_IS_CREATOR),
 				answer_hash,
-				// answer_nonce: toVec("NONCE"),
+				// answer_nonce: to_vec("NONCE"),
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
 				challenge_deadline: None,
@@ -63,7 +61,7 @@ fn test_create_puzzle() {
 		// who: T::AccountId, pid: PuzzleSubjectHash, create_bn: CreateBn<T::BlockNumber>, deposit: BalanceOf<T>
 		System::assert_last_event(
 			AtochaEvent::PuzzleCreated{
-				who: toAid(CONST_ORIGIN_IS_CREATOR),
+				who: to_aid(CONST_ORIGIN_IS_CREATOR),
 				pid: puzzle_hash,
 				create_bn: 5,
 				deposit: 100 * DOLLARS
@@ -78,14 +76,14 @@ fn test_answer_puzzle() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		// let puzzle_hash_err_ex_id = toVec("PUZZLE_TX_ERR_ID");
-		// let puzzle_hash = toVec("PUZZLE_TX_ID");
-		// let answer_hash = toVec("ANSWER_HASH_256");
+		// let puzzle_hash_err_ex_id = to_vec("PUZZLE_TX_ERR_ID");
+		// let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		// let answer_hash = to_vec("ANSWER_HASH_256");
 		// let sha256_answer = make_answer_sha256(answer_hash.clone(), puzzle_hash.clone());
 
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
-		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+		let answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 		let no_std_answer_hash = AtochaModule::make_answer_sign(answer_plain_txt.clone(), puzzle_hash.clone());
 		assert_eq!(no_std_answer_hash, answer_hash);
@@ -96,17 +94,17 @@ fn test_answer_puzzle() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::answer_puzzle(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 				answer_plain_txt.clone(),
-				toVec("Answer explain"),
+				to_vec("Answer explain"),
 			),
 			Error::<Test>::PuzzleNotExist
 		);
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
@@ -114,14 +112,14 @@ fn test_answer_puzzle() {
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
 			vec![]
 		));
 
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(1, answer_list.len());
 
 		assert_eq!(
@@ -129,7 +127,7 @@ fn test_answer_puzzle() {
 			(
 				answer_plain_txt_err.clone(),
 				PuzzleAnswerData {
-					account: toAid(CONST_ORIGIN_IS_ANSWER_1),
+					account: to_aid(CONST_ORIGIN_IS_ANSWER_1),
 					// puzzle_ticket: 500,
 					answer_status: PuzzleAnswerStatus::ANSWER_HASH_IS_MISMATCH,
 					answer_explain: vec![],
@@ -143,7 +141,7 @@ fn test_answer_puzzle() {
 		assert_eq!(
 			relation_info,
 			PuzzleInfoData {
-				account: toAid(CONST_ORIGIN_IS_CREATOR),
+				account: to_aid(CONST_ORIGIN_IS_CREATOR),
 				answer_hash: answer_hash.clone(),
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVING,
 				create_bn: 5,
@@ -156,7 +154,7 @@ fn test_answer_puzzle() {
 
 		// ------------
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
 			vec![]
@@ -164,7 +162,7 @@ fn test_answer_puzzle() {
 
 		// check answer list count.
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(2, answer_list.len());
 
 		assert_eq!(
@@ -172,7 +170,7 @@ fn test_answer_puzzle() {
 			(
 				answer_plain_txt.clone(),
 				PuzzleAnswerData {
-					account: toAid(CONST_ORIGIN_IS_ANSWER_1),
+					account: to_aid(CONST_ORIGIN_IS_ANSWER_1),
 					// puzzle_ticket: 500,
 					answer_status: PuzzleAnswerStatus::ANSWER_HASH_IS_MATCH,
 					answer_explain: vec![],
@@ -186,11 +184,11 @@ fn test_answer_puzzle() {
 		assert_eq!(
 			relation_info,
 			PuzzleInfoData {
-				account: toAid(CONST_ORIGIN_IS_CREATOR),
+				account: to_aid(CONST_ORIGIN_IS_CREATOR),
 				answer_hash: answer_hash.clone(),
 				puzzle_status: PuzzleStatus::PUZZLE_STATUS_IS_SOLVED,
 				create_bn: 5,
-				reveal_answer: Some(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				reveal_answer: Some(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 				reveal_bn: Some(15),
 				challenge_deadline: Some(15 + AtochaModule::get_ato_config().challenge_period_length),
 				puzzle_version: 1,
@@ -200,7 +198,7 @@ fn test_answer_puzzle() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::answer_puzzle(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 				answer_plain_txt.clone(),
 				vec![]
@@ -215,41 +213,41 @@ fn test_take_answer_reward_with_crator() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
-		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+		let answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
 
 		// Check puzzle no answers.
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(0, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// Check puzzle no win answers.
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
 			vec![]
 		));
 
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(1, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// bn < ChallengePeriodLength: BlockNumber = 100;
@@ -258,7 +256,7 @@ fn test_take_answer_reward_with_crator() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_CREATOR)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::PuzzleStatusErr
@@ -266,19 +264,19 @@ fn test_take_answer_reward_with_crator() {
 
 		// Update sure answer on chain.
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_CREATOR)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
 			vec![]
 		));
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_CREATOR)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
@@ -289,21 +287,21 @@ fn test_take_answer_reward_with_crator() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_CREATOR)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
 		);
 		System::set_block_number(15 + 50 + 100 + 1 );
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_CREATOR));
-		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_CREATOR));
+		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR));
 		assert_eq!(original_point, Zero::zero());
 
 		let atopot_balance_before = Balances::free_balance(AtochaPot::account_id());
 		println!("atopot_balance = {:?}", &atopot_balance_before);
 
 		assert_ok!(AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_CREATOR)),
 				puzzle_hash.clone(),
 		));
 
@@ -312,13 +310,13 @@ fn test_take_answer_reward_with_crator() {
 		assert_eq!(atopot_balance, atopot_balance_before - 100000000000000);
 
 		// Deduct TVS tax.
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_CREATOR)), original_balance + 100*DOLLARS - TaxOfTVS::get() * 100*DOLLARS);
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_CREATOR)), original_balance + 100*DOLLARS - TaxOfTVS::get() * 100*DOLLARS);
 		let reward_period_count = (65 - 5) / PerEraOfBlockNumber::get();
 		let winanswer_remain_points: Balance = 100*DOLLARS * reward_period_count as Balance;
 
 		let total_bonus = pallet_atofinance::imps::PointReward::<Test>::get_total_bonus(&puzzle_hash, 65);
 		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
-		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR)),
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR)),
 				   original_point + winanswer_remain_points - TaxOfTVS::get() * winanswer_remain_points);
 
 	});
@@ -329,41 +327,41 @@ fn test_take_answer_reward_with_other() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
-		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+		let answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
 
 		// Check puzzle no answers.
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(0, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// Check puzzle no win answers.
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
 			vec![]
 		));
 
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(1, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// bn < ChallengePeriodLength: BlockNumber = 100;
@@ -372,7 +370,7 @@ fn test_take_answer_reward_with_other() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::PuzzleStatusErr
@@ -380,19 +378,19 @@ fn test_take_answer_reward_with_other() {
 
 		// Update sure answer on chain.
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
 			vec![]
 		));
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
@@ -403,44 +401,44 @@ fn test_take_answer_reward_with_other() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
 		);
 		System::set_block_number(15 + 50 + 100 + 1 );
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2));
-		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_2));
+		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR));
 		assert_eq!(original_point, Zero::zero());
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_CREATOR)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_CREATOR)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::NoRightToReward
 		);
 
 		assert_ok!(AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 		));
 
 
 		// Deduct TVS tax.
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2)), original_balance + 100*DOLLARS - TaxOfTVO::get() * 100*DOLLARS);
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_2)), original_balance + 100*DOLLARS - TaxOfTVO::get() * 100*DOLLARS);
 		let reward_period_count = (65 - 5) / PerEraOfBlockNumber::get();
 		let winanswer_remain_points: Balance = 100*DOLLARS * reward_period_count as Balance;
 
 		let total_bonus = pallet_atofinance::imps::PointReward::<Test>::get_total_bonus(&puzzle_hash, 65);
 		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
 
-		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_ANSWER_2)),
-			(original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2 );
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_ANSWER_2)),
+				   (original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2 );
 
-		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR)),
-			(original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2 );
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR)),
+				   (original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2 );
 	});
 }
 
@@ -450,49 +448,49 @@ fn test_challenge_pull_out() {
 		System::set_block_number(5);
 
 		// Create a puzzle.
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
-		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+		let _answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// Answer puzzle .
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
 			vec![]
 		));
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
 
 		System::set_block_number(15 + 100);
 		// Commit challenge.
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)), 4000000000000000);
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3)), 4000000000000000);
 		// Challenge puzzle.
 		assert_ok!(AtochaModule::commit_challenge(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 				10 * DOLLARS
 		));
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)), 4000000000000000 - 10 * DOLLARS );
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3)), 4000000000000000 - 10 * DOLLARS );
 
 		System::set_block_number(15 + 101);
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::BeingChallenged
@@ -502,7 +500,7 @@ fn test_challenge_pull_out() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::challenge_pull_out(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengeCrowdloanPeriodNotEnd
@@ -513,7 +511,7 @@ fn test_challenge_pull_out() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::BeingChallenged
@@ -522,7 +520,7 @@ fn test_challenge_pull_out() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::challenge_pull_out(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengeCrowdloanPeriodNotEnd
@@ -533,25 +531,25 @@ fn test_challenge_pull_out() {
 		assert_ok!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			)
 		);
 
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)), (4000 - 10) * DOLLARS );
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3)), (4000 - 10) * DOLLARS );
 		assert_ok!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::challenge_pull_out(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 			)
 		);
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3)),  (4000 - 1)  * DOLLARS );
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3)), (4000 - 1)  * DOLLARS );
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::challenge_pull_out(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengeHasBeenDisbanded
@@ -565,41 +563,41 @@ fn test_take_answer_reward_with_challenge_win() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
-		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+		let answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
 
 		// Check puzzle no answers.
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(0, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// Check puzzle no win answers.
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
 			vec![]
 		));
 
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(1, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// bn < ChallengePeriodLength: BlockNumber = 100;
@@ -608,7 +606,7 @@ fn test_take_answer_reward_with_challenge_win() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::PuzzleStatusErr
@@ -616,19 +614,19 @@ fn test_take_answer_reward_with_challenge_win() {
 
 		// Update sure answer on chain.
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
 			vec![]
 		));
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
@@ -639,7 +637,7 @@ fn test_take_answer_reward_with_challenge_win() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
@@ -649,7 +647,7 @@ fn test_take_answer_reward_with_challenge_win() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::commit_challenge(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 				10 * DOLLARS
 			),
@@ -658,44 +656,44 @@ fn test_take_answer_reward_with_challenge_win() {
 
 		System::set_block_number( 15 + 50 + 100 );
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3));
 		assert_eq!(original_balance, 4000 * DOLLARS);
 
 		// --- Be challenged
 		assert_ok!(AtochaModule::commit_challenge(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 				10 * DOLLARS
 		));
 
 		System::set_block_number(15 + 50 + 100 + 1 );
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3));
 		assert_eq!(original_balance, 4000 * DOLLARS - 10 * DOLLARS);
 
-		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
+		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR));
 		assert_eq!(original_point, Zero::zero());
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::BeingChallenged
 		);
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_4));
 		assert_eq!(original_balance, 5000 * DOLLARS);
 
 		// Begin raise
 		assert_ok!(AtochaModule::challenge_crowdloan(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_4)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_4)),
 				puzzle_hash.clone(),
 				100 * DOLLARS
 		));
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_4));
 		assert_eq!(original_balance, 5000 * DOLLARS - 50 * DOLLARS);
 
 		assert_eq!(ChallengeManager::<Test>::get_total_raise(&puzzle_hash) , 60 * DOLLARS);
@@ -709,7 +707,7 @@ fn test_take_answer_reward_with_challenge_win() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::BeingChallenged
@@ -719,14 +717,14 @@ fn test_take_answer_reward_with_challenge_win() {
 		let get_chellenger_proportion = |acc: &AccountId|-> Option<Perbill> {
 			let challengers_clone = challengers.clone();
 			for x in challengers_clone {
-				if(&x.0 == acc) {
+				if &x.0 == acc {
 					return Some(x.1);
 				}
 			}
 			None
 		};
 
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3));
 		// println!("init original_balance = {:?}", original_balance);
 		assert_eq!(original_balance , (4000 - 10) * DOLLARS );
 		// 3990000000000000
@@ -741,7 +739,7 @@ fn test_take_answer_reward_with_challenge_win() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::PuzzleStatusErr
@@ -755,18 +753,18 @@ fn test_take_answer_reward_with_challenge_win() {
 		let total_bonus = Perbill::from_percent(100).saturating_sub(TaxOfTI::get()) * (100 * DOLLARS);
 		// println!("{:?}\n{:?}\n{:?}, ",
 		// 		 total_bonus,
-		// 		 get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus.clone(),
-		// 		get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus.clone()
+		// 		 get_chellenger_proportion(&to_aid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus.clone(),
+		// 		get_chellenger_proportion(&to_aid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus.clone()
 		// );
 
-		let reward_after_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_3));
+		let reward_after_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_3));
 		assert_eq!(reward_after_balance, 4000 * DOLLARS + (
-			get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus
+			get_chellenger_proportion(&to_aid(CONST_ORIGIN_IS_ANSWER_3)).unwrap().clone() * total_bonus
 		) );
 
-		let reward_after_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_4));
+		let reward_after_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_4));
 		assert_eq!(reward_after_balance, 5000 * DOLLARS + (
-			get_chellenger_proportion(&toAid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus
+			get_chellenger_proportion(&to_aid(CONST_ORIGIN_IS_ANSWER_4)).unwrap().clone() * total_bonus
 		));
 
 	});
@@ -777,41 +775,41 @@ fn test_take_answer_reward_with_challenge_faild() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
-		let puzzle_hash = toVec("PUZZLE_TX_ID");
-		let answer_plain_txt = toVec("ANSWER_HASH_256");
-		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+		let answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			puzzle_hash.clone(),
 			answer_hash.clone(),
 		);
 
 		// Check puzzle no answers.
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(0, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// Check puzzle no win answers.
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			puzzle_hash.clone(),
 			answer_plain_txt_err.clone(),
 			vec![]
 		));
 
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(1, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// bn < ChallengePeriodLength: BlockNumber = 100;
@@ -820,7 +818,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::PuzzleStatusErr
@@ -828,19 +826,19 @@ fn test_take_answer_reward_with_challenge_faild() {
 
 		// Update sure answer on chain.
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 			puzzle_hash.clone(),
 			answer_plain_txt.clone(),
 			vec![]
 		));
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
@@ -851,7 +849,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::ChallengePeriodIsNotEnd
@@ -861,7 +859,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::commit_challenge(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 				10 * DOLLARS
 			),
@@ -871,20 +869,20 @@ fn test_take_answer_reward_with_challenge_faild() {
 		System::set_block_number( 15 + 50 + 100 );
 		// --- Be challenged
 		assert_ok!(AtochaModule::commit_challenge(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_3)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_3)),
 				puzzle_hash.clone(),
 				10 * DOLLARS
 		));
 
 		System::set_block_number(15 + 50 + 100 + 1 );
-		let original_balance = Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2));
-		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR));
+		let original_balance = Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_2));
+		let original_point = <pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR));
 		assert_eq!(original_point, Zero::zero());
 
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::BeingChallenged
@@ -892,7 +890,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 
 		// Begin raise
 		assert_ok!(AtochaModule::challenge_crowdloan(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_4)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_4)),
 				puzzle_hash.clone(),
 				100 * DOLLARS
 		));
@@ -908,7 +906,7 @@ fn test_take_answer_reward_with_challenge_faild() {
 		assert_noop!(
 			// Try to call create answer, but the puzzle not exists.
 			AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 			),
 			Error::<Test>::BeingChallenged
@@ -920,22 +918,22 @@ fn test_take_answer_reward_with_challenge_faild() {
 		));
 
 		assert_ok!(AtochaModule::take_answer_reward(
-				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 				puzzle_hash.clone(),
 		));
 
 		// Deduct TVS tax.
-		assert_eq!(Balances::free_balance(toAid(CONST_ORIGIN_IS_ANSWER_2)), original_balance + 100*DOLLARS - TaxOfTVO::get() * 100*DOLLARS);
+		assert_eq!(Balances::free_balance(to_aid(CONST_ORIGIN_IS_ANSWER_2)), original_balance + 100*DOLLARS - TaxOfTVO::get() * 100*DOLLARS);
 		let reward_period_count = (65 - 5) / PerEraOfBlockNumber::get();
 		let winanswer_remain_points: Balance = 100*DOLLARS * reward_period_count as Balance;
 
 		let total_bonus = pallet_atofinance::imps::PointReward::<Test>::get_total_bonus(&puzzle_hash, 65);
 		assert_eq!(total_bonus.unwrap(), winanswer_remain_points);
 
-		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_ANSWER_2)),
-			(original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2);
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_ANSWER_2)),
+				   (original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2);
 
-		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&toAid(CONST_ORIGIN_IS_CREATOR)),
+		assert_eq!(<pallet_atofinance::imps::PointManager<Test>>::get_total_points(&to_aid(CONST_ORIGIN_IS_CREATOR)),
 				   (original_point + winanswer_remain_points - TaxOfTVO::get() * winanswer_remain_points)/2);
 
 	});
@@ -944,16 +942,16 @@ fn test_take_answer_reward_with_challenge_faild() {
 #[test]
 fn test_bug_online_checkfaild () {
 
-	let final_answer_raw =  toVec("C");
-	let final_answer_sha256 =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940d");
-	let final_puzzle_txid = toVec("liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
-	let final_answer_puzzle_hash =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940dliIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
-	let final_answer_final_sha256 =  toVec("aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd");
+	let final_answer_raw =  to_vec("C");
+	let final_answer_sha256 =  to_vec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940d");
+	let final_puzzle_txid = to_vec("liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let _final_answer_puzzle_hash =  to_vec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940dliIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let final_answer_final_sha256 =  to_vec("aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd");
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 		let c_sha256 = sha2_256(&final_answer_raw).encode();
 		// println!("RUN A1 ");
-		assert_eq!(shaToVec(c_sha256), final_answer_sha256);
+		assert_eq!(shato_vec(c_sha256), final_answer_sha256);
 		let make_answer_sha256 = make_answer_sha256(final_answer_raw.clone(), final_puzzle_txid.clone());
 		// println!("RUN A2 final_answer_final_sha256 = {:?}", &final_answer_final_sha256);
 		assert_eq!(make_answer_sha256, final_answer_final_sha256);
@@ -965,44 +963,44 @@ fn test_bug_online_checkfaild () {
 
 #[test]
 fn test_bug_online_answer_faild_2235 () {
-	let final_answer_raw =  toVec("C");
-	let final_answer_sha256 =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940d");
-	let final_puzzle_txid = toVec("liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
-	let final_answer_puzzle_hash =  toVec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940dliIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
-	let final_answer_final_sha256 =  toVec("aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd");
+	let _final_answer_raw =  to_vec("C");
+	let _final_answer_sha256 =  to_vec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940d");
+	let final_puzzle_txid = to_vec("liIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let _final_answer_puzzle_hash =  to_vec("6b23c0d5f35d1b11f9b683f0b0a617355deb11277d91ae091d399c655b87940dliIoGRFRiXTFOAga2G-TXVu6stHjq4ZDPEcET6v21iw");
+	let final_answer_final_sha256 =  to_vec("aaa3ef39d81f3a78f75f8c1a5bc454401746697f86930a809717b3503debd9cd");
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
 
 		// Create puzzle hash on the chain.
 		handle_create_puzzle(
-			toAid(CONST_ORIGIN_IS_CREATOR),
+			to_aid(CONST_ORIGIN_IS_CREATOR),
 			final_puzzle_txid.clone(),
 			final_answer_final_sha256.clone(),
 		);
 
 		// Check puzzle no answers.
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(final_puzzle_txid.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(final_puzzle_txid.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(0, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&final_puzzle_txid).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&final_puzzle_txid).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVING);
 
 		// Check puzzle no win answers.
 		System::set_block_number(15);
 
 		assert_ok!(AtochaModule::answer_puzzle(
-			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 			final_puzzle_txid.clone(),
-			toVec("C"),
+			to_vec("C"),
 			vec![]
 		));
 
 		let answer_list =
-			<PuzzleDirectAnswer<Test>>::iter_prefix(final_puzzle_txid.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+			<PuzzleDirectAnswer<Test>>::iter_prefix(final_puzzle_txid.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 		assert_eq!(1, answer_list.len());
 
-		let mut puzzle_content = <PuzzleInfo<Test>>::get(&final_puzzle_txid).unwrap();
+		let puzzle_content = <PuzzleInfo<Test>>::get(&final_puzzle_txid).unwrap();
 		assert_eq!(puzzle_content.puzzle_status, PuzzleStatus::PUZZLE_STATUS_IS_SOLVED);
 
 	});
@@ -1013,14 +1011,14 @@ fn test_bug_online_answer_faild_2235 () {
 // 	new_test_ext().execute_with(|| {
 // 		System::set_block_number(5);
 //
-// 		let puzzle_hash = toVec("PUZZLE_TX_ID");
-// 		let answer_plain_txt = toVec("ANSWER_HASH_256");
-// 		let answer_plain_txt_err = toVec("ANSWER_HASH_ERROR_256");
+// 		let puzzle_hash = to_vec("PUZZLE_TX_ID");
+// 		let answer_plain_txt = to_vec("ANSWER_HASH_256");
+// 		let answer_plain_txt_err = to_vec("ANSWER_HASH_ERROR_256");
 // 		let answer_hash = make_answer_sha256(answer_plain_txt.clone(), puzzle_hash.clone());
 //
 // 		// Create puzzle hash on the chain.
 // 		handle_create_puzzle(
-// 			toAid(CONST_ORIGIN_IS_CREATOR),
+// 			to_aid(CONST_ORIGIN_IS_CREATOR),
 // 			puzzle_hash.clone(),
 // 			answer_hash.clone(),
 // 		);
@@ -1028,7 +1026,7 @@ fn test_bug_online_answer_faild_2235 () {
 //
 // 		// Check puzzle no answers.
 // 		let answer_list =
-// 			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+// 			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 // 		assert_eq!(0, answer_list.len());
 //
 // 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
@@ -1038,13 +1036,13 @@ fn test_bug_online_answer_faild_2235 () {
 // 		System::set_block_number(15);
 //
 // 		assert_ok!(AtochaModule::answer_puzzle(
-// 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+// 			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 // 			puzzle_hash.clone(),
 // 			answer_plain_txt_err.clone(),
 // 		));
 //
 // 		let answer_list =
-// 			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&toVec("PUZZLE_HASH"));
+// 			<PuzzleDirectAnswer<Test>>::iter_prefix(puzzle_hash.clone()).collect::<Vec<_>>(); // ::puzzle_direct_answer(&to_vec("PUZZLE_HASH"));
 // 		assert_eq!(1, answer_list.len());
 //
 // 		let mut puzzle_content = <PuzzleInfo<Test>>::get(&puzzle_hash).unwrap();
@@ -1054,7 +1052,7 @@ fn test_bug_online_answer_faild_2235 () {
 // 		assert_noop!(
 // 			// Try to call create answer, but the puzzle not exists.
 // 			AtochaModule::issue_challenge(
-// 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+// 				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 // 				puzzle_hash.clone(),
 // 				1000 * DOLLARS
 // 			),
@@ -1063,13 +1061,13 @@ fn test_bug_online_answer_faild_2235 () {
 //
 // 		// Update sure answer on chain.
 // 		assert_ok!(AtochaModule::answer_puzzle(
-// 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+// 			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 // 			puzzle_hash.clone(),
 // 			answer_plain_txt.clone(),
 // 		));
 //
 // 		assert_ok!(AtochaModule::issue_challenge(
-// 			Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_2)),
+// 			Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_2)),
 // 			puzzle_hash.clone(),
 // 			1000 * DOLLARS
 // 		));
@@ -1078,7 +1076,7 @@ fn test_bug_online_answer_faild_2235 () {
 // 		assert_noop!(
 // 			// Try to call create answer, but the puzzle not exists.
 // 			AtochaModule::take_answer_reward(
-// 				Origin::signed(toAid(CONST_ORIGIN_IS_ANSWER_1)),
+// 				Origin::signed(to_aid(CONST_ORIGIN_IS_ANSWER_1)),
 // 				puzzle_hash.clone(),
 // 				1000 * DOLLARS
 // 			),
@@ -1096,7 +1094,7 @@ fn test_bug_online_answer_faild_2235 () {
 #[test]
 fn test_handler_reveal_signed_valid() {
 	new_test_ext().execute_with(|| {
-        use frame_support::sp_runtime::app_crypto::{Pair, Ss58Codec, TryFrom};
+        use frame_support::sp_runtime::app_crypto::{Ss58Codec};
         use sp_application_crypto::sr25519::Public;
 
         let test_signature = &hex::decode("2aeaa98e26062cf65161c68c5cb7aa31ca050cb5bdd07abc80a475d2a2eebc7b7a9c9546fbdff971b29419ddd9982bf4148c81a49df550154e1674a6b58bac84").expect("Hex invalid")[..];

@@ -127,7 +127,7 @@ fn test_issue_challenge() {
 				creator: ACCOUNT_ID_2,
 				start_bn: Some(5),
 				end_bn: None,
-				raising_deadline: 5 + ChallengeManager::<Test>::get_raising_period_Length(),
+				raising_deadline: 5 + ChallengeManager::<Test>::get_raising_period_length(),
 				raised_group: vec![
 					(ACCOUNT_ID_2, 2_000_000_000_000),
 					(ACCOUNT_ID_2, 3_000_000_000_000),

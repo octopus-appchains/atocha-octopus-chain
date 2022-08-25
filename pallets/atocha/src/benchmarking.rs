@@ -55,8 +55,8 @@ fn get_dollars<T: Config>(amount: u128) -> BalanceOf<T> {
 benchmarks! {
 	create_puzzle {
 		let caller: T::AccountId = wrap_account_with_balance::<T>(whitelisted_caller());
-		let puzzle_hash = "PUZZLE_HASH".as_bytes().to_vec(); // toVec("PUZZLE_HASH");
-		let answer_hash = "ANSWER_HASH".as_bytes().to_vec(); // toVec("ANSWER_HASH");
+		let puzzle_hash = "PUZZLE_HASH".as_bytes().to_vec(); // to_vec("PUZZLE_HASH");
+		let answer_hash = "ANSWER_HASH".as_bytes().to_vec(); // to_vec("ANSWER_HASH");
 		let puzzle_version = 1;
 	}: _(RawOrigin::Signed(caller), puzzle_hash.clone(), answer_hash.clone(), get_dollars::<T>(100), puzzle_version)
 	verify {

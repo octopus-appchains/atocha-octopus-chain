@@ -1,7 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use super::*;
-use sp_runtime::traits::Scale;
+// use sp_runtime::traits::Scale;
+use sp_std::marker::PhantomData;
+
 pub struct PointManager<T>(PhantomData<T>);
 
 impl<T: Config>

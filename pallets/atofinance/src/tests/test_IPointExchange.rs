@@ -1,5 +1,5 @@
 use super::*;
-use crate::{AtoFinanceLedger, CurrentExchangeRewardEra, ExchangeRewardEraStartBn};
+use crate::{CurrentExchangeRewardEra, ExchangeRewardEraStartBn};
 use crate::imps::point_exchange::PointExchange;
 use crate::imps::PointManager;
 

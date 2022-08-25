@@ -58,7 +58,7 @@ use sp_runtime::{
 	transaction_validity::TransactionPriority,
 };
 use static_assertions::const_assert;
-use pallet_atofinance::Config;
+// use pallet_atofinance::Config;
 use pallet_octopus_appchain::sr25519::AuthorityId as OctopusId;
 
 /// Import the template pallet.
@@ -125,7 +125,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 128,
+	spec_version: 129,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use sp_std::marker::PhantomData;
 use super::*;
 
 pub struct TokenReward<T>(PhantomData<T>);
@@ -135,7 +136,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 		let mut storage_beneficiaries = Vec::new();
 		for (beneficiary, pay_proportion) in beneficiaries.clone().into_iter() {
 
-			let tmp_init_free_balance = T::Currency::free_balance(&beneficiary);
+			let _tmp_init_free_balance = T::Currency::free_balance(&beneficiary);
 
 			T::Currency::transfer(
 				&pot_account,
@@ -144,7 +145,7 @@ impl<T: Config> IPuzzleReward<T::AccountId, BalanceOf<T>, PuzzleSubjectHash, T::
 				ExistenceRequirement::KeepAlive,
 			)?;
 
-			let tmp_init_free_balance = T::Currency::free_balance(&beneficiary);
+			let _tmp_init_free_balance = T::Currency::free_balance(&beneficiary);
 			storage_beneficiaries.push((beneficiary, pay_proportion));
 		}
 

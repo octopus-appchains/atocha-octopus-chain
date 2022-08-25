@@ -1,5 +1,5 @@
 use appchain_barnacle_runtime::{
-	opaque::Block, opaque::SessionKeys, AccountId, AtochaFinanceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, MINUTES, DAYS};
+	opaque::Block, opaque::SessionKeys, AccountId, AtochaFinanceConfig, AtochaModuleConfig, BabeConfig, Balance, BalancesConfig, GenesisConfig, GrandpaConfig, ImOnlineConfig, OctopusAppchainConfig, OctopusLposConfig, CouncilConfig, ElectionsConfig, SessionConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, DOLLARS, WASM_BINARY, DAYS};
 use beefy_primitives::crypto::AuthorityId as BeefyId;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use pallet_octopus_appchain::sr25519::AuthorityId as OctopusId;
@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize};
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use hex_literal::hex;
-use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public, H256};
+use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::{
-	app_crypto::sp_core::crypto::UncheckedFrom,
+	// app_crypto::sp_core::crypto::UncheckedFrom,
 	traits::{IdentifyAccount, Verify},
 	Perbill,
 };
@@ -246,7 +246,7 @@ fn testnet_genesis(
 	const VALIDATOR_STASH: Balance = 10000 * DOLLARS;
 	const MEMBER_STASH: Balance = 19000 * DOLLARS;
 
-	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
+	let endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![]
 	});
 
